@@ -70,6 +70,7 @@ public abstract class EntitySectionMixin<T extends EntityAccess> implements Clim
         return AbortableIterationConsumer.Continuation.CONTINUE;
     }
 
+    @Unique
     private void startFilteringPushableEntities() {
         this.pushableEntities = new ReferenceMaskedList<>();
         for (T entity : this.storage) {
@@ -77,6 +78,7 @@ public abstract class EntitySectionMixin<T extends EntityAccess> implements Clim
         }
     }
 
+    @Unique
     private void stopFilteringPushableEntities() {
         this.pushableEntities = null;
     }
@@ -92,6 +94,7 @@ public abstract class EntitySectionMixin<T extends EntityAccess> implements Clim
         }
     }
 
+    @Unique
     private void updatePushabilityOnCachedStateChange(BlockCachingEntity entity, BlockState newBlockState) {
         boolean visible = entityPushableHeuristic(newBlockState);
         //The entity might be moving into this section right now but isn't registered yet.
@@ -100,11 +103,11 @@ public abstract class EntitySectionMixin<T extends EntityAccess> implements Clim
         this.pushableEntities.setVisible((Entity) entity, visible);
     }
 
+    @Unique
     private void onStartClimbingCachingEntity(Entity entity) {
-        Class<? extends Entity> entityClass = entity.getClass();
-        if (PushableEntityClassGroup.MAYBE_PUSHABLE.contains(entityClass)) {
+        if (PushableEntityClassGroup.MAYBE_PUSHABLE.contains(entity)) {
             this.pushableEntities.add(entity);
-            boolean shouldTrackBlockChanges = PushableEntityClassGroup.CACHABLE_UNPUSHABILITY.contains(entityClass);
+            boolean shouldTrackBlockChanges = PushableEntityClassGroup.CACHABLE_UNPUSHABILITY.contains(entity);
             if (shouldTrackBlockChanges) {
                 BlockCachingEntity blockCachingEntity = (BlockCachingEntity) entity;
                 this.updatePushabilityOnCachedStateChange(blockCachingEntity, blockCachingEntity.lithium$getCachedFeetBlockState());
@@ -142,13 +145,14 @@ public abstract class EntitySectionMixin<T extends EntityAccess> implements Clim
     }
 
     /**
-     * Whether entities with this feet BlockState should be considered to be pushable. Some entity types are not pushable
-     * when they are inside climbable blocks like ladders. Returns true for edge-cases
+     * Whether entities with the given feet BlockState should be considered to be pushable. Some entity types are not
+     * pushable when they are inside climbable blocks like ladders. Returns true for edge-cases
      * like entity in a trapdoor (which maybe is climbable due to a ladder below).
      *
      * @param cachedFeetBlockState cached BlockState at entity feet
      * @return whether the entity should be treated as pushable
      */
+    @Unique
     private static boolean entityPushableHeuristic(BlockState cachedFeetBlockState) {
         return cachedFeetBlockState == null || !cachedFeetBlockState.is(BlockTags.CLIMBABLE);
     }

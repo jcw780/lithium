@@ -4,16 +4,19 @@ import net.caffeinemc.mods.lithium.common.entity.EntityClassGroup;
 import net.caffeinemc.mods.lithium.common.reflection.ReflectionUtil;
 import net.caffeinemc.mods.lithium.common.services.PlatformMappingInformation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ambient.Bat;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.function.Supplier;
+
 public class PushableEntityClassGroup {
 
     /**
-     * Contains Entity Classes that use {@link LivingEntity#isPushable()} ()} to determine their pushability state
+     * Contains Entity Classes that use {@link LivingEntity#isPushable()} to determine their pushability state
      * and use {@link LivingEntity#onClimbable()} to determine their climbing state and are never spectators (no players).
      * <p>
      * LivingEntity, but not Players and not Subclasses with different pushability calculations
@@ -31,7 +34,7 @@ public class PushableEntityClassGroup {
         String remapped_isClimbing = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1309", "method_6101", "()Z", "onClimbable");
         String remapped_isPushable = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1297", "method_5810", "()Z", "isPushable");
         CACHABLE_UNPUSHABILITY = new EntityClassGroup(
-                (Class<?> entityClass) -> {
+                (Class<?> entityClass, Supplier<EntityType<?>> entityType) -> {
                     if (LivingEntity.class.isAssignableFrom(entityClass) && !Player.class.isAssignableFrom(entityClass)) {
                         if (!ReflectionUtil.hasMethodOverride(entityClass, LivingEntity.class, true, remapped_isPushable)) {
                             if (!ReflectionUtil.hasMethodOverride(entityClass, LivingEntity.class, true, remapped_isClimbing)) {
@@ -42,7 +45,7 @@ public class PushableEntityClassGroup {
                     return false;
                 });
         MAYBE_PUSHABLE = new EntityClassGroup(
-                (Class<?> entityClass) -> {
+                (Class<?> entityClass, Supplier<EntityType<?>> entityType) -> {
                     if (ReflectionUtil.hasMethodOverride(entityClass, Entity.class, true, remapped_isPushable)) {
                         if (EnderDragon.class.isAssignableFrom(entityClass)) {
                             return false;

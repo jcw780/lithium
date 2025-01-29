@@ -3,6 +3,7 @@ package net.caffeinemc.mods.lithium.common.tracking.entity;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import net.caffeinemc.mods.lithium.api.inventory.LithiumInventory;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.entity.EntityAccess;
@@ -33,15 +34,17 @@ public abstract class MovementTrackerHelper {
         NUM_MOVEMENT_NOTIFYING_CLASSES = MOVEMENT_NOTIFYING_ENTITY_CLASSES.size();
     }
 
-    public static int getNotificationMask(Class<? extends EntityAccess> entityClass) {
-        int notificationMask = CLASS_2_NOTIFY_MASK.getInt(entityClass);
+    public static int getNotificationMask(Entity entity) {
+        int notificationMask = CLASS_2_NOTIFY_MASK.getInt(entity.getClass());
         if (notificationMask == -1) {
-            notificationMask = calculateNotificationMask(entityClass);
+            notificationMask = calculateNotificationMask(entity);
         }
         return notificationMask;
     }
-    private static int calculateNotificationMask(Class<? extends EntityAccess> entityClass) {
+
+    private static int calculateNotificationMask(Entity entity) {
         int mask = 0;
+        Class<? extends Entity> entityClass = entity.getClass();
         for (int i = 0; i < MOVEMENT_NOTIFYING_ENTITY_CLASSES.size(); i++) {
             Class<?> superclass = MOVEMENT_NOTIFYING_ENTITY_CLASSES.get(i);
             if (superclass.isAssignableFrom(entityClass)) {
