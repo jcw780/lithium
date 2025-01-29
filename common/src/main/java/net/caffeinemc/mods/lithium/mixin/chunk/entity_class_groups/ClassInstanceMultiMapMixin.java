@@ -9,6 +9,7 @@ import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
@@ -35,8 +36,8 @@ public abstract class ClassInstanceMultiMapMixin<T> implements ClassGroupFiltera
     @ModifyVariable(method = "add(Ljava/lang/Object;)Z", at = @At("HEAD"), argsOnly = true)
     public T add(T entity) {
         for (Map.Entry<EntityClassGroup, ReferenceLinkedOpenHashSet<T>> entityGroupAndSet : this.entitiesByGroup.entrySet()) {
-            EntityClassGroup entityGroup = entityGroupAndSet.getKey();
-            if (entityGroup.contains(((Entity) entity).getClass())) {
+            EntityClassGroup entityClassGroup = entityGroupAndSet.getKey();
+            if (entityClassGroup.contains(((Entity) entity))) {
                 entityGroupAndSet.getValue().add((entity));
             }
         }
@@ -71,11 +72,12 @@ public abstract class ClassInstanceMultiMapMixin<T> implements ClassGroupFiltera
     /**
      * Start grouping by a new class group
      */
+    @Unique
     private Collection<T> createAllOfGroupType(EntityClassGroup type) {
         ReferenceLinkedOpenHashSet<T> allOfType = new ReferenceLinkedOpenHashSet<>();
 
         for (T entity : this.allInstances) {
-            if (type.contains(entity.getClass())) {
+            if (type.contains((Entity) entity)) {
                 allOfType.add(entity);
             }
         }
