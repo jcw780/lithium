@@ -77,6 +77,8 @@
     "block.moving_block_shapes.PistonMovingBlockEntityMixin",
     "block.moving_block_shapes.VoxelShapeMixin",
     "block.redstone_wire.RedStoneWireBlockMixin",
+    "block_pattern_matching.BlockPatternMixin",
+    "block_pattern_matching.EndDragonFightMixin",
     "chunk.entity_class_groups.ClassInstanceMultiMapMixin",
     "chunk.no_locking.LevelChunkSectionMixin",
     "chunk.no_locking.PalettedContainerMixin",
