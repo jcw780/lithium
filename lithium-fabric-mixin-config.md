@@ -278,6 +278,14 @@ worldedit is present.
 Requirements:
 - `mixin.util.block_entity_retrieval=true`  
   
+### `mixin.debug`
+(default: `false`)  
+Debug features
+  
+### `mixin.debug.palette`
+(default: `true`)  
+Clients check the chunk section data when receiving a chunk data packet.
+  
 ### `mixin.entity`
 (default: `true`)  
 Various entity optimizations
@@ -548,7 +556,9 @@ Access chunks of worlds, chunk caches and chunk regions directly.
   
 ### `mixin.util.chunk_status_tracking`
 (default: `true`)  
-Allows reacting to changes of the load status of chunks.
+Allows reacting to changes of the load status of chunks.  
+Requirements:
+- `mixin.util.accessors=true`  
   
 ### `mixin.util.data_storage`
 (default: `true`)  
