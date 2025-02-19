@@ -86,7 +86,7 @@ jobs:
             --target=${{ github.ref_name }} \
             --draft=false \
             --prerelease=${{ inputs.releaseType != 'stable' }} \
-            build/libs/*.jar LICENSE
+            build/libs/*.jar LICENSE.md
 
       - name: Publish to Modrinth and Curseforge
         env:
