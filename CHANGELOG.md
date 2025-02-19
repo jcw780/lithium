@@ -16,5 +16,6 @@ Make sure to take a backup of your world before using the mod and please report 
 - Use worlds for thread tests instead of minecraft server to improve compatibility with the worldthreader mod
 
 ## Fixes
-- Set default return value in LithiumHashPalette copy
+- Fix missing default return value in LithiumHashPalette copies
 - Fix incorrect handling of fire, lava and soul fire in experimental block touching optimization
+- Fix compatibility with Moonrise
