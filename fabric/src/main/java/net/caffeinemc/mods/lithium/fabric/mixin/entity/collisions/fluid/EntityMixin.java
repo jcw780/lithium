@@ -1,11 +1,14 @@
 package net.caffeinemc.mods.lithium.fabric.mixin.entity.collisions.fluid;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import net.caffeinemc.mods.lithium.common.block.BlockCountingSection;
 import net.caffeinemc.mods.lithium.common.block.BlockStateFlags;
 import net.caffeinemc.mods.lithium.common.block.TrackedBlockStatePredicate;
 import net.caffeinemc.mods.lithium.common.entity.FluidCachingEntity;
 import net.caffeinemc.mods.lithium.common.util.Pos;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
@@ -13,13 +16,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(Entity.class)
 public abstract class EntityMixin implements FluidCachingEntity {
@@ -34,13 +35,16 @@ public abstract class EntityMixin implements FluidCachingEntity {
             method = "updateFluidHeightAndDoFluidPushing",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/Entity;isPushedByFluid()Z",
-                    shift = At.Shift.BEFORE
+                    target = "Lnet/minecraft/world/entity/Entity;isPushedByFluid()Z"
             ),
-            cancellable = true,
-            locals = LocalCapture.CAPTURE_FAILHARD
+            cancellable = true
     )
-    public void tryShortcutFluidPushing(TagKey<Fluid> tag, double speed, CallbackInfoReturnable<Boolean> cir, AABB box, int x1, int x2, int y1, int y2, int z1, int z2, double zero) {
+    public void tryShortcutFluidPushing(TagKey<Fluid> tag, double speed, CallbackInfoReturnable<Boolean> cir, @Local(ordinal = 0) int x1, @Local(ordinal = 1) int x2, @Local(ordinal = 2) int y1, @Local(ordinal = 3) int y2, @Local(ordinal = 4) int z1, @Local(ordinal = 5) int z2) {
+        if (!(this.level.isClientSide() && this.level instanceof ClientLevel || this.level instanceof ServerLevel)) {
+            //Create compatibility: Directly accessing the chunk sections is not compatible with Create Ponder level, which subclass neither client nor server levels
+            return;
+        }
+
         TrackedBlockStatePredicate blockStateFlag;
         if (tag == FluidTags.WATER) {
             blockStateFlag = BlockStateFlags.WATER;
