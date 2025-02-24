@@ -143,6 +143,7 @@
     "experimental.entity.block_caching.fire_lava_touching.EntityMixin",
     "experimental.entity.block_caching.suffocation.EntityMixin",
     "experimental.entity.item_entity_merging.ItemEntityMixin",
+    "experimental.entity.projectile_projectile_collisions.ProjectileUtilMixin",
     "gen.cached_generator_settings.NoiseBasedChunkGeneratorMixin",
     "math.fast_blockpos.BlockPosMixin",
     "math.fast_blockpos.DirectionMixin",

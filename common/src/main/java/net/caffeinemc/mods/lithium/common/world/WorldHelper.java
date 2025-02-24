@@ -3,6 +3,7 @@ package net.caffeinemc.mods.lithium.common.world;
 import net.caffeinemc.mods.lithium.common.client.ClientWorldAccessor;
 import net.caffeinemc.mods.lithium.common.entity.EntityClassGroup;
 import net.caffeinemc.mods.lithium.common.entity.pushable.EntityPushablePredicate;
+import net.caffeinemc.mods.lithium.common.services.PlatformEntityAccess;
 import net.caffeinemc.mods.lithium.common.world.chunk.ClassGroupFilterableList;
 import net.caffeinemc.mods.lithium.mixin.util.accessors.EntitySectionAccessor;
 import net.caffeinemc.mods.lithium.mixin.util.accessors.PersistentEntitySectionManagerAccessor;
@@ -45,7 +46,7 @@ public class WorldHelper {
             EntitySectionStorage<Entity> cache = getEntityCacheOrNull(world);
             if (cache != null) {
                 Profiler.get().incrementCounter("getEntities");
-                return getEntitiesOfEntityGroup(cache, collidingEntity, EntityClassGroup.NoDragonClassGroup.BOAT_SHULKER_LIKE_COLLISION, box, null);
+                return getEntitiesOfEntityGroupWithoutDragonPieces(cache, collidingEntity, EntityClassGroup.NoDragonClassGroup.BOAT_SHULKER_LIKE_COLLISION, box, null);
             }
         }
         //use vanilla code in case the shortcut is not applicable
@@ -59,7 +60,7 @@ public class WorldHelper {
                 EntitySectionStorage<Entity> cache = getEntityCacheOrNull(world);
                 if (cache != null) {
                     Profiler.get().incrementCounter("getEntities");
-                    return getEntitiesOfEntityGroup(cache, collidingEntity, EntityClassGroup.NoDragonClassGroup.BOAT_SHULKER_LIKE_COLLISION, box, entityFilter);
+                    return getEntitiesOfEntityGroupWithoutDragonPieces(cache, collidingEntity, EntityClassGroup.NoDragonClassGroup.BOAT_SHULKER_LIKE_COLLISION, box, entityFilter);
                 }
             }
         }
@@ -73,15 +74,21 @@ public class WorldHelper {
     public static EntitySectionStorage<Entity> getEntityCacheOrNull(Level world) {
         if (world instanceof ClientWorldAccessor) {
             //noinspection unchecked
-            return ((TransientEntitySectionManagerAccessor<Entity>) ((ClientWorldAccessor) world).lithium$getEntityManager()).getCache();
+            TransientEntitySectionManagerAccessor<Entity> entityManager = (TransientEntitySectionManagerAccessor<Entity>) ((ClientWorldAccessor) world).lithium$getEntityManager();
+            if (entityManager != null) {
+                return entityManager.getCache();
+            }
         } else if (world instanceof ServerLevelAccessor) {
             //noinspection unchecked
-            return ((PersistentEntitySectionManagerAccessor<Entity>) ((ServerLevelAccessor) world).getEntityManager()).getCache();
+            PersistentEntitySectionManagerAccessor<Entity> entityManager = (PersistentEntitySectionManagerAccessor<Entity>) ((ServerLevelAccessor) world).getEntityManager();
+            if (entityManager != null) {
+                return entityManager.getCache();
+            }
         }
         return null;
     }
 
-    public static List<Entity> getEntitiesOfEntityGroup(EntitySectionStorage<Entity> cache, Entity collidingEntity, EntityClassGroup.NoDragonClassGroup entityClassGroup, AABB box, Predicate<? super Entity> entityFilter) {
+    public static ArrayList<Entity> getEntitiesOfEntityGroupWithoutDragonPieces(EntitySectionStorage<Entity> cache, Entity excludedEntity, EntityClassGroup entityClassGroup, AABB box, Predicate<? super Entity> entityFilter) {
         ArrayList<Entity> entities = new ArrayList<>();
         cache.forEachAccessibleNonEmptySection(box, section -> {
             //noinspection unchecked
@@ -90,14 +97,21 @@ public class WorldHelper {
             Collection<Entity> entitiesOfType = ((ClassGroupFilterableList<Entity>) allEntities).lithium$getAllOfGroupType(entityClassGroup);
             if (!entitiesOfType.isEmpty()) {
                 for (Entity entity : entitiesOfType) {
-                    if (entity.getBoundingBox().intersects(box) && !entity.isSpectator() && entity != collidingEntity && (entityFilter == null || entityFilter.test(entity))) {
-                        //skip the dragon piece check without issues by only allowing EntityClassGroup.NoDragonClassGroup as type
+                    if (entity.getBoundingBox().intersects(box) && !entity.isSpectator() && entity != excludedEntity && (entityFilter == null || entityFilter.test(entity))) {
                         entities.add(entity);
                     }
                 }
             }
             return AbortableIterationConsumer.Continuation.CONTINUE;
         });
+        return entities;
+    }
+
+    public static List<Entity> getEntitiesOfEntityGroupPlusDragonPieces(Level level, EntitySectionStorage<Entity> cache, Entity excludedEntity, EntityClassGroup entityClassGroup, AABB box, Predicate<? super Entity> entityFilter) {
+        ArrayList<Entity> entities = getEntitiesOfEntityGroupWithoutDragonPieces(cache, excludedEntity, entityClassGroup, box, entityFilter);
+        if (!level.dragonParts().isEmpty()) {
+            PlatformEntityAccess.INSTANCE.addEnderDragonParts(level, excludedEntity, box, entityFilter, entities);
+        }
         return entities;
     }
 

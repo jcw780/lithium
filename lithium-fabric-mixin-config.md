@@ -406,6 +406,12 @@ Requirements:
 - `mixin.util.entity_collection_replacement=true`
 - `mixin.util.item_component_and_count_tracking=true`  
   
+### `mixin.experimental.entity.projectile_projectile_collisions`
+(default: `true`)  
+Optimize huge stacks of projectiles (e.g. 1000+ ender pearls in a single statis chamber) by skipping projectile-projectile collision checks for projectile types that are unable to collide with each other, e.g. ender pearls never collide with ender pearls.  
+Requirements:
+- `mixin.chunk.entity_class_groups=true`  
+
 ### `mixin.gen`
 (default: `true`)  
 Various world generation optimizations
