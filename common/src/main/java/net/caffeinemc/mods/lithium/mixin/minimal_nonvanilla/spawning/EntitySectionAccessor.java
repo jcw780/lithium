@@ -1,4 +1,4 @@
-package net.caffeinemc.mods.lithium.mixin.experimental.spawning;
+package net.caffeinemc.mods.lithium.mixin.minimal_nonvanilla.spawning;
 
 import net.minecraft.util.ClassInstanceMultiMap;
 import net.minecraft.world.level.entity.EntitySection;
