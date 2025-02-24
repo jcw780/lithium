@@ -1,4 +1,4 @@
-package net.caffeinemc.mods.lithium.mixin.experimental.spawning;
+package net.caffeinemc.mods.lithium.mixin.minimal_nonvanilla.spawning;
 
 import com.google.common.collect.AbstractIterator;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;

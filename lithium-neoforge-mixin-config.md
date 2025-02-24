@@ -379,10 +379,6 @@ Requirements:
 - `mixin.util.entity_collection_replacement=true`
 - `mixin.util.item_component_and_count_tracking=true`  
   
-### `mixin.experimental.spawning`
-(default: `true`)  
-Experimental optimizations to spawning conditions. Reorders the iteration over entities to match the chunks and chunk sections, reducing the number of cache misses.
-  
 ### `mixin.gen`
 (default: `true`)  
 Various world generation optimizations
@@ -426,6 +422,10 @@ Speed up frog attackable sensor by checking entity type before visibility test. 
 ### `mixin.minimal_nonvanilla.collisions.empty_space`
 (default: `true`)  
 Speed up finding empty spaces mobs fit into. This speeds up entity pose checks and nether portal positioning for colliding mobs (This code is vanilla's nether portal horse suffocation fix). If certain block collision surfaces have coordinates that are different but within 1e-7 of each other, this optimization may cause entities coming from nether portals or changing pose to be placed in a different position or pose than vanilla. This effect only occurs when the decision whether the entity fits into a space depends on a difference in the magnitude of 1e-7 blocks.
+  
+### `mixin.minimal_nonvanilla.spawning`
+(default: `true`)  
+Optimizations to spawning conditions. Reorders the iteration over entities to match the chunks and chunk sections, reducing the number of cache misses. Might differ slightly from vanilla due to floating point associativity differences when summing the spawning potential of density controlled spawns, e.g. skeleton, ghast, enderman and strider spawns in certain nether biomes.
   
 ### `mixin.minimal_nonvanilla.world.block_entity_ticking.support_cache`
 (default: `true`)  

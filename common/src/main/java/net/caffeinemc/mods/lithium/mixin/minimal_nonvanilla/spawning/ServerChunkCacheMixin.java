@@ -1,4 +1,4 @@
-package net.caffeinemc.mods.lithium.mixin.experimental.spawning;
+package net.caffeinemc.mods.lithium.mixin.minimal_nonvanilla.spawning;
 
 import net.caffeinemc.mods.lithium.common.world.ChunkAwareEntityIterable;
 import net.minecraft.server.level.ServerChunkCache;
