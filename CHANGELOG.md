@@ -14,3 +14,4 @@ Make sure to take a backup of your world before using the mod and please report 
 
 ## Fixes
 - Fix crash with Create Pondering when entities are pushed by fluids
+- Fix crash when placing a block at build limit in the end and attempting to spawn a dragon

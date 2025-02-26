@@ -23,7 +23,7 @@ public class BlockSearch {
                 int minSectionYIndex = Pos.SectionYIndex.fromBlockCoord(levelReader, searchBox.min().getY());
                 int maxSectionYIndex = Pos.SectionYIndex.fromBlockCoord(levelReader, searchBox.max().getY());
                 for (int sectionYIndex = minSectionYIndex; sectionYIndex <= maxSectionYIndex; sectionYIndex++) {
-                    if (sectionYIndex >= 0 && sectionYIndex <= chunk.getSectionsCount()) {
+                    if (sectionYIndex >= 0 && sectionYIndex < chunk.getSectionsCount()) {
                         LevelChunkSection section = chunk.getSection(sectionYIndex);
                         if (section.maybeHas(predicate)) {
                             int sectionYCoord = Pos.SectionYCoord.fromSectionIndex(levelReader, sectionYIndex);
