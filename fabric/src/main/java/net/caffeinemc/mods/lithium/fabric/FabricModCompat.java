@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class FabricModCompat implements PlatformModCompat {
 
     @Override
-    public boolean canHopperInteractWithApiInventory(HopperBlockEntity hopperBlockEntity, BlockState hopperState, boolean extracting) {
+    public boolean canHopperInteractWithApiBlockInventory(HopperBlockEntity hopperBlockEntity, BlockState hopperState, boolean extracting) {
         Direction direction = extracting ? Direction.UP : hopperState.getValue(HopperBlock.FACING);
         BlockPos targetPos = hopperBlockEntity.getBlockPos().relative(direction);
 

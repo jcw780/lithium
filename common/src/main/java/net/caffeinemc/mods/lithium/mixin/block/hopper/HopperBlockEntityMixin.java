@@ -738,7 +738,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
                         }
                     } else if (this.extractionMode == HopperCachingState.BlockInventory.NO_BLOCK_INVENTORY) {
                         BlockState hopperState = this.getBlockState();
-                        if (PlatformModCompat.INSTANCE.canHopperInteractWithApiInventory((HopperBlockEntity) (Object) this, hopperState, true)) {
+                        if (PlatformModCompat.INSTANCE.canHopperInteractWithApiBlockInventory((HopperBlockEntity) (Object) this, hopperState, true)) {
                             return;
                         }
                         listenToExtractEntities = true;
@@ -756,7 +756,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
                         }
                     } else if (this.insertionMode == HopperCachingState.BlockInventory.NO_BLOCK_INVENTORY) {
                         BlockState hopperState = this.getBlockState();
-                        if (PlatformModCompat.INSTANCE.canHopperInteractWithApiInventory((HopperBlockEntity) (Object) this, hopperState, false)) {
+                        if (PlatformModCompat.INSTANCE.canHopperInteractWithApiBlockInventory((HopperBlockEntity) (Object) this, hopperState, false)) {
                             return;
                         }
                         listenToInsertEntities = true;
