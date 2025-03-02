@@ -15,6 +15,7 @@ import net.caffeinemc.mods.lithium.common.tracking.entity.SectionedItemEntityMov
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.WorldlyContainer;
@@ -717,7 +718,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
     }
 
     private void checkSleepingConditions() {
-        if (this.isOnCooldown()) {
+        if (this.isOnCooldown() || this.getLevel() == null) {
             return;
         }
         if (this instanceof SleepingBlockEntity thisSleepingBlockEntity) {
@@ -732,6 +733,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
                 boolean listenToExtractTracker = false;
                 boolean listenToInsertTracker = false;
                 boolean listenToExtractEntities = false;
+                boolean listenToItemEntities = false;
                 boolean listenToInsertEntities = false;
 
                 LithiumStackList thisStackList = InventoryHelper.getLithiumStackList(this);
@@ -755,6 +757,12 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
                             return;
                         }
                         listenToExtractEntities = true;
+
+                        BlockPos blockPos = this.getBlockPos().above();
+                        BlockState blockState = this.getLevel().getBlockState(blockPos);
+                        if (!blockState.isCollisionShapeFullBlock(this.getLevel(), blockPos) || blockState.is(BlockTags.DOES_NOT_BLOCK_HOPPERS)) {
+                            listenToItemEntities = true;
+                        }
                     } else {
                         return;
                     }
@@ -795,11 +803,15 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
                         return;
                     }
                     this.extractInventoryEntityTracker.listenToEntityMovementOnce(this);
-                    if (this.collectItemEntityTracker == null) {
+                }
+                if (listenToItemEntities) {
+                    if (this.collectItemEntityTracker != null) {
+                        this.collectItemEntityTracker.listenToEntityMovementOnce(this);
+                    } else {
                         return;
                     }
-                    this.collectItemEntityTracker.listenToEntityMovementOnce(this);
                 }
+
                 thisTracker.listenForContentChangesOnce(thisStackList, this);
                 thisSleepingBlockEntity.lithium$startSleeping();
             }
