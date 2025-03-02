@@ -261,10 +261,6 @@ Uses custom hashset/list combination for faster mob spawn checks
 (default: `true`)  
 Uses fastutil hashmap for POI Types
   
-### `mixin.compat.transfer_api`
-(default: `false`)  
-Allow hoppers to check whether a transfer-api inventory is present to avoid sleeping, which would prevent the hopper-inventory interaction. Enabled automatically when the transfer-api is present.
-  
 ### `mixin.compat.worldedit`
 (default: `false`)  
 Send updates to hoppers when adding inventory block entities to chunks when world edit is loaded. Fixes the issue of hoppers not noticing when inventories are placed using worldedit without any block updates. Enabled automatically when worldedit is present.  
@@ -523,7 +519,7 @@ Access chunks of worlds, chunk caches and chunk regions directly.
   
 ### `mixin.util.chunk_status_tracking`
 (default: `true`)  
-Allows reacting to changes of the load status of chunks.  
+Allows reacting to changes of the load status of chunks.
 Requirements:
 - `mixin.util.accessors=true`  
   
