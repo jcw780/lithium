@@ -12,7 +12,6 @@
   "mixins": [
     "block.hopper.LevelMixin",
     "collections.poi_types.PoiTypesMixin",
-    "compat.transfer_api.TransferApiHelperMixin",
     "compat.worldedit.LevelChunkMixin",
     "entity.collisions.fluid.EntityMixin",
     "experimental.entity.block_caching.fluid_pushing.EntityMixin",

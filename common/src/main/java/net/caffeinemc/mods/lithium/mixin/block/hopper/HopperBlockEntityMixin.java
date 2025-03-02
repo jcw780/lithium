@@ -7,8 +7,8 @@ import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
 import net.caffeinemc.mods.lithium.common.block.entity.inventory_change_tracking.InventoryChangeListener;
 import net.caffeinemc.mods.lithium.common.block.entity.inventory_change_tracking.InventoryChangeTracker;
 import net.caffeinemc.mods.lithium.common.block.entity.inventory_comparator_tracking.ComparatorTracker;
-import net.caffeinemc.mods.lithium.common.compat.TransferApiHelper;
 import net.caffeinemc.mods.lithium.common.hopper.*;
+import net.caffeinemc.mods.lithium.common.services.PlatformModCompat;
 import net.caffeinemc.mods.lithium.common.tracking.entity.SectionedEntityMovementListener;
 import net.caffeinemc.mods.lithium.common.tracking.entity.SectionedInventoryEntityMovementTracker;
 import net.caffeinemc.mods.lithium.common.tracking.entity.SectionedItemEntityMovementTracker;
@@ -737,7 +737,8 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
                             return;
                         }
                     } else if (this.extractionMode == HopperCachingState.BlockInventory.NO_BLOCK_INVENTORY) {
-                        if (TransferApiHelper.canHopperInteractWithApiInventory((HopperBlockEntity) (Object) this, this.getBlockState(), true)) {
+                        BlockState hopperState = this.getBlockState();
+                        if (PlatformModCompat.INSTANCE.canHopperInteractWithApiInventory((HopperBlockEntity) (Object) this, hopperState, true)) {
                             return;
                         }
                         listenToExtractEntities = true;
@@ -754,7 +755,8 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
                             return;
                         }
                     } else if (this.insertionMode == HopperCachingState.BlockInventory.NO_BLOCK_INVENTORY) {
-                        if (TransferApiHelper.canHopperInteractWithApiInventory((HopperBlockEntity) (Object) this, this.getBlockState(), false)) {
+                        BlockState hopperState = this.getBlockState();
+                        if (PlatformModCompat.INSTANCE.canHopperInteractWithApiInventory((HopperBlockEntity) (Object) this, hopperState, false)) {
                             return;
                         }
                         listenToInsertEntities = true;

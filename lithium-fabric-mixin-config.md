@@ -89,10 +89,7 @@ Disable the goat item sensor whose memories are never used.
   
 ### `mixin.ai.useless_sensors.parent_animal_sensor`
 (default: `true`)  
-Disable the parent animal sensor when an animal is not a baby. Would differ from vanilla in the case where an adult
-animal turns back into a baby animal, as the sensor information is refreshed, leading to a less-outdated value in the
-first second of turning back into a baby animal. However, there is no way to turn an animal back into a baby without
-reinitializing the brain, creating entirely new sensors.
+Disable the parent animal sensor when an animal is not a baby. Would differ from vanilla in the case where an adult animal turns back into a baby animal, as the sensor information is refreshed, leading to a less-outdated value in the first second of turning back into a baby animal. However, there is no way to turn an animal back into a baby without reinitializing the brain, creating entirely new sensors.
   
 ### `mixin.alloc`
 (default: `true`)  
@@ -101,12 +98,11 @@ Patches that reduce memory allocations
 ### `mixin.alloc.chunk_random`
 (default: `true`)  
 Random block ticking uses fewer block position allocations, thereby reducing the object allocation rate.
-
+  
 ### `mixin.alloc.chunk_ticking`
-
 (default: `true`)  
 Reuse large chunk lists
-
+  
 ### `mixin.alloc.composter`
 (default: `true`)  
 Composters will reuse the available slot arrays that are requested by hoppers
@@ -240,8 +236,7 @@ Uses fastutil hashmaps for type specific entity lists
   
 ### `mixin.collections.entity_filtering`
 (default: `true`)  
-The expensive check to see if a TypeFilterableList can be filtered by a specific class is only made when a new list for
-that type needs to be created
+The expensive check to see if a TypeFilterableList can be filtered by a specific class is only made when a new list for that type needs to be created
   
 ### `mixin.collections.entity_ticking`
 (default: `true`)  
@@ -254,31 +249,22 @@ Use ReferenceArraySet instead of HashSet to store the fluids the entity is curre
 ### `mixin.collections.gamerules`
 (default: `true`)  
 Uses fastutil hashmaps for gamerules
-
+  
 ### `mixin.collections.goals`
-
 (default: `true`)  
 Uses fastutil hashsets for goals in the AI goal selector
-
+  
 ### `mixin.collections.mob_spawning`
 (default: `true`)  
 Uses custom hashset/list combination for faster mob spawn checks
-
+  
 ### `mixin.collections.poi_types`
-
 (default: `true`)  
 Uses fastutil hashmap for POI Types
-
-### `mixin.compat.transfer_api`
-(default: `false`)  
-Allow hoppers to check whether a transfer-api inventory is present to avoid sleeping, which would prevent the
-hopper-inventory interaction. Enabled automatically when the transfer-api is present.
   
 ### `mixin.compat.worldedit`
 (default: `false`)  
-Send updates to hoppers when adding inventory block entities to chunks when world edit is loaded. Fixes the issue of
-hoppers not noticing when inventories are placed using worldedit without any block updates. Enabled automatically when
-worldedit is present.
+Send updates to hoppers when adding inventory block entities to chunks when world edit is loaded. Fixes the issue of hoppers not noticing when inventories are placed using worldedit without any block updates. Enabled automatically when worldedit is present.
 Requirements:
 - `mixin.util.block_entity_retrieval=true`  
   
@@ -307,16 +293,13 @@ Requirements:
   
 ### `mixin.entity.collisions.intersection`
 (default: `true`)  
-Uses faster block access for block collisions and delayed entity access with grouped boat/shulker for entity collisions
-when available
+Uses faster block access for block collisions and delayed entity access with grouped boat/shulker for entity collisions when available
 Requirements:
 - `mixin.util.chunk_access=true`  
   
 ### `mixin.entity.collisions.movement`
 (default: `true`)  
-Entity movement uses optimized block access and optimized and delayed entity access. Additionally, the supporting block
-of entities that only move downwards is checked first. This can profit from
-mixin.experimental.entity.block_caching.block_support, but it is not required.
+Entity movement uses optimized block access and optimized and delayed entity access. Additionally, the supporting block of entities that only move downwards is checked first. This can profit from mixin.experimental.entity.block_caching.block_support, but it is not required.
 Requirements:
 - `mixin.util.chunk_access=true`  
   
@@ -334,8 +317,7 @@ Requirements:
   
 ### `mixin.entity.equipment_tracking.enchantment_ticking`
 (default: `true`)  
-Use equipment tracking to skip ticking enchantments (Soul speed) when no such enchantments are present on the equipment
-of a living entity.
+Use equipment tracking to skip ticking enchantments (Soul speed) when no such enchantments are present on the equipment of a living entity.
   
 ### `mixin.entity.equipment_tracking.equipment_changes`
 (default: `true`)  
@@ -387,8 +369,7 @@ Requirements:
   
 ### `mixin.experimental.entity.block_caching.block_support`
 (default: `true`)  
-Use the block listening system to skip supporting block search (used for honey block pushing, velocity modifiers like
-soulsand, etc)
+Use the block listening system to skip supporting block search (used for honey block pushing, velocity modifiers like soulsand, etc)
 Requirements:
 - `mixin.util.block_tracking=true`  
   
@@ -400,8 +381,7 @@ Requirements:
   
 ### `mixin.experimental.entity.block_caching.fire_lava_touching`
 (default: `true`)  
-Skip searching for fire or lava in the burn time countdown logic when they are not on fire and the result does not make
-a difference. Also use the block listening system to cache whether the entity is touching fire or lava.
+Skip searching for fire or lava in the burn time countdown logic when they are not on fire and the result does not make a difference. Also use the block listening system to cache whether the entity is touching fire or lava.
   
 ### `mixin.experimental.entity.block_caching.fluid_pushing`
 (default: `true`)  
@@ -417,9 +397,7 @@ Requirements:
   
 ### `mixin.experimental.entity.item_entity_merging`
 (default: `true`)  
-Optimize item entity merging by categorizing item entities by item type and only attempting to merge with the same type.
-Categorizing by stack size allows skipping merge attempts of full item entities or two more than half full item
-entities.
+Optimize item entity merging by categorizing item entities by item type and only attempting to merge with the same type. Categorizing by stack size allows skipping merge attempts of full item entities or two more than half full item entities.
 Requirements:
 - `mixin.util.accessors=true`
 - `mixin.util.entity_collection_replacement=true`
@@ -451,10 +429,7 @@ Reduces the sine table size to reduce memory usage and increase access speed
   
 ### `mixin.minimal_nonvanilla`
 (default: `true`)  
-Optimizations that technically deviate from vanilla behavior, but must not affect gameplay or contraptions. Each
-optimization includes a description of the differences to vanilla behavior. In case any of these optimizations breaks
-any of your contraptions or affects your gameplay, please report it to our issue tracker as we consider this to be a
-bug.
+Optimizations that technically deviate from vanilla behavior, but must not affect gameplay or contraptions. Each optimization includes a description of the differences to vanilla behavior. In case any of these optimizations breaks any of your contraptions or affects your gameplay, please report it to our issue tracker as we consider this to be a bug.
   
 ### `mixin.minimal_nonvanilla.ai`
 (default: `true`)  
@@ -466,18 +441,11 @@ Brain sensor optimizations
   
 ### `mixin.minimal_nonvanilla.ai.sensor.frog_attackables`
 (default: `true`)  
-Speed up frog attackable sensor by checking entity type before visibility test. This is slightly non-vanilla because the
-visibility information is cached for up to a second. If this sensor does not compute the visibility test, a later access
-might compute the visibility instead. That can cause a different result, since the later computation leads to a more
-updated result.
+Speed up frog attackable sensor by checking entity type before visibility test. This is slightly non-vanilla because the visibility information is cached for up to a second. If this sensor does not compute the visibility test, a later access might compute the visibility instead. That can cause a different result, since the later computation leads to a more updated result.
   
 ### `mixin.minimal_nonvanilla.collisions.empty_space`
 (default: `true`)  
-Speed up finding empty spaces mobs fit into. This speeds up entity pose checks and nether portal positioning for
-colliding mobs (This code is vanilla's nether portal horse suffocation fix). If certain block collision surfaces have
-coordinates that are different but within 1e-7 of each other, this optimization may cause entities coming from nether
-portals or changing pose to be placed in a different position or pose than vanilla. This effect only occurs when the
-decision whether the entity fits into a space depends on a difference in the magnitude of 1e-7 blocks.
+Speed up finding empty spaces mobs fit into. This speeds up entity pose checks and nether portal positioning for colliding mobs (This code is vanilla's nether portal horse suffocation fix). If certain block collision surfaces have coordinates that are different but within 1e-7 of each other, this optimization may cause entities coming from nether portals or changing pose to be placed in a different position or pose than vanilla. This effect only occurs when the decision whether the entity fits into a space depends on a difference in the magnitude of 1e-7 blocks.
   
 ### `mixin.minimal_nonvanilla.spawning`
 (default: `true`)  
@@ -485,25 +453,18 @@ Optimizations to spawning conditions. Reorders the iteration over entities to ma
   
 ### `mixin.minimal_nonvanilla.world.block_entity_ticking.support_cache`
 (default: `true`)  
-BlockEntity ticking caches whether the BlockEntity can exist in the BlockState at the same location. This deviates from
-vanilla in the case of placing a hopper in a powered location, immediately updating the cached BlockState (which is
-incorrect in vanilla). This most likely does not affect your gameplay, as this deviation only affects hoppers, and in
-vanilla, hoppers never use the cached state information anyway.
+BlockEntity ticking caches whether the BlockEntity can exist in the BlockState at the same location. This deviates from vanilla in the case of placing a hopper in a powered location, immediately updating the cached BlockState (which is incorrect in vanilla). This most likely does not affect your gameplay, as this deviation only affects hoppers, and in vanilla, hoppers never use the cached state information anyway.
 Requirements:
 - `mixin.world.block_entity_ticking=true`  
   
 ### `mixin.minimal_nonvanilla.world.expiring_chunk_tickets`
 (default: `false`)  
-Only check positions with expiring tickets during ticket expiration. Can cause reordering of chunks unloading. The chunk
-unloading order in vanilla is predictable, but depends on the hash of the chunk position of the tickets and the hashes
-of the other chunk tickets, and the order of creation of the chunk tickets when hash collisions occur. No known
-contraptions depend on the unload order.
-
+Only check positions with expiring tickets during ticket expiration. Can cause reordering of chunks unloading. The chunk unloading order in vanilla is predictable, but depends on the hash of the chunk position of the tickets and the hashes of the other chunk tickets, and the order of creation of the chunk tickets when hash collisions occur. No known contraptions depend on the unload order.
+  
 ### `mixin.profiler`
-
 (default: `true`)  
 Avoid indirection when accessing the profiler
-
+  
 ### `mixin.shapes`
 (default: `true`)  
 Various VoxelShape optimizations
@@ -530,8 +491,7 @@ Merging and intersecting VoxelShapes is optimized using faster position list mer
   
 ### `mixin.shapes.specialized_shapes`
 (default: `true`)  
-Specialized VoxelShape implementations are used for cuboid and empty shapes. Collisions with those shapes are optimized
-using a cuboid specific implementation
+Specialized VoxelShape implementations are used for cuboid and empty shapes. Collisions with those shapes are optimized using a cuboid specific implementation
   
 ### `mixin.util`
 (default: `true`)  
@@ -547,8 +507,7 @@ Allows access to existing BlockEntities without creating new ones
   
 ### `mixin.util.block_tracking`
 (default: `false`)  
-Chunk sections count certain blocks inside them and provide a method to quickly check whether a chunk contains any of
-these blocks. Furthermore, chunk sections can notify registered listeners about certain blocks being placed or broken.
+Chunk sections count certain blocks inside them and provide a method to quickly check whether a chunk contains any of these blocks. Furthermore, chunk sections can notify registered listeners about certain blocks being placed or broken.
 Requirements:
 - `mixin.util.data_storage=true`
 - `mixin.util.chunk_status_tracking=true`  
@@ -559,14 +518,13 @@ Access chunks of worlds, chunk caches and chunk regions directly.
   
 ### `mixin.util.chunk_status_tracking`
 (default: `true`)  
-Allows reacting to changes of the load status of chunks.  
+Allows reacting to changes of the load status of chunks.
 Requirements:
 - `mixin.util.accessors=true`  
   
 ### `mixin.util.data_storage`
 (default: `true`)  
-Stores lithium's extra data used for various optimizations on a per-world basis. The data is not saved, but allows
-optimizations to quickly store and access data.
+Stores lithium's extra data used for various optimizations on a per-world basis. The data is not saved, but allows optimizations to quickly store and access data.
   
 ### `mixin.util.entity_collection_replacement`
 (default: `true`)  
@@ -585,8 +543,7 @@ Entity sections store their position
   
 ### `mixin.util.inventory_change_listening`
 (default: `true`)  
-Certain BlockEntity Inventories emit updates to their listeners when their stack list is changed or the inventory
-becomes invalid
+Certain BlockEntity Inventories emit updates to their listeners when their stack list is changed or the inventory becomes invalid
   
 ### `mixin.util.inventory_comparator_tracking`
 (default: `true`)  
@@ -616,8 +573,7 @@ Speed up checking whether a chunk ticks block entities during block entity ticki
   
 ### `mixin.world.block_entity_ticking.sleeping`
 (default: `true`)  
-Allows BlockEntities to sleep, meaning they are no longer ticked until woken up, e.g. by updates to their inventory or
-block state
+Allows BlockEntities to sleep, meaning they are no longer ticked until woken up, e.g. by updates to their inventory or block state
   
 ### `mixin.world.block_entity_ticking.sleeping.brewing_stand`
 (default: `true`)  
@@ -649,8 +605,7 @@ BlockEntity sleeping for closed shulker boxes
   
 ### `mixin.world.block_entity_ticking.world_border`
 (default: `true`)  
-Avoids repeatedly testing whether the BlockEntity is inside the world border by caching the test result and listening
-for world border changes
+Avoids repeatedly testing whether the BlockEntity is inside the world border by caching the test result and listening for world border changes
 Requirements:
 - `mixin.util.world_border_listener=true`  
   
@@ -677,26 +632,21 @@ Various improvements to explosions.
 ### `mixin.world.explosions.block_raycast`
 (default: `true`)  
 Various improvements to explosion block damage, e.g. not accessing blocks along an explosion ray multiple times
-
+  
 ### `mixin.world.explosions.cache_exposure`
-
 (default: `true`)  
 Caches entity explosion exposure to avoid duplicate calculations.
-
+  
 ### `mixin.world.game_events`
 (default: `true`)  
 Various improvements to game events (vibrations) that are detected by allays, wardens and several sculk blocks.
   
 ### `mixin.world.game_events.dispatch`
-
 (default: `true`)  
-Create game event dispatchers for chunk sections only when needed, i.e. when a listener is added to a section. This
-reduces memory usage for chunks that do not have any listeners. The dispatchers are accessed more directly instead of
-indirectly through chunks. In total this speeds up attempting to dispatch events especially when there are no nearby
-listeners.
+Create game event dispatchers for chunk sections only when needed, i.e. when a listener is added to a section. This reduces memory usage for chunks that do not have any listeners. The dispatchers are accessed more directly instead of indirectly through chunks. In total this speeds up attempting to dispatch events especially when there are no nearby listeners.
 Requirements:
 - `mixin.util.data_storage=true`
-- `mixin.util.chunk_status_tracking=true`
+- `mixin.util.chunk_status_tracking=true`  
   
 ### `mixin.world.inline_block_access`
 (default: `true`)  
