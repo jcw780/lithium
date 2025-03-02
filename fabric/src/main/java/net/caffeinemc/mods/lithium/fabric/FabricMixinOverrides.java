@@ -19,9 +19,6 @@ public class FabricMixinOverrides implements PlatformMixinOverrides {
         if (FabricLoader.getInstance().isModLoaded("worldedit")) {
             options.get("mixin.compat.worldedit").addModOverride(true, "lithium");
         }
-        if (FabricLoader.getInstance().isModLoaded("fabric-transfer-api-v1")) {
-            options.get("mixin.compat.transfer_api").addModOverride(true, "lithium");
-        }
     }
 
     @Override
