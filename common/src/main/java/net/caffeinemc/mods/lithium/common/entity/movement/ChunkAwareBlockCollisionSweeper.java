@@ -142,26 +142,27 @@ public class ChunkAwareBlockCollisionSweeper extends AbstractIterator<VoxelShape
                     this.chunkYIndex++;
                     this.cachedChunkSection = this.cachedChunk.getSections()[this.chunkYIndex];
                 } else {
-                    this.chunkYIndex = Mth.clamp(
-                            Pos.SectionYIndex.fromBlockCoord(this.world, expandMin(this.minY)),
-                            Pos.SectionYIndex.getMinYSectionIndex(this.world),
-                            Pos.SectionYIndex.getMaxYSectionIndexInclusive(this.world)
-                    );
-
                     if (this.chunkX < Pos.ChunkCoord.fromBlockCoord(expandMax(this.maxX))) {
                         //first initialization takes this branch
                         this.chunkX++;
                     } else {
-                        this.chunkX = Pos.ChunkCoord.fromBlockCoord(expandMin(this.minX));
-
                         if (this.chunkZ < Pos.ChunkCoord.fromBlockCoord(expandMax(this.maxZ))) {
+                            this.chunkX = Pos.ChunkCoord.fromBlockCoord(expandMin(this.minX));
                             this.chunkZ++;
                         } else {
+                            //Important: No field assignment / mutation happens in the code path to this, so
+                            // consecutive nextSection calls keep returning false, instead of working on invalid data
+                            // Otherwise this additional chunk sections to be iterated wrongly: https://github.com/CaffeineMC/lithium/issues/628
                             return false; //no more sections to iterate
                         }
                     }
                     this.cachedChunk = this.world.getChunk(this.chunkX, this.chunkZ, ChunkStatus.FULL, false);
                     if (this.cachedChunk != null) {
+                        this.chunkYIndex = Mth.clamp(
+                                Pos.SectionYIndex.fromBlockCoord(this.world, expandMin(this.minY)),
+                                Pos.SectionYIndex.getMinYSectionIndex(this.world),
+                                Pos.SectionYIndex.getMaxYSectionIndexInclusive(this.world)
+                        );
                         this.cachedChunkSection = this.cachedChunk.getSections()[this.chunkYIndex];
                     }
                 }
