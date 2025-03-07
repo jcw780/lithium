@@ -407,7 +407,7 @@ Requirements:
 Optimize huge stacks of projectiles (e.g. 1000+ ender pearls in a single statis chamber) by skipping projectile-projectile collision checks for projectile types that are unable to collide with each other, e.g. ender pearls never collide with ender pearls.  
 Requirements:
 - `mixin.chunk.entity_class_groups=true`  
-
+  
 ### `mixin.gen`
 (default: `true`)  
 Various world generation optimizations
@@ -519,7 +519,7 @@ Access chunks of worlds, chunk caches and chunk regions directly.
   
 ### `mixin.util.chunk_status_tracking`
 (default: `true`)  
-Allows reacting to changes of the load status of chunks.
+Allows reacting to changes of the load status of chunks.  
 Requirements:
 - `mixin.util.accessors=true`  
   
