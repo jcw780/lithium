@@ -518,7 +518,7 @@ Access chunks of worlds, chunk caches and chunk regions directly.
   
 ### `mixin.util.chunk_status_tracking`
 (default: `true`)  
-Allows reacting to changes of the load status of chunks.
+Allows reacting to changes of the load status of chunks.  
 Requirements:
 - `mixin.util.accessors=true`  
   

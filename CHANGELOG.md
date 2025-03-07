@@ -9,9 +9,12 @@ Lithium _LithiumVersion_ for Minecraft _MCVersion_ includes new optimizations an
 Make sure to take a backup of your world before using the mod and please report any bugs and mod compatibility issues at the [issue tracker](https://github.com/CaffeineMC/lithium-fabric/issues). You can check the [description of each optimization](https://github.com/CaffeineMC/lithium/blob/_ReleaseTag_/lithium-mixin-config.md) and how to disable it when encountering a problem.
 
 ## Additions
-- Optimize explosions damaging mobs
+- explosion entity raycast optimizations (Thanks to RacoonDog)
 - Optimize projectile entity collisions attempts with uncollidable entities
 
 ## Fixes
 - Fix crash with Create Pondering when entities are pushed by fluids
 - Fix crash when placing a block at build limit in the end and attempting to spawn a dragon
+- Fix hoppers sleeping even though interaction with neoforge API block inventories is possible
+- Fix sleeping hoppers woken up by moving item entities even if blocked with a full block
+- Fix broken state of ChunkAwareBlockCollisionSweeper in entity nether portal positioning optimization and with TIS-Carpet
