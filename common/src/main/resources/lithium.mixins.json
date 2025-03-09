@@ -221,6 +221,7 @@
     "world.block_entity_ticking.sleeping.campfire.CampfireBlockEntityMixin",
     "world.block_entity_ticking.sleeping.campfire.lit.CampfireBlockEntityMixin",
     "world.block_entity_ticking.sleeping.campfire.unlit.CampfireBlockEntityMixin",
+    "world.block_entity_ticking.sleeping.crafter.CrafterBlockEntityMixin",
     "world.block_entity_ticking.sleeping.furnace.AbstractFurnaceBlockEntityMixin",
     "world.block_entity_ticking.sleeping.hopper.HopperBlockEntityMixin",
     "world.block_entity_ticking.sleeping.shulker_box.ShulkerBoxBlockEntityMixin",

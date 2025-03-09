@@ -573,6 +573,10 @@ BlockEntity sleeping for inactive lit campfires
 (default: `true`)  
 BlockEntity sleeping for inactive unlit campfires
   
+### `mixin.world.block_entity_ticking.sleeping.crafter`
+(default: `true`)  
+BlockEntity sleeping for inactive crafters
+  
 ### `mixin.world.block_entity_ticking.sleeping.furnace`
 (default: `true`)  
 BlockEntity sleeping for inactive furnaces
