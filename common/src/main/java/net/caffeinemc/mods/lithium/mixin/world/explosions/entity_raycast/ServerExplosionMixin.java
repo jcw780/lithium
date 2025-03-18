@@ -1,9 +1,11 @@
 package net.caffeinemc.mods.lithium.mixin.world.explosions.entity_raycast;
 
+import java.util.function.BiFunction;
+
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.caffeinemc.mods.lithium.common.util.Pos;
-import net.caffeinemc.mods.lithium.common.world.explosions.MutableExplosionClipContext;
+import net.caffeinemc.mods.lithium.common.world.explosions.ClipContextAccess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.*;
@@ -13,15 +15,12 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.function.BiFunction;
 
 /**
  * @author Crosby
@@ -31,21 +30,17 @@ public class ServerExplosionMixin {
     @SuppressWarnings("DataFlowIssue")
     @Unique
     private static final BlockHitResult MISS = BlockHitResult.miss(null, null, null);
-    @SuppressWarnings("DataFlowIssue")
-    @Unique
-    private static final ClipContext EMPTY = new ClipContext(null, null, null, null, (CollisionContext) null);
 
     /**
-     * Pre-allocate our {@link MutableExplosionClipContext}.
+     * Pre-allocate our {@link ClipContextAccess}.
      * @author Crosby
      */
     @Inject(
             method = "getSeenPercent",
             at = @At("HEAD")
     )
-    private static void createMutableContext(Vec3 to, Entity entity, CallbackInfoReturnable<Float> cir, @Share("context") LocalRef<MutableExplosionClipContext> contextRef, @Share("blockHitFactory") LocalRef<BiFunction<MutableExplosionClipContext, BlockPos, BlockHitResult>> hitFactoryRef) {
-        contextRef.set(new MutableExplosionClipContext(entity.level(), to));
-        hitFactoryRef.set(blockHitFactory());
+    private static void createMutableContext(Vec3 to, Entity entity, CallbackInfoReturnable<Float> cir, @Share("blockHitFactory") LocalRef<BiFunction<ClipContext, BlockPos, BlockHitResult>> hitFactoryRef) {
+        hitFactoryRef.set(blockHitFactory(entity));
     }
 
     /**
@@ -56,9 +51,15 @@ public class ServerExplosionMixin {
             method = "getSeenPercent",
             at = @At(value = "NEW", target = "net/minecraft/world/level/ClipContext")
     )
-    private static ClipContext removeUnusedObject(Vec3 from, Vec3 to, ClipContext.Block p_45690_, ClipContext.Fluid p_45691_, Entity entity, @Share("context") LocalRef<MutableExplosionClipContext> contextRef) {
-        contextRef.get().from = from;
-        return EMPTY;
+    private static ClipContext reuseClipContext(Vec3 from, Vec3 to, ClipContext.Block block, ClipContext.Fluid fluid, Entity entity, @Share("context") LocalRef<ClipContext> contextRef) {
+        ClipContext clipContext = contextRef.get();
+        if (clipContext == null) {
+            clipContext = new ClipContext(from, to, block, fluid, entity);
+            contextRef.set(clipContext);
+        } else {
+            ((ClipContextAccess) clipContext).lithium$setFrom(from);
+        }
+        return clipContext;
     }
 
     /**
@@ -69,32 +70,32 @@ public class ServerExplosionMixin {
             method = "getSeenPercent",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;clip(Lnet/minecraft/world/level/ClipContext;)Lnet/minecraft/world/phys/BlockHitResult;")
     )
-    private static BlockHitResult simplifyRaycast(Level level, ClipContext nullContext, @Share("context") LocalRef<MutableExplosionClipContext> contextRef, @Share("blockHitFactory") LocalRef<BiFunction<MutableExplosionClipContext, BlockPos, BlockHitResult>> hitFactoryRef) {
-        MutableExplosionClipContext context = contextRef.get();
-        BiFunction<MutableExplosionClipContext, BlockPos, BlockHitResult> blockHitFactory = hitFactoryRef.get();
-        return BlockGetter.traverseBlocks(context.from, context.to, context, blockHitFactory, ctx -> MISS);
+    private static BlockHitResult simplifyRaycast(Level level, ClipContext clipContext, @Share("blockHitFactory") LocalRef<BiFunction<ClipContext, BlockPos, BlockHitResult>> hitFactoryRef) {
+        return BlockGetter.traverseBlocks(clipContext.getFrom(), clipContext.getTo(), clipContext, hitFactoryRef.get(), ctx -> MISS);
     }
 
     /**
      * Specialized version of {@link net.caffeinemc.mods.lithium.mixin.world.raycast.BlockGetterMixin#blockHitFactory(ClipContext)}
-     * where the inlined shape getter allows us to replace the {@link ClipContext} with our own {@link MutableExplosionClipContext},
+     * reusing the {@link ClipContext} by repeatedly adjust the raycast from position,
      * eliminating extra allocations from the loop body of {@link ServerExplosion#getSeenPercent(Vec3, Entity)}.
      * We also remove fluid handling and hit direction computation.
      * @author Crosby
      */
     @Unique
-    private static BiFunction<MutableExplosionClipContext, BlockPos, BlockHitResult> blockHitFactory() {
+    private static BiFunction<ClipContext, BlockPos, BlockHitResult> blockHitFactory(Entity entity) {
         return new BiFunction<>() {
+            final Level level = entity.level();
             int chunkX = Integer.MIN_VALUE, chunkZ = Integer.MIN_VALUE;
             ChunkAccess chunk = null;
 
             @Override
-            public BlockHitResult apply(MutableExplosionClipContext context, BlockPos blockPos) {
-                BlockState state = getBlock(context.level, blockPos);
+            public BlockHitResult apply(ClipContext clipContext, BlockPos blockPos) {
+                BlockState state = getBlock(this.level, blockPos);
 
-                return state.getCollisionShape(context.level, blockPos).clip(context.from, context.to, blockPos);
+                return state.getCollisionShape(this.level, blockPos, ((ClipContextAccess) clipContext).lithium$getCollisionContext()).clip(clipContext.getFrom(), clipContext.getTo(), blockPos);
             }
 
+            //Code duplicated from BlockGetterMixin
             private BlockState getBlock(LevelReader world, BlockPos blockPos) {
                 if (world.isOutsideBuildHeight(blockPos.getY())) {
                     return Blocks.VOID_AIR.defaultBlockState();
