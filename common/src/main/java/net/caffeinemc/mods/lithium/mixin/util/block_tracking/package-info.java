@@ -4,7 +4,8 @@
                 " certain blocks being placed or broken.",
         depends = {
                 @MixinConfigDependency(dependencyPath = "mixin.util.data_storage"),
-                @MixinConfigDependency(dependencyPath = "mixin.util.chunk_status_tracking")
+                @MixinConfigDependency(dependencyPath = "mixin.util.chunk_status_tracking"),
+                @MixinConfigDependency(dependencyPath = "mixin.util.initialization")
         }
 )
 package net.caffeinemc.mods.lithium.mixin.util.block_tracking;

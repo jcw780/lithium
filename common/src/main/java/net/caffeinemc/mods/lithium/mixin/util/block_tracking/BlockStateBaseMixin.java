@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Unique;
 @Mixin(value = BlockBehaviour.BlockStateBase.class, priority = 1010)
 public class BlockStateBaseMixin implements BlockStateFlagHolder {
     @Unique
-    private int flags;
+    private int flags = -1;
 
     @Override
     public void lithium$initializeFlags() {
@@ -31,6 +31,10 @@ public class BlockStateBaseMixin implements BlockStateFlagHolder {
 
     @Override
     public int lithium$getAllFlags() {
-        return this.flags;
+        int blockStateFlags = this.flags;
+        if (blockStateFlags == -1) {
+            throw new IllegalStateException("Tried to get uninitialized block state flags!");
+        }
+        return blockStateFlags;
     }
 }

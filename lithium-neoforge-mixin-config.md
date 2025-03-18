@@ -26,7 +26,8 @@ A faster code path is used for determining what kind of path-finding node type i
 given block. Additionally, a faster chunk cache will be used for accessing blocks while evaluating
 paths.  
 Requirements:
-- `mixin.util.chunk_access=true`  
+- `mixin.util.chunk_access=true`
+- `mixin.util.initialization=true`  
   
 ### `mixin.ai.poi`
 (default: `true`)  
@@ -492,7 +493,8 @@ Allows access to existing BlockEntities without creating new ones
 Chunk sections count certain blocks inside them and provide a method to quickly check whether a chunk contains any of these blocks. Furthermore, chunk sections can notify registered listeners about certain blocks being placed or broken.  
 Requirements:
 - `mixin.util.data_storage=true`
-- `mixin.util.chunk_status_tracking=true`  
+- `mixin.util.chunk_status_tracking=true`
+- `mixin.util.initialization=true`  
   
 ### `mixin.util.chunk_access`
 (default: `true`)  
@@ -522,6 +524,10 @@ Requirements:
 ### `mixin.util.entity_section_position`
 (default: `true`)  
 Entity sections store their position
+  
+### `mixin.util.initialization`
+(default: `true`)  
+Platform dependent initialization hooks.
   
 ### `mixin.util.inventory_change_listening`
 (default: `true`)  

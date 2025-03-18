@@ -12,3 +12,4 @@ Make sure to take a backup of your world before using the mod and please report 
 
 ## Fixes
 - Fix entity explosion exposure optimization not using the entity collision context
+- Fix initialization of cached block info not working on neoforge
