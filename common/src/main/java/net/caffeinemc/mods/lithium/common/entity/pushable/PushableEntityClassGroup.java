@@ -1,5 +1,7 @@
 package net.caffeinemc.mods.lithium.common.entity.pushable;
 
+import java.util.function.Supplier;
+
 import net.caffeinemc.mods.lithium.common.entity.EntityClassGroup;
 import net.caffeinemc.mods.lithium.common.reflection.ReflectionUtil;
 import net.caffeinemc.mods.lithium.common.services.PlatformMappingInformation;
@@ -9,9 +11,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ambient.Bat;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.monster.creaking.Creaking;
+import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
-
-import java.util.function.Supplier;
 
 public class PushableEntityClassGroup {
 
@@ -36,10 +38,13 @@ public class PushableEntityClassGroup {
         CACHABLE_UNPUSHABILITY = new EntityClassGroup(
                 (Class<?> entityClass, Supplier<EntityType<?>> entityType) -> {
                     if (LivingEntity.class.isAssignableFrom(entityClass) && !Player.class.isAssignableFrom(entityClass)) {
-                        if (!ReflectionUtil.hasMethodOverride(entityClass, LivingEntity.class, true, remapped_isPushable)) {
-                            if (!ReflectionUtil.hasMethodOverride(entityClass, LivingEntity.class, true, remapped_isClimbing)) {
-                                return true;
+                        if (!ReflectionUtil.hasMethodOverride(entityClass, LivingEntity.class, true, remapped_isClimbing)) {
+                            if (Creaking.class.isAssignableFrom(entityClass)) {
+                                return !ReflectionUtil.hasMethodOverride(entityClass, Creaking.class, true, remapped_isPushable);
+                            } else if (Warden.class.isAssignableFrom(entityClass)) {
+                                return !ReflectionUtil.hasMethodOverride(entityClass, Warden.class, true, remapped_isPushable);
                             }
+                            return !ReflectionUtil.hasMethodOverride(entityClass, LivingEntity.class, true, remapped_isPushable);
                         }
                     }
                     return false;
