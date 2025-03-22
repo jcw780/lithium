@@ -1,12 +1,14 @@
 package net.caffeinemc.mods.lithium.mixin.world.combined_heightmap_update;
 
+import java.util.Map;
+
+import com.llamalad7.mixinextras.sugar.Local;
 import net.caffeinemc.mods.lithium.common.world.chunk.heightmap.CombinedHeightmapUpdate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -20,9 +22,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-
-import java.util.Map;
 
 @Mixin(LevelChunk.class)
 public abstract class LevelChunkMixin extends ChunkAccess {
@@ -31,7 +30,7 @@ public abstract class LevelChunkMixin extends ChunkAccess {
     }
 
     @Redirect(
-            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
+            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Lnet/minecraft/world/level/block/state/BlockState;",
             at = @At(value = "INVOKE", target = "Ljava/util/Map;get(Ljava/lang/Object;)Ljava/lang/Object;")
     )
     private <K, V> V skipGetHeightmap(Map<K, V> heightmaps, K heightmapType) {
@@ -42,7 +41,7 @@ public abstract class LevelChunkMixin extends ChunkAccess {
     }
 
     @Redirect(
-            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
+            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Lnet/minecraft/world/level/block/state/BlockState;",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/Heightmap;update(IIILnet/minecraft/world/level/block/state/BlockState;)Z")
     )
     private boolean skipHeightmapUpdate(Heightmap instance, int x, int y, int z, BlockState state) {
@@ -53,20 +52,18 @@ public abstract class LevelChunkMixin extends ChunkAccess {
     }
 
     @Inject(
-            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
+            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Lnet/minecraft/world/level/block/state/BlockState;",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/levelgen/Heightmap;update(IIILnet/minecraft/world/level/block/state/BlockState;)Z",
-                    shift = At.Shift.BEFORE,
                     ordinal = 0
-            ),
-            locals = LocalCapture.CAPTURE_FAILHARD
+            )
     )
-    private void updateHeightmapsCombined(BlockPos pos, BlockState state, boolean moved, CallbackInfoReturnable<BlockState> cir, int y, LevelChunkSection chunkSection, boolean bl, int x, int yMod16, int z, BlockState blockState, Block block) {
-        Heightmap heightmap0 = this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING);
+    private void updateHeightmapsCombined(BlockPos blockPos, BlockState blockState, int i, CallbackInfoReturnable<BlockState> cir, @Local(ordinal = 1) int y, @Local(ordinal = 2) int x, @Local(ordinal = 4) int z) {
+        Heightmap heightmap0 = this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING); //TODO check if local caputure is correct
         Heightmap heightmap1 = this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
         Heightmap heightmap2 = this.heightmaps.get(Heightmap.Types.OCEAN_FLOOR);
         Heightmap heightmap3 = this.heightmaps.get(Heightmap.Types.WORLD_SURFACE);
-        CombinedHeightmapUpdate.updateHeightmaps(heightmap0, heightmap1, heightmap2, heightmap3, (LevelChunk) (ChunkAccess) this, x, y, z, state);
+        CombinedHeightmapUpdate.updateHeightmaps(heightmap0, heightmap1, heightmap2, heightmap3, (LevelChunk) (ChunkAccess) this, x, y, z, blockState);
     }
 }

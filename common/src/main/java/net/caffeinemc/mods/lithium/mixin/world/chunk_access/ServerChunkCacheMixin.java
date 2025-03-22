@@ -1,5 +1,9 @@
 package net.caffeinemc.mods.lithium.mixin.world.chunk_access;
 
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BooleanSupplier;
+
 import net.caffeinemc.mods.lithium.common.world.chunk.ChunkHolderExtended;
 import net.minecraft.Util;
 import net.minecraft.server.level.*;
@@ -10,10 +14,6 @@ import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BooleanSupplier;
 
 /**
  * This patch makes a number of optimizations to chunk retrieval which helps to alleviate some of the slowdown introduced
@@ -59,6 +59,9 @@ public abstract class ServerChunkCacheMixin {
 
     @Shadow
     abstract boolean runDistanceManagerUpdates();
+
+    @Shadow
+    public abstract void addTicket(Ticket ticket, ChunkPos chunkPos);
 
     private long time;
 
@@ -186,8 +189,7 @@ public abstract class ServerChunkCacheMixin {
 
     private void createChunkLoadTicket(int x, int z, int level) {
         ChunkPos chunkPos = new ChunkPos(x, z);
-
-        this.distanceManager.addTicket(TicketType.UNKNOWN, chunkPos, level, chunkPos);
+        this.addTicket(new Ticket(TicketType.UNKNOWN, level), chunkPos);
     }
 
     /**

@@ -1,11 +1,17 @@
 package net.caffeinemc.mods.lithium.mixin.ai.task.run.long_jump_weighted_choice;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.ToIntFunction;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.caffeinemc.mods.lithium.common.util.collections.LongJumpChoiceList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.random.WeightedRandom;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.behavior.LongJumpToRandomPos;
 import org.spongepowered.asm.mixin.Final;
@@ -15,10 +21,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 @Mixin(LongJumpToRandomPos.class)
 public class LongJumpToRandomPosMixin<E extends Mob> {
@@ -49,15 +51,15 @@ public class LongJumpToRandomPosMixin<E extends Mob> {
         }
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "getJumpCandidate(Lnet/minecraft/server/level/ServerLevel;)Ljava/util/Optional;",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/random/WeightedRandom;getRandomItem(Lnet/minecraft/util/RandomSource;Ljava/util/List;)Ljava/util/Optional;")
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/random/WeightedRandom;getRandomItem(Lnet/minecraft/util/RandomSource;Ljava/util/List;Ljava/util/function/ToIntFunction;)Ljava/util/Optional;")
     )
-    private Optional<LongJumpToRandomPos.PossibleJump> getRandomFast(RandomSource random, List<LongJumpToRandomPos.PossibleJump> pool) {
+    private Optional<LongJumpToRandomPos.PossibleJump> getRandomFast(RandomSource random, List<?> pool, ToIntFunction<?> toIntFunction, Operation<Optional<LongJumpToRandomPos.PossibleJump>> original) {
         if (pool instanceof LongJumpChoiceList longJumpChoiceList) {
             return Optional.ofNullable(longJumpChoiceList.removeRandomWeightedByDistanceSq(random));
         } else {
-            return WeightedRandom.getRandomItem(random, pool);
+            return original.call(random, pool, toIntFunction);
         }
     }
 

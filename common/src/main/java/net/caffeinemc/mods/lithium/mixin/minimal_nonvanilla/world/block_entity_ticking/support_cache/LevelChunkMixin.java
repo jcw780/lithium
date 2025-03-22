@@ -29,7 +29,7 @@ public abstract class LevelChunkMixin {
     public abstract BlockState getBlockState(BlockPos pos);
 
     @Redirect(
-            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
+            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Lnet/minecraft/world/level/block/state/BlockState;",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/block/EntityBlock;newBlockEntity(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/entity/BlockEntity;"
@@ -48,14 +48,14 @@ public abstract class LevelChunkMixin {
     }
 
     @Inject(
-            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
+            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Lnet/minecraft/world/level/block/state/BlockState;",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/block/entity/BlockEntity;setBlockState(Lnet/minecraft/world/level/block/state/BlockState;)V",
                     shift = At.Shift.AFTER
             )
     )
-    private void fixCachedState(BlockPos pos, BlockState state, boolean moved, CallbackInfoReturnable<BlockState> cir, @Local BlockEntity blockEntity) {
+    private void fixCachedState(BlockPos pos, BlockState state, int i, CallbackInfoReturnable<BlockState> cir, @Local BlockEntity blockEntity) {
         BlockState updatedBlockState = this.getBlockState(pos);
         if (updatedBlockState != state) {
             //noinspection deprecation

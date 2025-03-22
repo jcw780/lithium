@@ -1,11 +1,11 @@
 package net.caffeinemc.mods.lithium.common.util.collections;
 
+import java.util.*;
+
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 /**
  * Wraps a {@link List} with a hash table which provides O(1) lookups for {@link Collection#contains(Object)}. The type
@@ -16,7 +16,7 @@ public class HashedReferenceList<T> implements List<T> {
     private final ReferenceArrayList<T> list;
     private final Reference2IntOpenHashMap<T> counter;
 
-    public HashedReferenceList(List<T> list) {
+    public HashedReferenceList(Collection<T> list) {
         this.list = new ReferenceArrayList<>();
         this.list.addAll(list);
 

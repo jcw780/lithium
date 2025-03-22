@@ -21,6 +21,7 @@ public abstract class LevelMixin implements LevelAccessor {
      */
     @Override
     public boolean noCollision(@Nullable Entity entity, AABB box) {
+        //TODO vanilla makes all entities walk on lava AND water here like striders?
         boolean ret = !LithiumEntityCollisions.doesBoxCollideWithBlocks((Level) (Object) this, entity, box);
 
         // If no blocks were collided with, try to check for entity collisions if we can read entities

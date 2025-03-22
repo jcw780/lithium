@@ -1,5 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.shapes.lazy_shape_context;
 
+import java.util.function.Predicate;
+
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -14,8 +16,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.function.Predicate;
 
 @Mixin(EntityCollisionContext.class)
 public class EntityCollisionContextMixin {
@@ -39,7 +39,7 @@ public class EntityCollisionContextMixin {
      * No need to use Opcodes.INSTANCEOF or similar.
      */
     @ModifyConstant(
-            method = "<init>(Lnet/minecraft/world/entity/Entity;Z)V",
+            method = "<init>(Lnet/minecraft/world/entity/Entity;ZZ)V",
             constant = @Constant(classValue = LivingEntity.class, ordinal = 0)
     )
     private static boolean redirectInstanceOf(Object obj, Class<?> clazz) {
@@ -47,7 +47,7 @@ public class EntityCollisionContextMixin {
     }
 
     @ModifyConstant(
-            method = "<init>(Lnet/minecraft/world/entity/Entity;Z)V",
+            method = "<init>(Lnet/minecraft/world/entity/Entity;ZZ)V",
             constant = @Constant(classValue = LivingEntity.class, ordinal = 2)
     )
     private static boolean redirectInstanceOf2(Object obj, Class<?> clazz) {
@@ -55,16 +55,18 @@ public class EntityCollisionContextMixin {
     }
 
     @Inject(
-            method = "<init>(Lnet/minecraft/world/entity/Entity;Z)V",
+            method = "<init>(Lnet/minecraft/world/entity/Entity;ZZ)V",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/shapes/EntityCollisionContext;<init>(ZDLnet/minecraft/world/item/ItemStack;Ljava/util/function/Predicate;Lnet/minecraft/world/entity/Entity;)V",
+                    target = "Lnet/minecraft/world/phys/shapes/EntityCollisionContext;<init>(ZZDLnet/minecraft/world/item/ItemStack;Ljava/util/function/Predicate;Lnet/minecraft/world/entity/Entity;)V",
                     shift = At.Shift.AFTER
             )
     )
-    private void initFields(Entity entity, boolean bl, CallbackInfo ci) {
+    private void initFields(Entity entity, boolean standOnEveryFluid, boolean isPlacement, CallbackInfo ci) {
         this.heldItem = null;
-        this.canStandOnFluid = null;
+        if (!standOnEveryFluid) {
+            this.canStandOnFluid = null;
+        }
     }
 
     @Inject(

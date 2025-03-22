@@ -1,20 +1,17 @@
 package net.caffeinemc.mods.lithium.mixin.alloc.nbt;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Use {@link Object2ObjectOpenHashMap} instead of {@link HashMap} to reduce NBT memory consumption and improve
@@ -24,6 +21,9 @@ import java.util.Map;
  */
 @Mixin(CompoundTag.class)
 public class CompoundTagMixin {
+
+    @Unique
+    private static final HashMap<String, Tag> DUMMY = new HashMap<>();
 
     @Shadow
     @Final
@@ -40,13 +40,13 @@ public class CompoundTagMixin {
     @Redirect(
             method = "<init>()V",
             at = @At(
-                    value = "INVOKE",
-                    target = "Lcom/google/common/collect/Maps;newHashMap()Ljava/util/HashMap;",
+                    value = "NEW",
+                    target = "()Ljava/util/HashMap;",
                     remap = false
             )
     )
-    private static HashMap<?, ?> removeOldMapAlloc() {
-        return null;
+    private static HashMap removeOldMapAlloc() {
+        return DUMMY;
     }
 
     /**
