@@ -137,8 +137,6 @@
     "entity.sprinting_particles.EntityMixin",
     "experimental.entity.block_caching.EntityMixin",
     "experimental.entity.block_caching.block_support.EntityMixin",
-    "experimental.entity.block_caching.block_touching.EntityMixin",
-    "experimental.entity.block_caching.fire_lava_touching.EntityMixin",
     "experimental.entity.block_caching.suffocation.EntityMixin",
     "experimental.entity.item_entity_merging.ItemEntityMixin",
     "experimental.entity.projectile_projectile_collisions.ProjectileUtilMixin",

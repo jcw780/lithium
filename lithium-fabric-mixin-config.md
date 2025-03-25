@@ -373,16 +373,6 @@ Use the block listening system to skip supporting block search (used for honey b
 Requirements:
 - `mixin.util.block_tracking=true`  
   
-### `mixin.experimental.entity.block_caching.block_touching`
-(default: `true`)  
-Use the block listening system to skip block touching (like cactus touching).  
-Requirements:
-- `mixin.util.block_tracking=true`  
-  
-### `mixin.experimental.entity.block_caching.fire_lava_touching`
-(default: `true`)  
-Skip searching for fire or lava in the burn time countdown logic when they are not on fire and the result does not make a difference. Also use the block listening system to cache whether the entity is touching fire or lava.
-  
 ### `mixin.experimental.entity.block_caching.fluid_pushing`
 (default: `true`)  
 Use the block listening system to cache entity fluid interaction when not touching fluid currents.  

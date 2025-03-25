@@ -26,7 +26,7 @@ public abstract class RaidMixin {
     /**
      * Check if an update was queued for the bar, and if so, perform an update
      */
-    @Inject(method = "tick()V", at = @At("HEAD"))
+    @Inject(method = "tick(Lnet/minecraft/server/level/ServerLevel;)V", at = @At("HEAD"))
     private void onTick(CallbackInfo ci) {
         if (this.isBarDirty) {
             this.raidEvent.setProgress(Mth.clamp(this.getHealthOfLivingRaiders() / this.totalHealth, 0.0F, 1.0F));

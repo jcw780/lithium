@@ -15,7 +15,7 @@ public class LevelMixin {
 
     @Inject(
             method = "markAndNotifyBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;II)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;onBlockStateChange(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)V")
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;updatePOIOnBlockStateChange(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)V")
 
     )
     private void updateHopperOnUpdateSuppression(BlockPos pos, LevelChunk chunk, BlockState blockState, BlockState blockState2, int flags, int maxUpdateDepth, CallbackInfo ci) {

@@ -28,7 +28,7 @@ public abstract class LevelChunkMixin {
             method = "setBlockState",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;onPlace(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)V", shift = At.Shift.BEFORE)
     )
-    private void updateHoppersIfWorldEditPresent(BlockPos pos, BlockState state, boolean moved, CallbackInfoReturnable<BlockState> cir) {
+    private void updateHoppersIfWorldEditPresent(BlockPos pos, BlockState state, int i, CallbackInfoReturnable<BlockState> cir) {
         if ((state.getBlock() instanceof WorldlyContainerHolder || state.hasBlockEntity())) {
             lithium$updateHopperCachesOnNewInventoryAdded((LevelChunk) (Object) this, pos, this.getLevel());
         }
