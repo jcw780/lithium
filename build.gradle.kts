@@ -10,7 +10,7 @@ plugins {
 // Fabric: https://fabricmc.net/develop/
 // Neoforge: https://neoforged.net/
 val MINECRAFT_VERSION by extra { "1.21.5" } //MUST manually update fabric.mod.json and neoforge.mods.toml
-val NEOFORGE_VERSION by extra { "21.4.115-beta" }
+val NEOFORGE_VERSION by extra { "21.5.0-beta" }
 val FABRIC_LOADER_VERSION by extra { "0.16.10" }
 val FABRIC_API_VERSION by extra { "0.119.5+1.21.5" }
 
@@ -18,7 +18,7 @@ val FABRIC_API_VERSION by extra { "0.119.5+1.21.5" }
 val PARCHMENT_VERSION by extra { null }
 
 // https://semver.org/
-val MOD_VERSION by extra { "0.15.1" }
+val MOD_VERSION by extra { "0.16.0" }
 
 allprojects {
     apply(plugin = "java")

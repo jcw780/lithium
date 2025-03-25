@@ -101,7 +101,7 @@ neoForge {
 
             sourceSet = sourceSets.getByName("gametest")
             systemProperty("neoforge.enabledGameTestNamespaces", "lithium-gametest")
-            environment("LITHIUM_GAMETEST_RESOURCES", file(gameDirectory.get().asFile).resolve("../../../common/src/gametest/resources/data/lithium-gametest/gametest/structure").path)
+            environment("LITHIUM_GAMETEST_RESOURCES", project(":common").path + "src/gametest/resources/data")
         }
         create("gametestServer") {
             type = "gameTestServer"
@@ -109,7 +109,7 @@ neoForge {
 
             sourceSet = sourceSets.getByName("gametest")
             systemProperty("neoforge.enabledGameTestNamespaces", "lithium-gametest")
-            environment("LITHIUM_GAMETEST_RESOURCES", file(gameDirectory.get().asFile).resolve("../../../common/src/gametest/resources/data/lithium-gametest/gametest/structure").path)
+            environment("LITHIUM_GAMETEST_RESOURCES", project(":common").path + "src/gametest/resources/data")
         }
     }
 
