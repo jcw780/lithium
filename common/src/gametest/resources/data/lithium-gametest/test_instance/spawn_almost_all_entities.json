@@ -1,7 +1,7 @@
 {
   "type" : "minecraft:block_based",
   "environment" : "lithium-gametest:lithium_default_environment",
-  "structure" : "lithium-gametest:spawn_all_entities",
+  "structure" : "lithium-gametest:spawn_almost_all_entities",
   "max_ticks" : 400,
   "setup_ticks" : 10,
   "required" : true,
