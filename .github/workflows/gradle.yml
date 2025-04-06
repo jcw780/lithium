@@ -40,6 +40,7 @@ jobs:
                     echo "" > "$server/run/gametestServer/config/lithium.properties"
                     if [ "$experimental" = "true" ]; then
                       echo "mixin.experimental=true" > "$server"/run/gametestServer/config/lithium.properties
+                    fi
                     ./gradlew "$server:runGametestServer"
                   done
                 done
