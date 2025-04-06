@@ -24,7 +24,7 @@
         {pos: [1, 0, 4], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:hoglin ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
         {pos: [1, 0, 5], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:llama_spit ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
         {pos: [1, 0, 6], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:panda ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
-        {pos: [1, 0, 7], state: "minecraft:bedrock"
+        {pos: [1, 0, 7], state: "minecraft:bedrock"}
         {pos: [1, 0, 8], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:squid ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
         {pos: [1, 0, 9], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:warden ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
         {pos: [1, 0, 10], state: "minecraft:bedrock"},
@@ -169,7 +169,7 @@
         {pos: [10, 0, 14], state: "minecraft:bedrock"},
         {pos: [11, 0, 0], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:bee ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
         {pos: [11, 0, 1], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:cod ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
-        {pos: [11, 0, 2], state: "minecraft:bedrock",
+        {pos: [11, 0, 2], state: "minecraft:bedrock"},
         {pos: [11, 0, 3], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:giant ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
         {pos: [11, 0, 4], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:jungle_boat ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
         {pos: [11, 0, 5], state: "minecraft:command_block{conditional:false,facing:north}", nbt: {Command: "/summon minecraft:ocelot ~ ~3 ~", SuccessCount: 0, TrackOutput: 1b, UpdateLastExecution: 1b, auto: 0b, conditionMet: 0b, id: "minecraft:command_block", powered: 0b}},
