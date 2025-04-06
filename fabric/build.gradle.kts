@@ -120,9 +120,9 @@ loom {
 
         create("gametestServer") {
             server()
-            name = "Game Test"
+            name = "Game Test Server"
             vmArg("-Dfabric-api.gametest")
-            runDir = "run/gametest"
+            runDir = "run/gametestServer"
             source(sourceSets["gametest"])
             environmentVariable("LITHIUM_GAMETEST_RESOURCES", project(":common").file("src/gametest/resources/data").path)
         }
@@ -130,7 +130,7 @@ loom {
             client()
             name = "Game Test Client"
             vmArg("-Dfabric-api.gametest")
-            runDir = "run/gametest"
+            runDir = "run/gametestClient"
             source(sourceSets["gametest"])
             environmentVariable("LITHIUM_GAMETEST_RESOURCES", project(":common").file("src/gametest/resources/data").path)
         }

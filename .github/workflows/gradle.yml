@@ -37,7 +37,8 @@ jobs:
                   for experimental in true false; do
                     echo "Running tests for server: $server, experimental: $experimental"
                     if [ "$experimental" = "true" ]; then
-                      echo "mixin.experimental=true" > lithium.properties
+                      mkdir -p "$server/run/gametestServer/config"
+                      echo "mixin.experimental=true" > "$server"/run/gametestServer/config/lithium.properties
                     fi
                     ./gradlew "$server:runGametestServer"
                   done
