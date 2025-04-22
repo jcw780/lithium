@@ -34,6 +34,10 @@ public class PalettedContainerMixin<T> {
                     throw new MissingPaletteEntryException(index);
                 }
             }
+
+            if (palette.getSize() == 0) {
+                throw new IllegalArgumentException("Palette must not be empty, otherwise get() accesses will always crash!");
+            }
         } catch (Exception e) {
             String builder = "Received invalid paletted container data!\n" +
                     "Entry at index " + i + " has palette index " + index + ".\n" +
