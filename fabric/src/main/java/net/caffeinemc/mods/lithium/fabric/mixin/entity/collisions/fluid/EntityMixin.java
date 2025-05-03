@@ -7,8 +7,6 @@ import net.caffeinemc.mods.lithium.common.block.BlockStateFlags;
 import net.caffeinemc.mods.lithium.common.block.TrackedBlockStatePredicate;
 import net.caffeinemc.mods.lithium.common.entity.FluidCachingEntity;
 import net.caffeinemc.mods.lithium.common.util.Pos;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
@@ -40,11 +38,6 @@ public abstract class EntityMixin implements FluidCachingEntity {
             cancellable = true
     )
     public void tryShortcutFluidPushing(TagKey<Fluid> tag, double speed, CallbackInfoReturnable<Boolean> cir, @Local(ordinal = 0) int x1, @Local(ordinal = 1) int x2, @Local(ordinal = 2) int y1, @Local(ordinal = 3) int y2, @Local(ordinal = 4) int z1, @Local(ordinal = 5) int z2) {
-        if (!(this.level.isClientSide() && this.level instanceof ClientLevel || this.level instanceof ServerLevel)) {
-            //Create compatibility: Directly accessing the chunk sections is not compatible with Create Ponder level, which subclass neither client nor server levels
-            return;
-        }
-
         TrackedBlockStatePredicate blockStateFlag;
         if (tag == FluidTags.WATER) {
             blockStateFlag = BlockStateFlags.WATER;
