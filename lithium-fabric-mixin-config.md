@@ -616,6 +616,10 @@ BlockEntity sleeping for inactive lit campfires
 (default: `true`)  
 BlockEntity sleeping for inactive unlit campfires
   
+### `mixin.world.block_entity_ticking.sleeping.chest_animation`
+(default: `true`)  
+BlockEntity sleeping for inactive chest lid animation, which is only performed client side.
+  
 ### `mixin.world.block_entity_ticking.sleeping.crafter`
 (default: `true`)  
 BlockEntity sleeping for inactive crafters

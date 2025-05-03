@@ -252,6 +252,8 @@
     "experimental.client_tick.entity.unused_brain.LivingEntityMixin",
     "experimental.client_tick.particle.biome_particles.AmbientParticleSettingsMixin",
     "experimental.client_tick.particle.biome_particles.ClientLevelMixin",
-    "util.accessors.TransientEntitySectionManagerAccessor"
+    "util.accessors.TransientEntitySectionManagerAccessor",
+    "world.block_entity_ticking.sleeping.chest_animation.ChestBlockEntityMixin",
+    "world.block_entity_ticking.sleeping.chest_animation.EnderChestBlockEntityMixin"
   ]
 }
