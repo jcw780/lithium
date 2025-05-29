@@ -3,8 +3,6 @@ package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.ca
 import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
 import net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.WrappedBlockEntityTickInvokerAccessor;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -13,6 +11,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.CampfireBlockEntity;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -63,7 +62,7 @@ public class CampfireBlockEntityMixin extends BlockEntity implements SleepingBlo
             method = "loadAdditional",
             at = @At(value = "RETURN")
     )
-    private void wakeUpOnReadNbt(CompoundTag nbt, HolderLookup.Provider registryLookup, CallbackInfo ci) {
+    private void wakeUpOnReadNbt(ValueInput valueInput, CallbackInfo ci) {
         this.wakeUpNow();
     }
 }

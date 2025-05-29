@@ -1,11 +1,10 @@
 package net.caffeinemc.mods.lithium.mixin.util.inventory_change_listening;
 
 import net.caffeinemc.mods.lithium.common.block.entity.inventory_change_tracking.InventoryChangeTracker;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.*;
+import net.minecraft.world.level.storage.ValueInput;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -26,7 +25,7 @@ public class StackListReplacementTracking {
     @Mixin(BaseContainerBlockEntity.class)
     public abstract static class BaseContainerBlockEntityMixin {
         @Inject(method = "loadAdditional", at = @At("RETURN"))
-        public void readNbtStackListReplacement(CompoundTag nbt, HolderLookup.Provider registryLookup, CallbackInfo ci) {
+        public void readNbtStackListReplacement(ValueInput valueInput, CallbackInfo ci) {
             if (this instanceof InventoryChangeTracker inventoryChangeTracker) {
                 inventoryChangeTracker.lithium$emitStackListReplaced();
             }

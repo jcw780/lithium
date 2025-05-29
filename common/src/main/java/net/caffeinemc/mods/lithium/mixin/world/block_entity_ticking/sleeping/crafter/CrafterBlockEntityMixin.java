@@ -68,7 +68,7 @@ public class CrafterBlockEntityMixin extends BlockEntity implements SleepingBloc
 
     @Inject(
             method = {
-                    "loadAdditional(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/core/HolderLookup$Provider;)V",
+                    "loadAdditional",
                     "setCraftingTicksRemaining"
             },
             at = @At("RETURN")

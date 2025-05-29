@@ -1,7 +1,5 @@
 package net.caffeinemc.mods.lithium.mixin.shapes.lazy_shape_context;
 
-import java.util.function.Predicate;
-
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -16,6 +14,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.function.Predicate;
 
 @Mixin(EntityCollisionContext.class)
 public class EntityCollisionContextMixin {
@@ -38,6 +38,7 @@ public class EntityCollisionContextMixin {
      * Mixin the instanceof to always return false to avoid the expensive inventory access.
      * No need to use Opcodes.INSTANCEOF or similar.
      */
+    @SuppressWarnings("InvalidInjectorMethodSignature")
     @ModifyConstant(
             method = "<init>(Lnet/minecraft/world/entity/Entity;ZZ)V",
             constant = @Constant(classValue = LivingEntity.class, ordinal = 0)
@@ -46,6 +47,7 @@ public class EntityCollisionContextMixin {
         return false;
     }
 
+    @SuppressWarnings("InvalidInjectorMethodSignature")
     @ModifyConstant(
             method = "<init>(Lnet/minecraft/world/entity/Entity;ZZ)V",
             constant = @Constant(classValue = LivingEntity.class, ordinal = 2)

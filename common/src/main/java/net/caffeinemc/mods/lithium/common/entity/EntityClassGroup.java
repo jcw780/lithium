@@ -135,9 +135,9 @@ public class EntityClassGroup {
         public static final NoDragonClassGroup BOAT_SHULKER_LIKE_COLLISION; //aka entities that other entities will do block-like collisions with when moving
 
         static {
-            String remapped_canBeCollidedWith = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1297", "method_30948", "()Z", "canBeCollidedWith");
+            String remapped_canBeCollidedWith = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1297", "method_30948", "(Lnet/minecraft/class_1297;)Z", "canBeCollidedWith");
             BOAT_SHULKER_LIKE_COLLISION = new NoDragonClassGroup(
-                    (Class<?> entityClass, Supplier<EntityType<?>> entityType) -> ReflectionUtil.hasMethodOverride(entityClass, Entity.class, true, remapped_canBeCollidedWith));
+                    (Class<?> entityClass, Supplier<EntityType<?>> entityType) -> ReflectionUtil.hasMethodOverride(entityClass, Entity.class, true, remapped_canBeCollidedWith, Entity.class));
 
             if ((!BOAT_SHULKER_LIKE_COLLISION.contains(Shulker.class, EntityType.SHULKER))) {
                 throw new AssertionError();

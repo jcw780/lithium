@@ -80,7 +80,7 @@ public class LithiumEntityCollisions {
              * otherEntity as a vehicle.
              */
             if (entity == null) {
-                if (!otherEntity.canBeCollidedWith()) {
+                if (!otherEntity.canBeCollidedWith(null)) {
                     continue;
                 }
             } else if (!entity.canCollideWith(otherEntity)) {
@@ -153,7 +153,7 @@ public class LithiumEntityCollisions {
                                  * otherEntity as a vehicle.
                                  */
                                 if (entity == null) {
-                                    if (!otherEntity.canBeCollidedWith()) {
+                                    if (!otherEntity.canBeCollidedWith(null)) {
                                         otherEntity = null;
                                     }
                                 } else if (!entity.canCollideWith(otherEntity)) {

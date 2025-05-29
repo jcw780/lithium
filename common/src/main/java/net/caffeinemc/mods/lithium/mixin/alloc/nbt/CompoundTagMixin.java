@@ -1,8 +1,5 @@
 package net.caffeinemc.mods.lithium.mixin.alloc.nbt;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
@@ -12,6 +9,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Use {@link Object2ObjectOpenHashMap} instead of {@link HashMap} to reduce NBT memory consumption and improve
@@ -63,6 +63,7 @@ public class CompoundTagMixin {
     @Mixin(targets = "net/minecraft/nbt/CompoundTag$1")
     static class Type {
 
+        @SuppressWarnings("InvalidInjectorMethodSignature")
         @ModifyVariable(
                 method = "loadCompound",
                 at = @At(

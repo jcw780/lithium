@@ -64,7 +64,7 @@ public class ServerEntityManagerListenerMixin<T extends EntityAccess> implements
     @Unique
     private void notifyMovementListeners() {
         if (this.notificationMask != 0) {
-            ((EntityMovementTrackerSection) this.currentSection).lithium$trackEntityMovement(this.notificationMask, ((Entity) this.entity).getCommandSenderWorld().getGameTime());
+            ((EntityMovementTrackerSection) this.currentSection).lithium$trackEntityMovement(this.notificationMask, ((Entity) this.entity).level().getGameTime());
         }
     }
 

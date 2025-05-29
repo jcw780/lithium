@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(LevelChunk.class)
 public class LevelChunkMixin {
 
+    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
             method = { "method_31719", "lambda$updateBlockEntityTicker$7" }, // Fabric, Neoforge
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addBlockEntityTicker(Lnet/minecraft/world/level/block/entity/TickingBlockEntity;)V"),
@@ -27,6 +28,7 @@ public class LevelChunkMixin {
         }
     }
 
+    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
             method = { "method_31719", "lambda$updateBlockEntityTicker$7" }, // Fabric, Neoforge
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/chunk/LevelChunk$RebindableTickingBlockEntityWrapper;rebind(Lnet/minecraft/world/level/block/entity/TickingBlockEntity;)V"),

@@ -64,7 +64,7 @@ public abstract class AbstractFurnaceBlockEntityMixin extends BlockEntity implem
         }
     }
 
-    @Inject(method = "loadAdditional(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/core/HolderLookup$Provider;)V", at = @At("RETURN"))
+    @Inject(method = "loadAdditional", at = @At("RETURN"))
     private void wakeUpAfterFromTag(CallbackInfo ci) {
         if (this.isSleeping() && this.level != null && !this.level.isClientSide) {
             this.wakeUpNow();

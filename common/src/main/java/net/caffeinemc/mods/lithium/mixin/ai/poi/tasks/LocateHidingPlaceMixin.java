@@ -18,6 +18,7 @@ import java.util.function.Predicate;
 @Mixin(LocateHidingPlace.class)
 public class LocateHidingPlaceMixin {
 
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(
             method = { "method_46979", "lambda$create$5" }, // Fabric, Neoforge
             at = @At(
@@ -29,6 +30,7 @@ public class LocateHidingPlaceMixin {
         return pointOfInterestStorage.getRandom(new SinglePointOfInterestTypeFilter(POIRegistryEntries.HOME_ENTRY), positionPredicate, occupationStatus, pos, radius, random);
     }
 
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(
             method = { "method_46978", "lambda$create$8" }, // Fabric, Neoforge
             at = @At(
