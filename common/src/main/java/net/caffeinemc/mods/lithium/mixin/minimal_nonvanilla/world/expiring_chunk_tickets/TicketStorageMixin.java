@@ -69,7 +69,7 @@ public abstract class TicketStorageMixin {
     }
 
 
-    @ModifyReceiver(method = "removeTicketIf(Ljava/util/function/Predicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V",
+    @ModifyReceiver(method = "removeTicketIf(Ljava/util/function/BiPredicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V",
             at = @At(
                     value = "INVOKE", remap = false,
                     target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;long2ObjectEntrySet()Lit/unimi/dsi/fastutil/longs/Long2ObjectMap$FastEntrySet;"
@@ -79,7 +79,7 @@ public abstract class TicketStorageMixin {
         return nullIfTickingDownTickets == null ? this.positionsWithExpiringTicket : allTicketPositions;
     }
 
-    @ModifyExpressionValue(method = "removeTicketIf(Ljava/util/function/Predicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V",
+    @ModifyExpressionValue(method = "removeTicketIf(Ljava/util/function/BiPredicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Ljava/util/List;isEmpty()Z"
@@ -98,7 +98,7 @@ public abstract class TicketStorageMixin {
         return isEmpty;
     }
 
-    @Inject(method = "removeTicketIf(Ljava/util/function/Predicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V",
+    @Inject(method = "removeTicketIf(Ljava/util/function/BiPredicate;Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lit/unimi/dsi/fastutil/objects/ObjectIterator;remove()V"
