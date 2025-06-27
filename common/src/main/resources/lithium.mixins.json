@@ -227,6 +227,7 @@
     "world.chunk_access.GenerationChunkHolderAccessor",
     "world.chunk_access.LevelMixin",
     "world.chunk_access.ServerChunkCacheMixin",
+    "world.chunk_ticking.precipitation.ServerLevelMixin",
     "world.chunk_ticking.random_block_ticking.LevelChunkSectionMixin",
     "world.chunk_ticking.random_block_ticking.PalettedContainerMixin",
     "world.chunk_ticking.random_block_ticking.ServerLevelMixin",
