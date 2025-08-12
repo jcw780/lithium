@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.caffeinemc.mods.lithium.common.block.*;
 import net.caffeinemc.mods.lithium.common.tracking.block.ChunkSectionChangeCallback;
 import net.caffeinemc.mods.lithium.common.tracking.block.SectionedBlockChangeTracker;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -58,6 +59,26 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
 
     @Unique
     private void fastInitClientCounts() {
+        this.countsByFlag = new short[BlockStateFlags.NUM_TRACKED_FLAGS];
+        for (TrackedBlockStatePredicate trackedBlockStatePredicate : BlockStateFlags.TRACKED_FLAGS) {
+            if (this.states.maybeHas(trackedBlockStatePredicate)) {
+                //We haven't counted, so we just set the count so high that it never incorrectly reaches 0.
+                //For most situations, this overestimation does not hurt client performance compared to correct counting,
+                this.countsByFlag[trackedBlockStatePredicate.getIndex()] = 16 * 16 * 16;
+            }
+        }
+    }
+
+    @Inject(
+            method = "Lnet/minecraft/world/level/chunk/LevelChunkSection;<init>(Lnet/minecraft/core/Registry;)V",
+            at = @At("RETURN")
+    )
+    private void initAirSection(Registry<?> registry, CallbackInfo ci) {
+        //Instead of initializing all flag counters to 0, initialize them correctly in case they accept air. The entire section should always be air here.
+
+        if (this.countsByFlag != null) {
+            throw new IllegalStateException("CountsByFlag already initialized!");
+        }
         this.countsByFlag = new short[BlockStateFlags.NUM_TRACKED_FLAGS];
         for (TrackedBlockStatePredicate trackedBlockStatePredicate : BlockStateFlags.TRACKED_FLAGS) {
             if (this.states.maybeHas(trackedBlockStatePredicate)) {
