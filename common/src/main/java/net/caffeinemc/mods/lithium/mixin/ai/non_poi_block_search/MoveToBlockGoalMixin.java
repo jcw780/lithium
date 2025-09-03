@@ -3,6 +3,8 @@ package net.caffeinemc.mods.lithium.mixin.ai.non_poi_block_search;
 import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.LithiumMoveToBlockGoal;
 import net.caffeinemc.mods.lithium.common.util.collections.FixedChunkSectionBuffer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
 import net.minecraft.world.level.LevelReader;
@@ -15,6 +17,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
+import java.util.ArrayList;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -67,13 +70,15 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         FixedChunkSectionBuffer<Integer> chunkSectionsMinimumDistance = new FixedChunkSectionBuffer<>(-1, corner0, corner1);
         LevelReader levelReader = this.mob.level();
 
-        int possibleSections = this.initializeChunkSections(levelReader, requiredBlock, chunkAccesses, chunkSectionsMinimumDistance);
-        if(possibleSections == 0){
+        ArrayList<Long> chunksToInterate = this.initializeChunkSections(center, levelReader, requiredBlock,
+                chunkAccesses, chunkSectionsMinimumDistance);
+        if(chunksToInterate.size() == 0){
             return false; //No sections with target block - return early
         }
 
         for (int k = this.verticalSearchStart; k <= j; k = k > 0 ? -k : 1 - k) {
             for (int l = 0; l < i; l++) {
+                /*
                 int currentClosest = Integer.MAX_VALUE;
                 for (int m = 0; m <= l; m = m > 0 ? -m : 1 - m) {
                     for (int n = m < l && m > -l ? l : 0; n <= l; n = n > 0 ? -n : 1 - n) {
@@ -89,6 +94,41 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                             }
                         }
                     }
+                }*/
+                int y = blockPos.getY() + k - 1;
+                int foundClosest = Integer.MAX_VALUE;
+                int ringMax = this.searchRange-1;
+                for(long chunk: chunksToInterate){
+                    int chunkX = SectionPos.x(chunk);
+                    int chunkZ = SectionPos.z(chunk);
+                    ChunkAccess chunkAccess = chunkAccesses.get(chunkX, 0, chunkZ);
+                    //If ChunkSection may have close enough targets, iterate layer in Paletted Container (xz) order
+                    if(foundClosest > chunkSectionsMinimumDistance.get(chunkX, SectionPos.blockToSectionCoord(y), chunkZ)){
+                        int xMin = SectionPos.sectionToBlockCoord(chunkX);
+                        int zMin = SectionPos.sectionToBlockCoord(chunkZ);
+                        LevelChunkSection levelChunkSection = chunkAccess.getSections()[chunkAccess.getSectionIndex(y)];
+                        for(int z = Math.max(center.getZ()-ringMax, zMin); z < Math.min(center.getZ()+ringMax, zMin+15)+1; z++){
+                            for(int x = Math.max(center.getX()-ringMax, xMin); x < Math.min(center.getX()+ringMax, xMin+15)+1; x++){
+                                int dX = x - center.getX();
+                                int dZ = z - center.getZ();
+                                int ring = this.getRing(dX, dZ);
+                                int ringIndex = this.getRingIndex(ring);
+                                int currentDistance = ringIndex + this.getWithinRingIndex(ring, dX, dZ);
+                                if (currentDistance < foundClosest
+                                        && this.mob.isWithinHome(new BlockPos(x, y, z))
+                                        && requiredBlock.test(levelChunkSection.getBlockState(x & 15, y & 15, z & 15))
+                                        && lithium$isValidTarget.test(chunkAccess, mutableBlockPos)) {
+                                    mutableBlockPos.set(x, y, z);
+                                    foundClosest = currentDistance;
+                                     ringMax = ring;
+                                }
+                            }
+                        }
+                    }
+                }
+                if(foundClosest < Integer.MAX_VALUE){
+                    this.blockPos = mutableBlockPos;
+                    return true;
                 }
             }
         }
@@ -97,10 +137,10 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
     }
 
     @Unique
-    private int initializeChunkSections(LevelReader levelReader, Predicate<BlockState> requiredBlock,
+    private ArrayList<Long> initializeChunkSections(BlockPos center, LevelReader levelReader, Predicate<BlockState> requiredBlock,
                                         FixedChunkSectionBuffer<ChunkAccess> chunkAccesses,
                                         FixedChunkSectionBuffer<Integer> chunkSectionsMinimumDistance){
-        int possibleSections = 0;
+        ArrayList<Long> chunksToInterate = new ArrayList<>(chunkAccesses.length);
         for(int x=chunkSectionsMinimumDistance.xMin; x<chunkSectionsMinimumDistance.xMin+chunkSectionsMinimumDistance.xLength; x++){
             for(int z=chunkSectionsMinimumDistance.zMin; z<chunkSectionsMinimumDistance.zMin+chunkSectionsMinimumDistance.zLength; z++){
                 // This is originally made to match the chunk-loading behavior in RemoveBlockGoal
@@ -110,6 +150,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                 );
                 int yMax = chunkSectionsMinimumDistance.yMin+chunkSectionsMinimumDistance.yLength;
                 if(chunkAccess != null){ //RemoveBlockGoal::isValidTarget will also return false if null
+                    boolean hasSubchunks = false;
                     chunkAccesses.set(x, 0, z, chunkAccess);
                     for(int y=chunkSectionsMinimumDistance.yMin; y<yMax; y++){
                         int chunkSectionYIndex = chunkAccess.getSectionIndexFromSectionY(y);
@@ -117,8 +158,9 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                         if (chunkSectionYIndex >= 0 && chunkSectionYIndex < chunkAccess.getSections().length) {
                             LevelChunkSection levelChunkSection = chunkAccess.getSections()[chunkSectionYIndex];
                             if(levelChunkSection.maybeHas(requiredBlock)){
-                                chunkSectionMinDistance = 0;
-                                possibleSections++;
+                                chunkSectionMinDistance = this.getMinimumDistanceOfChunk(
+                                        center.getX(), center.getZ(), x, z);
+                                hasSubchunks = true;
                             }else{
                                 chunkSectionMinDistance = Integer.MAX_VALUE;
                             }
@@ -126,6 +168,9 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                             chunkSectionMinDistance = Integer.MAX_VALUE;
                         }
                         chunkSectionsMinimumDistance.set(x,y,z, chunkSectionMinDistance);
+                    }
+                    if(hasSubchunks){
+                        chunksToInterate.add(SectionPos.asLong(x, 0, z));
                     }
                 }else{
                     for(int y=chunkSectionsMinimumDistance.yMin; y<yMax; y++){
@@ -135,6 +180,49 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
 
             }
         }
-        return possibleSections;
+
+        //Sort chunks by closest possible ring
+        chunksToInterate.sort( (chunkLong0, chunkLong1) -> {
+             int x0 = SectionPos.x(chunkLong0);
+             int z0 = SectionPos.z(chunkLong0);
+             int x1 = SectionPos.x(chunkLong1);
+             int z1 = SectionPos.z(chunkLong1);
+
+             return getMinimumDistanceOfChunk(center.getX(), center.getZ(), x0, z0) -
+                     getMinimumDistanceOfChunk(center.getX(), center.getZ(), x1, z1);
+        });
+
+        return chunksToInterate;
     }
+
+    @Unique
+    private int getMinimumDistanceOfChunk(int centerX, int centerZ, int chunkX, int chunkZ){
+        int minX = SectionPos.sectionToBlockCoord(chunkX);
+        int minZ = SectionPos.sectionToBlockCoord(chunkZ);
+        int closestX = Mth.clamp(centerX, minX, minX+15);
+        int closestZ = Mth.clamp(centerZ, minZ, minZ+15);
+
+        int dX = closestX - centerX;
+        int dZ = closestZ - centerZ;
+
+        return this.getRingIndex(this.getRing(dX, dZ));
+    }
+
+    @Unique
+    private int getRing(int dX, int dZ){
+        return Math.max(Math.abs(dX), Math.abs(dZ));
+    }
+
+    @Unique
+    private int getRingIndex(int ring){
+        return (2*ring-1)*(2*ring-1)-(ring==0?1:0);
+    }
+
+    @Unique
+    private int getWithinRingIndex(int ring, int dX, int dZ){
+        return Math.abs(dX) < ring ?
+                (Math.abs(dX)*2-(dX>0?1:0))*2 + (dZ<0?1:0)
+                : Math.max(ring*2-1,0)*2 + (ring*2+1)*(dX<0?1:0) + Math.abs(dZ)*2-(dZ>0?1:0);
+    }
+
 }
