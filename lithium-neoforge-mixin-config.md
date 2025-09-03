@@ -20,6 +20,10 @@ mixin.gen.biome_noise_cache=false
 (default: `true`)  
 Mob AI optimizations
   
+### `mixin.ai.non_poi_block_search`
+(default: `true`)  
+Large Non-POI block search optimization
+  
 ### `mixin.ai.pathing`
 (default: `true`)  
 A faster code path is used for determining what kind of path-finding node type is associated with a

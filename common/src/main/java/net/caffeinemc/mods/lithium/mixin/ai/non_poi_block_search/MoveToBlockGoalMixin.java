@@ -77,15 +77,14 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         }
 
         for (int k = this.verticalSearchStart; k <= j; k = k > 0 ? -k : 1 - k) {
-            for (int l = 0; l < i; l++) {
-                /*
+            /*for (int l = 0; l < i; l++) {
                 int currentClosest = Integer.MAX_VALUE;
                 for (int m = 0; m <= l; m = m > 0 ? -m : 1 - m) {
                     for (int n = m < l && m > -l ? l : 0; n <= l; n = n > 0 ? -n : 1 - n) {
                         mutableBlockPos.setWithOffset(blockPos, m, k - 1, n);
                         int minDistance = chunkSectionsMinimumDistance.get(mutableBlockPos);
-                        if(minDistance < currentClosest){
-                            ChunkAccess chunkAccess = chunkAccesses.get(mutableBlockPos.offset(0,-mutableBlockPos.getY(),0));
+                        if (minDistance < currentClosest) {
+                            ChunkAccess chunkAccess = chunkAccesses.get(mutableBlockPos.offset(0, -mutableBlockPos.getY(), 0));
                             if (this.mob.isWithinHome(mutableBlockPos) &&
                                     requiredBlock.test(chunkAccess.getBlockState(mutableBlockPos))
                                     && lithium$isValidTarget.test(chunkAccess, mutableBlockPos)) {
@@ -94,42 +93,43 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                             }
                         }
                     }
-                }*/
-                int y = blockPos.getY() + k - 1;
-                int foundClosest = Integer.MAX_VALUE;
-                int ringMax = this.searchRange-1;
-                for(long chunk: chunksToInterate){
-                    int chunkX = SectionPos.x(chunk);
-                    int chunkZ = SectionPos.z(chunk);
-                    ChunkAccess chunkAccess = chunkAccesses.get(chunkX, 0, chunkZ);
-                    //If ChunkSection may have close enough targets, iterate layer in Paletted Container (xz) order
-                    if(foundClosest > chunkSectionsMinimumDistance.get(chunkX, SectionPos.blockToSectionCoord(y), chunkZ)){
-                        int xMin = SectionPos.sectionToBlockCoord(chunkX);
-                        int zMin = SectionPos.sectionToBlockCoord(chunkZ);
-                        LevelChunkSection levelChunkSection = chunkAccess.getSections()[chunkAccess.getSectionIndex(y)];
-                        for(int z = Math.max(center.getZ()-ringMax, zMin); z < Math.min(center.getZ()+ringMax, zMin+15)+1; z++){
-                            for(int x = Math.max(center.getX()-ringMax, xMin); x < Math.min(center.getX()+ringMax, xMin+15)+1; x++){
-                                int dX = x - center.getX();
-                                int dZ = z - center.getZ();
-                                int ring = this.getRing(dX, dZ);
-                                int ringIndex = this.getRingIndex(ring);
-                                int currentDistance = ringIndex + this.getWithinRingIndex(ring, dX, dZ);
-                                if (currentDistance < foundClosest
-                                        && this.mob.isWithinHome(new BlockPos(x, y, z))
-                                        && requiredBlock.test(levelChunkSection.getBlockState(x & 15, y & 15, z & 15))
-                                        && lithium$isValidTarget.test(chunkAccess, mutableBlockPos)) {
-                                    mutableBlockPos.set(x, y, z);
-                                    foundClosest = currentDistance;
-                                     ringMax = ring;
-                                }
+                }
+            }*/
+
+            int y = blockPos.getY() + k - 1;
+            int foundClosest = Integer.MAX_VALUE;
+            int ringMax = this.searchRange-1;
+            for(long chunk: chunksToInterate){
+                int chunkX = SectionPos.x(chunk);
+                int chunkZ = SectionPos.z(chunk);
+                ChunkAccess chunkAccess = chunkAccesses.get(chunkX, 0, chunkZ);
+                //If ChunkSection may have close enough targets, iterate layer in Paletted Container (xz) order
+                if(foundClosest > chunkSectionsMinimumDistance.get(chunkX, SectionPos.blockToSectionCoord(y), chunkZ)){
+                    int xMin = SectionPos.sectionToBlockCoord(chunkX);
+                    int zMin = SectionPos.sectionToBlockCoord(chunkZ);
+                    LevelChunkSection levelChunkSection = chunkAccess.getSections()[chunkAccess.getSectionIndex(y)];
+                    for(int z = Math.max(center.getZ()-ringMax, zMin); z < Math.min(center.getZ()+ringMax, zMin+15)+1; z++){
+                        for(int x = Math.max(center.getX()-ringMax, xMin); x < Math.min(center.getX()+ringMax, xMin+15)+1; x++){
+                            int dX = x - center.getX();
+                            int dZ = z - center.getZ();
+                            int ring = this.getRing(dX, dZ);
+                            int ringIndex = this.getRingIndex(ring);
+                            int currentDistance = ringIndex + this.getWithinRingIndex(ring, dX, dZ);
+                            if (currentDistance < foundClosest
+                                    && this.mob.isWithinHome(new BlockPos(x, y, z))
+                                    && requiredBlock.test(levelChunkSection.getBlockState(x & 15, y & 15, z & 15))
+                                    && lithium$isValidTarget.test(chunkAccess, mutableBlockPos)) {
+                                mutableBlockPos.set(x, y, z);
+                                foundClosest = currentDistance;
+                                 ringMax = ring;
                             }
                         }
                     }
                 }
-                if(foundClosest < Integer.MAX_VALUE){
-                    this.blockPos = mutableBlockPos;
-                    return true;
-                }
+            }
+            if(foundClosest < Integer.MAX_VALUE){
+                this.blockPos = mutableBlockPos;
+                return true;
             }
         }
 
