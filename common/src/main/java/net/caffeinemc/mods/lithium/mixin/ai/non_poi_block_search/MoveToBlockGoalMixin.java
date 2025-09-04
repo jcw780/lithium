@@ -105,23 +105,30 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                 ChunkAccess chunkAccess = chunkAccesses.get(chunkX, 0, chunkZ);
                 //If ChunkSection may have close enough targets, iterate layer in Paletted Container (xz) order
                 if(foundClosest > chunkSectionsMinimumDistance.get(chunkX, SectionPos.blockToSectionCoord(y), chunkZ)){
-                    int xMin = SectionPos.sectionToBlockCoord(chunkX);
-                    int zMin = SectionPos.sectionToBlockCoord(chunkZ);
+                    int chunkBlockX = SectionPos.sectionToBlockCoord(chunkX);
+                    int xMin = Math.max(center.getX()-ringMax, chunkBlockX);
+                    int xMax = Math.min(center.getX()+ringMax, chunkBlockX+15);
+                    int chunkBlockZ = SectionPos.sectionToBlockCoord(chunkZ);
+                    int zMin = Math.max(center.getZ()-ringMax, chunkBlockZ);
+                    int zMax = Math.min(center.getZ()+ringMax, chunkBlockZ+15);
                     LevelChunkSection levelChunkSection = chunkAccess.getSections()[chunkAccess.getSectionIndex(y)];
-                    for(int z = Math.max(center.getZ()-ringMax, zMin); z < Math.min(center.getZ()+ringMax, zMin+15)+1; z++){
-                        for(int x = Math.max(center.getX()-ringMax, xMin); x < Math.min(center.getX()+ringMax, xMin+15)+1; x++){
+                    for(int z = zMin; z <= zMax; z++){
+                        for(int x = xMin; x <= xMax; x++){
                             int dX = x - center.getX();
                             int dZ = z - center.getZ();
                             int ring = this.getRing(dX, dZ);
-                            int ringIndex = this.getRingIndex(ring);
-                            int currentDistance = ringIndex + this.getWithinRingIndex(ring, dX, dZ);
+                            int currentDistance = this.getRelativeDistance(ring, dX, dZ);
                             if (currentDistance < foundClosest
                                     && this.mob.isWithinHome(new BlockPos(x, y, z))
                                     && requiredBlock.test(levelChunkSection.getBlockState(x & 15, y & 15, z & 15))
                                     && lithium$isValidTarget.test(chunkAccess, mutableBlockPos)) {
+                                ringMax = ring;
+                                xMin = Math.max(center.getX()-ringMax, chunkBlockX);
+                                xMax = Math.min(center.getX()+ringMax, chunkBlockX+15);
+                                //zMin = Math.max(center.getZ()-ringMax, chunkBlockZ);
+                                zMax = Math.min(center.getZ()+ringMax, chunkBlockZ+15);
                                 mutableBlockPos.set(x, y, z);
                                 foundClosest = currentDistance;
-                                 ringMax = ring;
                             }
                         }
                     }
@@ -205,7 +212,8 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         int dX = closestX - centerX;
         int dZ = closestZ - centerZ;
 
-        return this.getRingIndex(this.getRing(dX, dZ));
+        //This will always get the closest one due to the nature of the search
+        return this.getRelativeDistance(this.getRing(dX, dZ), dX, dZ);
     }
 
     @Unique
@@ -214,15 +222,27 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
     }
 
     @Unique
-    private int getRingIndex(int ring){
-        return (2*ring-1)*(2*ring-1)-(ring==0?1:0);
-    }
-
-    @Unique
-    private int getWithinRingIndex(int ring, int dX, int dZ){
-        return Math.abs(dX) < ring ?
-                (Math.abs(dX)*2-(dX>0?1:0))*2 + (dZ<0?1:0)
-                : Math.max(ring*2-1,0)*2 + (ring*2+1)*(dX<0?1:0) + Math.abs(dZ)*2-(dZ>0?1:0);
+    private int getRelativeDistance(int ring, int dX, int dZ){
+        /** This is equivalent to:
+         * int ringX = Math.abs(dX) * 2 - Boolean.compare(dX > 0, false);
+         * int ringZ = Math.abs(dZ) * 2 - Boolean.compare(dZ > 0, false);
+         * return ring << 16 | ringX << 8 | ringZ;
+         *
+         * This works because the search prioritizes in order of:
+         * 1. The distance of y from the center - Not used
+         * 2. Whether y is - or + (- is closer) - Not used
+         * 2. The square ring that the block is in (outer is further)
+         * 3. The distance of x from the center
+         * 4. Whether x is - or + (- is closer)
+         * 5. The distance of z from the center
+         * 6. Whether z is - or + (- is closer)
+         *
+         * Note: The bit-packing only works for horizontal search ranges of <=128 and vertical search range of <=63
+         * You can convert to longs if you somehow exceed that, but also seriously consider POIs instead xd
+         */
+        return (((Math.abs(dX) << 9) | (Math.abs(dZ) << 1))
+                - ((Boolean.compare(dX > 0, false) << 8) | (Boolean.compare(dZ > 0, false))))
+                | (ring << 16);
     }
 
 }
