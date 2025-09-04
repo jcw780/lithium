@@ -44,67 +44,44 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
      * - The current implementation optimizes it by caching the ChunkAccesses and by checking whether the ChunkSection
      * has the target block using ChunkSection::maybeHas.
      * - If no ChunkSection in the search range has any target blocks, this check returns early.
-     * Otherwise, the search will proceed normally but will only run getBlockState if the chunkSection has the
-     * target block. While not as fast as returning early, this still reduces a substantial portion of the lag.
-     * - Note: If ChunkSections in the search range have A LOT of blockStates and ChunkSections all have turtle eggs but
-     * out of range of the search there may not be much of a benefit or even possible regression.
+     * Otherwise, the search will proceed on a layer by layer [same as vanilla] then ChunkSection basis if the
+     * ChunkSection has the target block.
+     * - Note: If ChunkSections in the search range have A LOT of different blockStates and all ChunkSections have *had*
+     * turtle eggs but the eggs are not in the search there may not be much of a benefit or even possible regression.
      */
-    public boolean lithium$findNearestBlock(Predicate<BlockState> requiredBlock, BiPredicate<ChunkAccess, BlockPos> lithium$isValidTarget) {
-        int i = this.searchRange;
-        int j = this.verticalSearchRange;
-        BlockPos blockPos = this.mob.blockPosition();
-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
-
-        //Center of the search starts 1 block below the mob position
-        BlockPos center = blockPos.offset(0,-1,0);
+    public boolean lithium$findNearestBlock(Predicate<BlockState> requiredBlock, BiPredicate<ChunkAccess,
+            BlockPos> lithium$isValidTarget) {
+        //Center of the search starts 1 block below the mob's block position
+        BlockPos center = this.mob.blockPosition().offset(0,-1,0);
 
         //Range is +-(searchRange - 1), +-verticalSearchRange, +-(searchRange - 1)
         BlockPos corner0 = center.offset(-this.searchRange+1, -this.verticalSearchRange, -this.searchRange+1);
         BlockPos corner1 = center.offset(this.searchRange-1, this.verticalSearchRange, this.searchRange-1);
 
-        //Cache ChunkAccesses (this is surprisingly expensive) and track minimum distance for the ChunkSection in a layer
+        //Cache ChunkAccesses - getting them is surprisingly expensive - and track minimum distance for ChunkSections
         //Always use Y:0 for chunkAccesses
         FixedChunkSectionBuffer<ChunkAccess> chunkAccesses = new FixedChunkSectionBuffer<>(null,
                 corner0.offset(0, -center.getY(), 0), corner1.offset(0, -center.getY(), 0)
         );
-        FixedChunkSectionBuffer<Integer> chunkSectionsMinimumDistance = new FixedChunkSectionBuffer<>(-1, corner0, corner1);
-        LevelReader levelReader = this.mob.level();
+        FixedChunkSectionBuffer<Integer> chunkSectionsMinimumDistance = new FixedChunkSectionBuffer<>(Integer.MAX_VALUE,
+                corner0, corner1);
 
-        ArrayList<Long> chunksToInterate = this.initializeChunkSections(center, levelReader, requiredBlock,
+        ArrayList<Long> chunksToIterate = this.initializeChunkSections(center, this.mob.level(), requiredBlock,
                 chunkAccesses, chunkSectionsMinimumDistance);
-        if(chunksToInterate.size() == 0){
-            return false; //No sections with target block - return early
-        }
 
-        for (int k = this.verticalSearchStart; k <= j; k = k > 0 ? -k : 1 - k) {
-            /*for (int l = 0; l < i; l++) {
-                int currentClosest = Integer.MAX_VALUE;
-                for (int m = 0; m <= l; m = m > 0 ? -m : 1 - m) {
-                    for (int n = m < l && m > -l ? l : 0; n <= l; n = n > 0 ? -n : 1 - n) {
-                        mutableBlockPos.setWithOffset(blockPos, m, k - 1, n);
-                        int minDistance = chunkSectionsMinimumDistance.get(mutableBlockPos);
-                        if (minDistance < currentClosest) {
-                            ChunkAccess chunkAccess = chunkAccesses.get(mutableBlockPos.offset(0, -mutableBlockPos.getY(), 0));
-                            if (this.mob.isWithinHome(mutableBlockPos) &&
-                                    requiredBlock.test(chunkAccess.getBlockState(mutableBlockPos))
-                                    && lithium$isValidTarget.test(chunkAccess, mutableBlockPos)) {
-                                this.blockPos = mutableBlockPos;
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }*/
+        if(chunksToIterate.isEmpty()) return false; //No chunks with the target block - return early
 
-            int y = blockPos.getY() + k - 1;
-            int foundClosest = Integer.MAX_VALUE;
+        BlockPos.MutableBlockPos foundPos = new BlockPos.MutableBlockPos();
+        for (int k = this.verticalSearchStart; k <= this.verticalSearchRange; k = k > 0 ? -k : 1 - k) {
+            int y = center.getY() + k;
+            int closestFound = Integer.MAX_VALUE;
             int ringMax = this.searchRange-1;
-            for(long chunk: chunksToInterate){
+            for(long chunk: chunksToIterate){
                 int chunkX = SectionPos.x(chunk);
                 int chunkZ = SectionPos.z(chunk);
                 ChunkAccess chunkAccess = chunkAccesses.get(chunkX, 0, chunkZ);
                 //If ChunkSection may have close enough targets, iterate layer in Paletted Container (xz) order
-                if(foundClosest > chunkSectionsMinimumDistance.get(chunkX, SectionPos.blockToSectionCoord(y), chunkZ)){
+                if(closestFound > chunkSectionsMinimumDistance.get(chunkX, SectionPos.blockToSectionCoord(y), chunkZ)){
                     int chunkBlockX = SectionPos.sectionToBlockCoord(chunkX);
                     int xMin = Math.max(center.getX()-ringMax, chunkBlockX);
                     int xMax = Math.min(center.getX()+ringMax, chunkBlockX+15);
@@ -118,24 +95,25 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                             int dZ = z - center.getZ();
                             int ring = this.getRing(dX, dZ);
                             int currentDistance = this.getRelativeDistance(ring, dX, dZ);
-                            if (currentDistance < foundClosest
+                            if (currentDistance < closestFound
                                     && this.mob.isWithinHome(new BlockPos(x, y, z))
-                                    && requiredBlock.test(levelChunkSection.getBlockState(x & 15, y & 15, z & 15))
-                                    && lithium$isValidTarget.test(chunkAccess, mutableBlockPos)) {
+                                    && requiredBlock.test(levelChunkSection.getBlockState(
+                                            x & 15, y & 15, z & 15))
+                                    && lithium$isValidTarget.test(chunkAccess, foundPos)) {
                                 ringMax = ring;
                                 xMin = Math.max(center.getX()-ringMax, chunkBlockX);
                                 xMax = Math.min(center.getX()+ringMax, chunkBlockX+15);
-                                //zMin = Math.max(center.getZ()-ringMax, chunkBlockZ);
                                 zMax = Math.min(center.getZ()+ringMax, chunkBlockZ+15);
-                                mutableBlockPos.set(x, y, z);
-                                foundClosest = currentDistance;
+                                foundPos.set(x, y, z);
+                                closestFound = currentDistance;
                             }
                         }
                     }
                 }
             }
-            if(foundClosest < Integer.MAX_VALUE){
-                this.blockPos = mutableBlockPos;
+
+            if(closestFound < Integer.MAX_VALUE){
+                this.blockPos = foundPos;
                 return true;
             }
         }
@@ -144,52 +122,47 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
     }
 
     @Unique
-    private ArrayList<Long> initializeChunkSections(BlockPos center, LevelReader levelReader, Predicate<BlockState> requiredBlock,
-                                        FixedChunkSectionBuffer<ChunkAccess> chunkAccesses,
-                                        FixedChunkSectionBuffer<Integer> chunkSectionsMinimumDistance){
-        ArrayList<Long> chunksToInterate = new ArrayList<>(chunkAccesses.length);
-        for(int x=chunkSectionsMinimumDistance.xMin; x<chunkSectionsMinimumDistance.xMin+chunkSectionsMinimumDistance.xLength; x++){
-            for(int z=chunkSectionsMinimumDistance.zMin; z<chunkSectionsMinimumDistance.zMin+chunkSectionsMinimumDistance.zLength; z++){
+    private ArrayList<Long> initializeChunkSections(BlockPos center, LevelReader levelReader,
+                                                    Predicate<BlockState> requiredBlock,
+                                                    FixedChunkSectionBuffer<ChunkAccess> chunkAccesses,
+                                                    FixedChunkSectionBuffer<Integer> chunkSectionsMinimumDistance){
+        ArrayList<Long> chunksToIterate = new ArrayList<>(chunkAccesses.length);
+        int xLimit = chunkAccesses.xMin+chunkAccesses.xLength;
+        int zLimit = chunkAccesses.zMin+chunkAccesses.zLength;
+        for(int x=chunkAccesses.xMin; x<xLimit; x++){
+            for(int z=chunkAccesses.zMin; z<zLimit; z++){
                 // This is originally made to match the chunk-loading behavior in RemoveBlockGoal
-                // However other goals can chunk-load if their search range is large enough
+                // However other goals can chunk-load if their search range is [made] large enough
                 ChunkAccess chunkAccess = levelReader.getChunk(
                         x, z, ChunkStatus.FULL, false
                 );
-                int yMax = chunkSectionsMinimumDistance.yMin+chunkSectionsMinimumDistance.yLength;
-                if(chunkAccess != null){ //RemoveBlockGoal::isValidTarget will also return false if null
+
+                //RemoveBlockGoal::isValidTarget will also return false if chunkAccess is null regardless of block type
+                if(chunkAccess != null){
                     boolean hasSubchunks = false;
                     chunkAccesses.set(x, 0, z, chunkAccess);
+                    int yMax = chunkSectionsMinimumDistance.yMin+chunkSectionsMinimumDistance.yLength;
                     for(int y=chunkSectionsMinimumDistance.yMin; y<yMax; y++){
                         int chunkSectionYIndex = chunkAccess.getSectionIndexFromSectionY(y);
-                        int chunkSectionMinDistance;
-                        if (chunkSectionYIndex >= 0 && chunkSectionYIndex < chunkAccess.getSections().length) {
-                            LevelChunkSection levelChunkSection = chunkAccess.getSections()[chunkSectionYIndex];
-                            if(levelChunkSection.maybeHas(requiredBlock)){
-                                chunkSectionMinDistance = this.getMinimumDistanceOfChunk(
-                                        center.getX(), center.getZ(), x, z);
-                                hasSubchunks = true;
-                            }else{
-                                chunkSectionMinDistance = Integer.MAX_VALUE;
-                            }
-                        } else {
-                            chunkSectionMinDistance = Integer.MAX_VALUE;
+                        LevelChunkSection[] chunkSections = chunkAccess.getSections();
+                        if (chunkSectionYIndex >= 0
+                                && chunkSectionYIndex < chunkSections.length
+                                && chunkSections[chunkSectionYIndex].maybeHas(requiredBlock)) {
+                            chunkSectionsMinimumDistance.set(x,y,z, this.getMinimumDistanceOfChunk(
+                                    center.getX(), center.getZ(), x, z));
+                            hasSubchunks = true;
                         }
-                        chunkSectionsMinimumDistance.set(x,y,z, chunkSectionMinDistance);
                     }
+
                     if(hasSubchunks){
-                        chunksToInterate.add(SectionPos.asLong(x, 0, z));
-                    }
-                }else{
-                    for(int y=chunkSectionsMinimumDistance.yMin; y<yMax; y++){
-                        chunkSectionsMinimumDistance.set(x, y, z, Integer.MAX_VALUE);
+                        chunksToIterate.add(SectionPos.asLong(x, 0, z));
                     }
                 }
-
             }
         }
 
-        //Sort chunks by closest possible ring
-        chunksToInterate.sort( (chunkLong0, chunkLong1) -> {
+        //Sort chunks by closest possible relative distance
+        chunksToIterate.sort( (chunkLong0, chunkLong1) -> {
              int x0 = SectionPos.x(chunkLong0);
              int z0 = SectionPos.z(chunkLong0);
              int x1 = SectionPos.x(chunkLong1);
@@ -199,7 +172,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                      getMinimumDistanceOfChunk(center.getX(), center.getZ(), x1, z1);
         });
 
-        return chunksToInterate;
+        return chunksToIterate;
     }
 
     @Unique
@@ -231,14 +204,14 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
          * This works because the search prioritizes in order of:
          * 1. The distance of y from the center - Not used
          * 2. Whether y is - or + (- is closer) - Not used
-         * 2. The square ring that the block is in (outer is further)
-         * 3. The distance of x from the center
-         * 4. Whether x is - or + (- is closer)
-         * 5. The distance of z from the center
-         * 6. Whether z is - or + (- is closer)
+         * 3. The square ring that the block is in (outer is further)
+         * 4. The distance of x from the center
+         * 5. Whether x is - or + (- is closer)
+         * 6. The distance of z from the center
+         * 7. Whether z is - or + (- is closer)
          *
-         * Note: The bit-packing only works for horizontal search ranges of <=128 and vertical search range of <=63
-         * You can convert to longs if you somehow exceed that, but also seriously consider POIs instead xd
+         * Note: The bit-packing only works for horizontal search ranges of <=128.
+         * You can convert to longs if you somehow exceed that, but also seriously consider POIs instead.
          */
         return (((Math.abs(dX) << 9) | (Math.abs(dZ) << 1))
                 - ((Boolean.compare(dX > 0, false) << 8) | (Boolean.compare(dZ > 0, false))))
