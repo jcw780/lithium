@@ -72,6 +72,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         if(chunksToIterate.isEmpty()) return false; //No chunks with the target block - return early
 
         BlockPos.MutableBlockPos foundPos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos currentPos = new BlockPos.MutableBlockPos();
         for (int k = this.verticalSearchStart; k <= this.verticalSearchRange; k = k > 0 ? -k : 1 - k) {
             int y = center.getY() + k;
             int closestFound = Integer.MAX_VALUE;
@@ -96,7 +97,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                             int ring = this.getRing(dX, dZ);
                             int currentDistance = this.getRelativeDistance(ring, dX, dZ);
                             if (currentDistance < closestFound
-                                    && this.mob.isWithinHome(new BlockPos(x, y, z))
+                                    && this.mob.isWithinHome(currentPos.set(x, y, z))
                                     && requiredBlock.test(levelChunkSection.getBlockState(
                                             x & 15, y & 15, z & 15))
                                     && lithium$isValidTarget.test(chunkAccess, foundPos)) {
