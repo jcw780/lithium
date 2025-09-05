@@ -163,15 +163,11 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         }
 
         //Sort chunks by closest possible relative distance
-        chunksToIterate.sort( (chunkLong0, chunkLong1) -> {
-             int x0 = SectionPos.x(chunkLong0);
-             int z0 = SectionPos.z(chunkLong0);
-             int x1 = SectionPos.x(chunkLong1);
-             int z1 = SectionPos.z(chunkLong1);
-
-             return getMinimumDistanceOfChunk(center.getX(), center.getZ(), x0, z0) -
-                     getMinimumDistanceOfChunk(center.getX(), center.getZ(), x1, z1);
-        });
+        chunksToIterate.sort((chunkLong0, chunkLong1) -> getMinimumDistanceOfChunk(
+                center.getX(), center.getZ(), SectionPos.x(chunkLong0), SectionPos.z(chunkLong0))
+                - getMinimumDistanceOfChunk(
+                        center.getX(), center.getZ(), SectionPos.x(chunkLong1), SectionPos.z(chunkLong1))
+        );
 
         return chunksToIterate;
     }
