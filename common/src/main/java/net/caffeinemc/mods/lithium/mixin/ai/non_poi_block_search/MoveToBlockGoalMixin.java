@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.ai.non_poi_block_search;
 
 import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.LithiumMoveToBlockGoal;
-import net.caffeinemc.mods.lithium.common.util.collections.FixedChunkSectionBuffer;
+import net.caffeinemc.mods.lithium.common.util.collections.fixed_contiguous_region.FixedChunkSectionBuffer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.util.Mth;

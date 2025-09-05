@@ -1,4 +1,4 @@
-package net.caffeinemc.mods.lithium.common.util.collections;
+package net.caffeinemc.mods.lithium.common.util.collections.fixed_contiguous_region;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
