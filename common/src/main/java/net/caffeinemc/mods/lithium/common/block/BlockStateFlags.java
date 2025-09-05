@@ -34,6 +34,7 @@ public class BlockStateFlags {
     static {
         ArrayList<TrackedBlockStatePredicate> countingFlags = new ArrayList<>();
 
+        //TODO add each flag if and only if it is going to be used (corresponding mixins enabled)
         //noinspection ConstantValue
         OVERSIZED_SHAPE = new TrackedBlockStatePredicate(countingFlags.size()) {
             @Override

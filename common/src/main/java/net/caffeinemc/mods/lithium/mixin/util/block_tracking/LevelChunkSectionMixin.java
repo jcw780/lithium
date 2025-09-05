@@ -82,8 +82,6 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
         this.countsByFlag = new short[BlockStateFlags.NUM_TRACKED_FLAGS];
         for (TrackedBlockStatePredicate trackedBlockStatePredicate : BlockStateFlags.TRACKED_FLAGS) {
             if (this.states.maybeHas(trackedBlockStatePredicate)) {
-                //We haven't counted, so we just set the count so high that it never incorrectly reaches 0.
-                //For most situations, this overestimation does not hurt client performance compared to correct counting,
                 this.countsByFlag[trackedBlockStatePredicate.getIndex()] = 16 * 16 * 16;
             }
         }
