@@ -51,7 +51,7 @@ public class CheckAndCacheBlockChecker {
         }
     }
 
-    public boolean checkChunkSection(ChunkAccess chunkAccess, int chunkX, int chunkY, int chunkZ){
+    private boolean checkChunkSection(ChunkAccess chunkAccess, int chunkX, int chunkY, int chunkZ){
         int chunkSectionYIndex = chunkAccess.getSectionIndexFromSectionY(chunkY);
         LevelChunkSection[] chunkSections = chunkAccess.getSections();
         if (chunkSectionYIndex >= 0
@@ -75,7 +75,8 @@ public class CheckAndCacheBlockChecker {
             int chunkY = SectionPos.blockToSectionCoord(blockPos.getY());
             int chunkZ = SectionPos.blockToSectionCoord(blockPos.getZ());
             chunkAccess = levelReader.getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
-            //this chunkAccess cannot be null and reach here because it will throw earlier
+            //this chunkAccess cannot be null and reach here because it should throw earlier
+            assert chunkAccess != null;
             this.chunkAccesses.set(blockPos.offset(0,-blockPos.getY(),0), chunkAccess);
             if (!checkChunkSection(chunkAccess, chunkX, chunkY, chunkZ)) return false;
         }
