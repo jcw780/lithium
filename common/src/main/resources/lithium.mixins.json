@@ -206,6 +206,7 @@
     "util.item_component_and_count_tracking.ItemEntityMixin",
     "util.item_component_and_count_tracking.ItemStackMixin",
     "util.item_component_and_count_tracking.PatchedDataComponentMapMixin",
+    "util.section_data_storage.LevelChunkSectionMixin",
     "util.world_border_listener.WorldBorderMixin",
     "world.block_entity_ticking.chunk_tickable.LevelMixin",
     "world.block_entity_ticking.sleeping.BlockEntityMixin",

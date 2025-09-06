@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.caffeinemc.mods.lithium.common.block.*;
 import net.caffeinemc.mods.lithium.common.tracking.block.ChunkSectionChangeCallback;
 import net.caffeinemc.mods.lithium.common.tracking.block.SectionedBlockChangeTracker;
+import net.caffeinemc.mods.lithium.common.world.section.LithiumSectionData;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
@@ -27,16 +28,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * @author 2No2Name
  */
 @Mixin(LevelChunkSection.class)
-public abstract class LevelChunkSectionMixin implements BlockCountingSection, BlockListeningSection {
+public abstract class LevelChunkSectionMixin implements BlockCountingSection, BlockListeningSection, LithiumSectionData {
 
     @Shadow
     @Final
     private PalettedContainer<BlockState> states;
-
-    @Unique
-    private short[] countsByFlag = null;
-    @Unique
-    private ChunkSectionChangeCallback changeListener;
 
     @Unique
     private static void addToFlagCount(short[] countsByFlag, BlockState state, short change) {
@@ -51,38 +47,41 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
 
     @Override
     public boolean lithium$mayContainAny(TrackedBlockStatePredicate trackedBlockStatePredicate) {
-        if (this.countsByFlag == null) {
-            fastInitClientCounts();
+        SectionData sectionData = this.lithium$getSectionData();
+        if (sectionData.getCountsByFlag() == null) {
+            this.fastInitClientCounts();
         }
-        return this.countsByFlag[trackedBlockStatePredicate.getIndex()] != (short) 0;
+        return sectionData.getCountsByFlag()[trackedBlockStatePredicate.getIndex()] != (short) 0;
     }
 
     @Unique
     private void fastInitClientCounts() {
-        this.countsByFlag = new short[BlockStateFlags.NUM_TRACKED_FLAGS];
+        SectionData sectionData = this.lithium$getSectionData();
+        sectionData.setCountsByFlag(new short[BlockStateFlags.NUM_TRACKED_FLAGS]);
         for (TrackedBlockStatePredicate trackedBlockStatePredicate : BlockStateFlags.TRACKED_FLAGS) {
             if (this.states.maybeHas(trackedBlockStatePredicate)) {
                 //We haven't counted, so we just set the count so high that it never incorrectly reaches 0.
                 //For most situations, this overestimation does not hurt client performance compared to correct counting,
-                this.countsByFlag[trackedBlockStatePredicate.getIndex()] = 16 * 16 * 16;
+                sectionData.getCountsByFlag()[trackedBlockStatePredicate.getIndex()] = 16 * 16 * 16;
             }
         }
     }
 
     @Inject(
-            method = "Lnet/minecraft/world/level/chunk/LevelChunkSection;<init>(Lnet/minecraft/core/Registry;)V",
+            method = "<init>(Lnet/minecraft/core/Registry;)V",
             at = @At("RETURN")
     )
     private void initAirSection(Registry<?> registry, CallbackInfo ci) {
+        SectionData sectionData = this.lithium$getSectionData();
         //Instead of initializing all flag counters to 0, initialize them correctly in case they accept air. The entire section should always be air here.
 
-        if (this.countsByFlag != null) {
+        if (sectionData.getCountsByFlag() != null) {
             throw new IllegalStateException("CountsByFlag already initialized!");
         }
-        this.countsByFlag = new short[BlockStateFlags.NUM_TRACKED_FLAGS];
+        sectionData.setCountsByFlag(new short[BlockStateFlags.NUM_TRACKED_FLAGS]);
         for (TrackedBlockStatePredicate trackedBlockStatePredicate : BlockStateFlags.TRACKED_FLAGS) {
             if (this.states.maybeHas(trackedBlockStatePredicate)) {
-                this.countsByFlag[trackedBlockStatePredicate.getIndex()] = 16 * 16 * 16;
+                sectionData.getCountsByFlag()[trackedBlockStatePredicate.getIndex()] = 16 * 16 * 16;
             }
         }
     }
@@ -95,15 +94,16 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
             )
     )
     private void initFlagCounters(PalettedContainer<BlockState> palettedContainer, PalettedContainer.CountConsumer<BlockState> consumer) {
+        SectionData sectionData = this.lithium$getSectionData();
         palettedContainer.count((state, count) -> {
             consumer.accept(state, count);
-            addToFlagCount(this.countsByFlag, state, (short) count);
+            addToFlagCount(sectionData.getCountsByFlag(), state, (short) count);
         });
     }
 
     @Inject(method = "recalcBlockCounts()V", at = @At("HEAD"))
     private void createFlagCounters(CallbackInfo ci) {
-        this.countsByFlag = new short[BlockStateFlags.NUM_TRACKED_FLAGS];
+        this.lithium$getSectionData().setCountsByFlag(new short[BlockStateFlags.NUM_TRACKED_FLAGS]);
     }
 
     @Inject(
@@ -111,7 +111,7 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
             at = @At(value = "HEAD")
     )
     private void resetData(FriendlyByteBuf buf, CallbackInfo ci) {
-        this.countsByFlag = null;
+        this.lithium$getSectionData().setCountsByFlag(null);
     }
 
     @Inject(
@@ -124,14 +124,15 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
     )
     private void updateFlagCounters(int x, int y, int z, BlockState newState, boolean lock, CallbackInfoReturnable<BlockState> cir, @Local(ordinal = 1) BlockState oldState) {
         this.lithium$trackBlockStateChange(newState, oldState);
-        if (this.changeListener != null) {
-            this.changeListener.onBlockChange(this);
+        ChunkSectionChangeCallback changeListener = this.lithium$getSectionData().getChangeListener();
+        if (changeListener != null) {
+            changeListener.onBlockChange(this);
         }
     }
 
     @Override
     public void lithium$trackBlockStateChange(BlockState newState, BlockState oldState) {
-        short[] countsByFlag = this.countsByFlag;
+        short[] countsByFlag = this.lithium$getSectionData().getCountsByFlag();
         if (countsByFlag == null) {
             return;
         }
@@ -154,21 +155,22 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
 
     @Override
     public void lithium$addToCallback(SectionedBlockChangeTracker tracker, long sectionPos, Level world) {
-        if (this.changeListener == null) {
+        SectionData sectionData = this.lithium$getSectionData();
+        if (sectionData.getChangeListener() == null) {
             if (sectionPos == Long.MIN_VALUE || world == null) {
                 throw new IllegalArgumentException("Expected world and section pos during intialization!");
             }
-            this.changeListener = ChunkSectionChangeCallback.create(sectionPos, world);
+            sectionData.setChangeListener(ChunkSectionChangeCallback.create(sectionPos, world));
         }
 
-        this.changeListener.addTracker(tracker);
+        sectionData.getChangeListener().addTracker(tracker);
     }
 
     @Override
     public void lithium$removeFromCallback(SectionedBlockChangeTracker tracker) {
-        if (this.changeListener != null) {
-            this.changeListener.removeTracker(tracker);
+        ChunkSectionChangeCallback changeListener = this.lithium$getSectionData().getChangeListener();
+        if (changeListener != null) {
+            changeListener.removeTracker(tracker);
         }
     }
-
 }

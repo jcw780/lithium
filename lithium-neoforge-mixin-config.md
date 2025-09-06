@@ -528,7 +528,8 @@ Chunk sections count certain blocks inside them and provide a method to quickly 
 Requirements:
 - `mixin.util.data_storage=true`
 - `mixin.util.chunk_status_tracking=true`
-- `mixin.util.initialization=true`  
+- `mixin.util.initialization=true`
+- `mixin.util.section_data_storage=true`  
   
 ### `mixin.util.chunk_access`
 (default: `true`)  
@@ -576,6 +577,10 @@ Requirements:
 ### `mixin.util.item_component_and_count_tracking`
 (default: `true`)  
 Implements a subscription / publishing system for changes of item stack components and item entity item type.
+  
+### `mixin.util.section_data_storage`
+(default: `true`)  
+Stores lithium's extra data used for various optimizations on a per-chunk section basis. The data is not saved, but allows optimizations to quickly store and access data.
   
 ### `mixin.util.world_border_listener`
 (default: `true`)  
