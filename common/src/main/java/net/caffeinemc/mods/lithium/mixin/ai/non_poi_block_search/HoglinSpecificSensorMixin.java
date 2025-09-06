@@ -12,6 +12,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Optional;
 
+/** [Vanilla Copy]
+ *  Optimizes Hoglin repellent search.
+ *  Note: Search may chunk load in unusual circumstances - must maintain behavior
+ */
 @Mixin(HoglinSpecificSensor.class)
 public abstract class HoglinSpecificSensorMixin implements CheckAndCacheFindClosestMatch {
     @Redirect(method = "doTick(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/monster/hoglin/Hoglin;)V",
