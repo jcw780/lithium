@@ -671,6 +671,12 @@ Several changes to the chunk manager to speed up chunk access
 (default: `true`)  
 Various optimizations to chunk ticking
   
+### `mixin.world.chunk_ticking.random_block_ticking`
+(default: `true`)  
+Speed up random ticks by evaluating random chances early and using a fast block search.  
+Requirements:
+- `mixin.util.section_data_storage=true`  
+  
 ### `mixin.world.chunk_ticking.spread_ice`
 (default: `true`)  
 Access FluidState through already known BlockState instead of accessing the world again.

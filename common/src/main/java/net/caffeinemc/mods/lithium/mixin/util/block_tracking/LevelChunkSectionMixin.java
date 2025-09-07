@@ -17,9 +17,11 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Objects;
 
 /**
  * Keep track of how many blocks that meet certain criteria are in this chunk section.
@@ -34,38 +36,6 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
     @Final
     private PalettedContainer<BlockState> states;
 
-    @Unique
-    private static void addToFlagCount(short[] countsByFlag, BlockState state, short change) {
-        int flags = ((BlockStateFlagHolder) state).lithium$getAllFlags();
-        int i;
-        while ((i = Integer.numberOfTrailingZeros(flags)) < 32 && i < countsByFlag.length) {
-            //either count up by one (prevFlag not set) or down by one (prevFlag set)
-            countsByFlag[i] += change;
-            flags &= ~(1 << i);
-        }
-    }
-
-    @Override
-    public boolean lithium$mayContainAny(TrackedBlockStatePredicate trackedBlockStatePredicate) {
-        SectionData sectionData = this.lithium$getSectionData();
-        if (sectionData.getCountsByFlag() == null) {
-            this.fastInitClientCounts();
-        }
-        return sectionData.getCountsByFlag()[trackedBlockStatePredicate.getIndex()] != (short) 0;
-    }
-
-    @Unique
-    private void fastInitClientCounts() {
-        SectionData sectionData = this.lithium$getSectionData();
-        sectionData.setCountsByFlag(new short[BlockStateFlags.NUM_TRACKED_FLAGS]);
-        for (TrackedBlockStatePredicate trackedBlockStatePredicate : BlockStateFlags.TRACKED_FLAGS) {
-            if (this.states.maybeHas(trackedBlockStatePredicate)) {
-                //We haven't counted, so we just set the count so high that it never incorrectly reaches 0.
-                //For most situations, this overestimation does not hurt client performance compared to correct counting,
-                sectionData.getCountsByFlag()[trackedBlockStatePredicate.getIndex()] = 16 * 16 * 16;
-            }
-        }
-    }
 
     @Inject(
             method = "<init>(Lnet/minecraft/core/Registry;)V",
@@ -86,19 +56,20 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
         }
     }
 
-    @Redirect(
+    @ModifyArg(
             method = "recalcBlockCounts()V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/chunk/PalettedContainer;count(Lnet/minecraft/world/level/chunk/PalettedContainer$CountConsumer;)V"
             )
     )
-    private void initFlagCounters(PalettedContainer<BlockState> palettedContainer, PalettedContainer.CountConsumer<BlockState> consumer) {
-        SectionData sectionData = this.lithium$getSectionData();
-        palettedContainer.count((state, count) -> {
-            consumer.accept(state, count);
-            addToFlagCount(sectionData.getCountsByFlag(), state, (short) count);
-        });
+    private PalettedContainer.CountConsumer<BlockState> initFlagCounters(PalettedContainer.CountConsumer<BlockState> countConsumer) {
+        short[] countsByFlag = Objects.requireNonNull(this.lithium$getSectionData().getCountsByFlag());
+
+        return (state, count) -> {
+            countConsumer.accept(state, count);
+            addToFlagCount(countsByFlag, state, (short) count);
+        };
     }
 
     @Inject(method = "recalcBlockCounts()V", at = @At("HEAD"))
@@ -127,6 +98,48 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
         ChunkSectionChangeCallback changeListener = this.lithium$getSectionData().getChangeListener();
         if (changeListener != null) {
             changeListener.onBlockChange(this);
+        }
+    }
+
+    @Unique
+    private static void addToFlagCount(short[] countsByFlag, BlockState state, short change) {
+        int flags = ((BlockStateFlagHolder) state).lithium$getAllFlags();
+        int i;
+        while ((i = Integer.numberOfTrailingZeros(flags)) < 32 && i < countsByFlag.length) {
+            //either count up by one (prevFlag not set) or down by one (prevFlag set)
+            countsByFlag[i] += change;
+            flags &= ~(1 << i);
+        }
+    }
+
+    @Override
+    public short lithium$getCount(int predicateIndex) {
+        SectionData sectionData = this.lithium$getSectionData();
+        if (sectionData.getCountsByFlag() == null) {
+            fastInitClientCounts();
+        }
+        return sectionData.getCountsByFlag()[predicateIndex];
+    }
+
+    @Override
+    public boolean lithium$mayContainAny(TrackedBlockStatePredicate trackedBlockStatePredicate) {
+        SectionData sectionData = this.lithium$getSectionData();
+        if (sectionData.getCountsByFlag() == null) {
+            this.fastInitClientCounts();
+        }
+        return sectionData.getCountsByFlag()[trackedBlockStatePredicate.getIndex()] != (short) 0;
+    }
+
+    @Unique
+    private void fastInitClientCounts() {
+        SectionData sectionData = this.lithium$getSectionData();
+        sectionData.setCountsByFlag(new short[BlockStateFlags.NUM_TRACKED_FLAGS]);
+        for (TrackedBlockStatePredicate trackedBlockStatePredicate : BlockStateFlags.TRACKED_FLAGS) {
+            if (this.states.maybeHas(trackedBlockStatePredicate)) {
+                //We haven't counted, so we just set the count so high that it never incorrectly reaches 0.
+                //For most situations, this overestimation does not hurt client performance compared to correct counting,
+                sectionData.getCountsByFlag()[trackedBlockStatePredicate.getIndex()] = 16 * 16 * 16;
+            }
         }
     }
 

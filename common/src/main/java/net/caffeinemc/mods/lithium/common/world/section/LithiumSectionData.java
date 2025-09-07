@@ -1,6 +1,7 @@
 package net.caffeinemc.mods.lithium.common.world.section;
 
 import net.caffeinemc.mods.lithium.common.tracking.block.ChunkSectionChangeCallback;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 
 import java.util.Arrays;
 
@@ -10,7 +11,9 @@ public interface LithiumSectionData {
         private short[] countsByFlag;
         private ChunkSectionChangeCallback changeListener;
 
-        public SectionData() {
+        private byte[] randomTickableBlocksByY;
+
+        public SectionData(LevelChunkSection chunkSection) {
             this.countsByFlag = null;
             this.changeListener = null;
         }
@@ -31,15 +34,29 @@ public interface LithiumSectionData {
             return this.changeListener;
         }
 
+        public byte[] getRandomTickableBlocksByY() {
+            return this.randomTickableBlocksByY;
+        }
+
+        public void setRandomTickableBlocksByY(byte[] randomTickableBlocksByY) {
+            if (randomTickableBlocksByY.length != RandomTickingSectionDataHelper.BYTE_COUNT) {
+                throw new IllegalArgumentException("Invalid randomTickableBlocksByY length: " + randomTickableBlocksByY.length + ", expected " + RandomTickingSectionDataHelper.BYTE_COUNT);
+            }
+            this.randomTickableBlocksByY = randomTickableBlocksByY;
+        }
+
         @Override
         public String toString() {
             return "SectionData[" +
                     "countsByFlag=" + Arrays.toString(this.countsByFlag) + ", " +
-                    "changeListener=" + this.changeListener + ']';
+                    "changeListener=" + this.changeListener + ", " +
+                    "randomTickableBlocksByY=" + Arrays.toString(this.randomTickableBlocksByY) + "]";
         }
 
 
     }
 
     LithiumSectionData.SectionData lithium$getSectionData();
+
+    LithiumSectionData.SectionData lithium$getSectionDataDirect();
 }

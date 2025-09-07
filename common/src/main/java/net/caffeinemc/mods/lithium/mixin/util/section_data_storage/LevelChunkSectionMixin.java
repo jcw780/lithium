@@ -13,7 +13,15 @@ public class LevelChunkSectionMixin implements LithiumSectionData {
     @Override
     public SectionData lithium$getSectionData() {
         if (this.sectionData == null) {
-            this.sectionData = new SectionData();
+            this.sectionData = new SectionData((LevelChunkSection) (Object) this);
+        }
+        return this.sectionData;
+    }
+
+    @Override
+    public SectionData lithium$getSectionDataDirect() {
+        if (this.sectionData == null) {
+            throw new NullPointerException("SectionData has not been created yet!");
         }
         return this.sectionData;
     }
