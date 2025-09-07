@@ -30,6 +30,7 @@ public class BlockStateFlags {
 
     //Non counting flags
     public static final TrackedBlockStatePredicate ENTITY_TOUCHABLE;
+    public static final TrackedBlockStatePredicate RANDOM_TICKING;
 
     static {
         ArrayList<TrackedBlockStatePredicate> countingFlags = new ArrayList<>();
@@ -77,18 +78,27 @@ public class BlockStateFlags {
             PATH_NOT_OPEN = null;
         }
 
+        RANDOM_TICKING = new TrackedBlockStatePredicate(countingFlags.size()) {
+            @Override
+            public boolean test(BlockState operand) {
+                return operand.isRandomlyTicking() || operand.getFluidState().isRandomlyTicking();
+            }
+        };
+        countingFlags.add(RANDOM_TICKING);
+
         NUM_TRACKED_FLAGS = countingFlags.size();
         TRACKED_FLAGS = countingFlags.toArray(new TrackedBlockStatePredicate[NUM_TRACKED_FLAGS]);
 
         ArrayList<TrackedBlockStatePredicate> flags = new ArrayList<>(countingFlags);
 
-        ENTITY_TOUCHABLE = new TrackedBlockStatePredicate(countingFlags.size()) {
+        ENTITY_TOUCHABLE = new TrackedBlockStatePredicate(flags.size()) {
             @Override
             public boolean test(BlockState operand) {
                 return ReflectionUtil.isBlockStateEntityTouchable(operand) || operand.is(Blocks.LAVA) || operand.is(BlockTags.FIRE); //Fire and Lava explicit as they need to be added to the set of touched blocks too
             }
         };
         flags.add(ENTITY_TOUCHABLE);
+
 
         FLAGS = flags.toArray(new TrackedBlockStatePredicate[0]);
     }
