@@ -9,6 +9,7 @@ import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSect
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.SectionPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiSection;
@@ -16,10 +17,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -28,6 +26,8 @@ import java.util.function.Predicate;
  * provide a huge reduction in time for situations where an entity needs to search for a point of interest around a
  * location in the world. For example, nether portals ordinarily search a huge volume around the "expected" location
  * of a portal, but it is almost always right at or nearby to the search origin.
+ * This current one also builds upon the original by preferring closer subchunks and providing more ways to advance early.
+ * e.g. If other subchunks are too far or if enough empty chunks have been searched through to advance earlier points.
  */
 public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterator<PoiRecord> {
     private final RegionBasedStorageSectionExtended<PoiSection> storage;
@@ -42,7 +42,16 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
     private final BlockPos origin;
 
     private int chunkIndex;
-    private double currChunkMinDistanceSq;
+    private double nextChunkMinDistanceSq;
+
+    private final int chunkYMin;
+    private final int adjustedY;
+    private final int clampedCenter;
+
+    private int upperBit;
+    private int lowerBit;
+    private double nextSubchunkMinDistanceSq;
+    private double lowestWaitingDistance;
     private int pointIndex;
     private final Comparator<? super SortedPointOfInterest> pointComparator;
 
@@ -59,12 +68,18 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
 
         this.chunkIndex = 0;
         this.pointIndex = 0;
+        this.upperBit = -1;
+        this.lowerBit = -1;
 
         this.points = new ArrayList<>();
         this.occupationStatus = status;
         this.typeSelector = typeSelector;
 
         this.origin = origin;
+        chunkYMin = this.storage.lithium$getChunkYMin();
+        adjustedY = this.origin.getY() - SectionPos.sectionToBlockCoord(chunkYMin);
+        clampedCenter = Math.max(SectionPos.blockToSectionCoord(this.origin.getY()), chunkYMin);
+
         if (useSquareDistanceLimit) {
             this.collector = (point) -> {
                 if (Distances.isWithinSquareRadius(this.origin, radius, point.getPos())) {
@@ -81,6 +96,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
         }
 
         double distanceLimitL2Sq = useSquareDistanceLimit ? radius * radius * 2 : radius * radius;
+        this.lowestWaitingDistance = Double.MAX_VALUE;
         this.chunksSortedByMinDistance = initChunkPositions(origin, radius, distanceLimitL2Sq);
         this.afterSortingPredicate = afterSortingPredicate;
         this.pointComparator = preferNegativeY ? (o1, o2) -> {
@@ -172,7 +188,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
             }
         }
 
-        // Find the next ordered chunk to scan for points
+        // While there are still chunks to check
         while (this.chunkIndex < this.chunksSortedByMinDistance.size()) {
             long chunkPos = this.chunksSortedByMinDistance.getLong(this.chunkIndex);
             int chunkPosX = ChunkPos.getX(chunkPos);
@@ -180,29 +196,74 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
 
             // Keep track of the guaranteed minimum distance of newly collected POI. We can only consume the closest
             // POI if we know that there will not be any other POI with a smaller distance.
-            this.currChunkMinDistanceSq = Distances.getMinChunkToBlockDistanceL2Sq(this.origin, chunkPosX, chunkPosZ);
-            this.chunkIndex++;
-            if (this.chunkIndex == this.chunksSortedByMinDistance.size()) {
-                this.currChunkMinDistanceSq = Double.POSITIVE_INFINITY;
+            double currChunkMinDistanceSq = Distances.getMinChunkToBlockDistanceL2Sq(this.origin, chunkPosX, chunkPosZ);
+            BitSet sectionsWithPOI = this.storage.lithium$getNonEmptyPOISections(chunkPosX, chunkPosZ);
+
+            // If current chunk is depleted, move onto the next chunk
+            if(this.upperBit == -1 && this.lowerBit == -1) {
+                this.chunkIndex++;
+                if (this.chunkIndex == this.chunksSortedByMinDistance.size()) {
+                    this.nextChunkMinDistanceSq = Double.POSITIVE_INFINITY;
+                } else {
+                    long next = this.chunksSortedByMinDistance.getLong(this.chunkIndex);
+                    this.nextChunkMinDistanceSq = Distances.getMinChunkToBlockDistanceL2Sq(this.origin, ChunkPos.getX(next), ChunkPos.getZ(next));
+                }
+
+                this.upperBit = sectionsWithPOI.nextSetBit(this.clampedCenter);
+                this.lowerBit = sectionsWithPOI.previousSetBit(this.clampedCenter-1);
             }
 
-            int previousSize = this.points.size();
-            // Collect all points in the chunk into the active list of points
-            for (PoiSection set : this.storage.lithium$getInChunkColumn(chunkPosX, chunkPosZ)) {
-                ((PointOfInterestSetExtended) set).lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector);
+            int upperDist = getDistance(this.upperBit);
+            int lowerDist = getDistance(this.lowerBit);
+
+            //While there are still more subchunks with POIs
+            //Picks the subchunk closest to origin Y level wise first - allows optimal portal links to finish faster
+            int nextBit;
+            while (this.upperBit >= 0 || this.lowerBit >= 0) {
+                if(upperDist < lowerDist){
+                    nextBit = this.upperBit;
+                    this.upperBit = this.upperBit == -1 ? this.upperBit : sectionsWithPOI.nextSetBit(this.upperBit+1);
+                    upperDist = getDistance(this.upperBit);
+                }else{
+                    nextBit = this.lowerBit;
+                    this.lowerBit = this.lowerBit == -1 ? this.lowerBit : sectionsWithPOI.previousSetBit(this.lowerBit-1);
+                    lowerDist = getDistance(this.lowerBit);
+                }
+
+                //Compute distance to next nearest subchunk
+                int nextClosestDist = Math.min(upperDist,lowerDist);
+                this.nextSubchunkMinDistanceSq = nextClosestDist == Integer.MAX_VALUE ?
+                        Double.MAX_VALUE : nextClosestDist * nextClosestDist + currChunkMinDistanceSq;
+
+                int previousSize = this.points.size();
+
+                //Collect all points in the subchunk
+                this.storage.lithium$getElementAt(
+                        SectionPos.asLong(chunkPosX, nextBit + chunkYMin,chunkPosZ))
+                        .ifPresent(section -> ((PointOfInterestSetExtended) section)
+                                .lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector));
+
+                // If no points were found in this chunk, skip it early and move on
+                if (this.points.size() == previousSize) {
+                    continue;
+                }
+
+                this.points.subList(this.pointIndex, this.points.size()).sort(this.pointComparator);
+
+                // Return the first point in the chunk
+                if (this.tryAdvancePoint(action)) {
+                    return true; //Returns true when progress was made by consuming an element
+                }
+
             }
 
-            // If no points were found in this chunk, skip it early and move on
-            if (this.points.size() == previousSize) {
-                continue;
+            // Previous logic only tried advancing on next chunk with POIs. However, it is possible for many chunks to be
+            // empty. The below allows for the stream to advance early if enough empty chunks have passed that there are
+            // no longer any chunks with possibly closer POIs.
+            if(this.lowestWaitingDistance < this.minimumNextPOIDistance()){
+                return this.tryAdvancePoint(action);
             }
 
-            this.points.subList(this.pointIndex, this.points.size()).sort(this.pointComparator);
-
-            // Return the first point in the chunk
-            if (this.tryAdvancePoint(action)) {
-                return true; //Returns true when progress was made by consuming an element
-            }
         }
 
         // Return the first valid point
@@ -211,13 +272,13 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
         //Returns false when no progress was made because no more elements exist.
     }
 
-
     private boolean tryAdvancePoint(Consumer<? super PoiRecord> action) {
         while (this.pointIndex < this.points.size()) {
             SortedPointOfInterest next = this.points.get(this.pointIndex);
 
-            //Only consume points if we are sure that there are no closer (or same distance) points to be scanned. Otherwise scan more chunks
-            if (next.distanceSq() >= this.currChunkMinDistanceSq) {
+            //Only consume points if we are sure that there are no closer (or same distance) points to be scanned.
+            if (next.distanceSq() >= this.minimumNextPOIDistance()) {
+                this.lowestWaitingDistance = next.distanceSq();
                 return false;
             }
             this.pointIndex++;
@@ -229,6 +290,18 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
             //Continue with the other points when condition is not met
         }
         return false; //No more points. Scan more chunks
+    }
+
+    private int getDistance(int sectionIndex){
+        int sectionMin = sectionIndex << 4;
+        return sectionIndex == -1 ? Integer.MAX_VALUE :
+                Math.abs(Mth.clamp(this.adjustedY, sectionMin, sectionMin+15) - this.adjustedY);
+    }
+
+    //Minimum distance of an un-scanned POI is the minimum of remaining to the closest remaining subchunk and the
+    //next closest chunk.
+    private double minimumNextPOIDistance(){
+        return Math.min(this.nextSubchunkMinDistanceSq, this.nextChunkMinDistanceSq);
     }
 
 }

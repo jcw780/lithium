@@ -7,8 +7,10 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.caffeinemc.mods.lithium.common.util.Pos;
 import net.caffeinemc.mods.lithium.common.util.collections.ListeningLong2ObjectOpenHashMap;
 import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
@@ -136,7 +138,6 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
         return () -> new AbstractIterator<>() {
             private int nextBit = sectionsWithPOI.nextSetBit(0);
 
-
             @Override
             protected R computeNext() {
                 // If the next bit is <0, that means that no remaining set bits exist
@@ -154,6 +155,21 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
                 return this.endOfData();
             }
         };
+    }
+
+    @Override
+    public Optional<R> lithium$getElementAt(long sectionPos){
+        return this.storage.get(sectionPos);
+    }
+
+    @Override
+    public int lithium$getChunkYMin(){
+        return Pos.SectionYCoord.getMinYSection(this.levelHeightAccessor);
+    }
+
+    @Override
+    public BitSet lithium$getNonEmptyPOISections(int chunkX, int chunkZ) {
+        return this.getNonEmptyPOISections(chunkX, chunkZ);
     }
 
     private BitSet getNonEmptyPOISections(int chunkX, int chunkZ) {
