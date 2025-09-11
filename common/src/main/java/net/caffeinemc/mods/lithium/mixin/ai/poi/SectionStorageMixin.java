@@ -179,4 +179,19 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
 
         return set;
     }
+
+    @Override
+    public Optional<R> lithium$getElementAt(long sectionPos){
+        return this.storage.get(sectionPos);
+    }
+
+    @Override
+    public int lithium$getChunkYMin(){
+        return Pos.SectionYCoord.getMinYSection(this.levelHeightAccessor);
+    }
+
+    @Override
+    public BitSet lithium$getNonEmptyPOISections(int chunkX, int chunkZ) {
+        return this.getNonEmptyPOISections(chunkX, chunkZ);
+    }
 }

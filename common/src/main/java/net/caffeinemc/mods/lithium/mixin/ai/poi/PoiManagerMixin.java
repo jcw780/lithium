@@ -6,6 +6,7 @@ import net.caffeinemc.mods.lithium.common.world.interests.PointOfInterestSetExte
 import net.caffeinemc.mods.lithium.common.world.interests.PointOfInterestStorageExtended;
 import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
 import net.caffeinemc.mods.lithium.common.world.interests.iterator.NearbyPointOfInterestStream;
+import net.caffeinemc.mods.lithium.common.world.interests.iterator.NearbyPointOfInterestStream2;
 import net.caffeinemc.mods.lithium.common.world.interests.iterator.SinglePointOfInterestTypeFilter;
 import net.caffeinemc.mods.lithium.common.world.interests.iterator.SphereChunkOrderedPoiSetSpliterator;
 import net.minecraft.core.BlockPos;
@@ -215,6 +216,6 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
         // noinspection unchecked
         RegionBasedStorageSectionExtended<PoiSection> storage = (RegionBasedStorageSectionExtended<PoiSection>) this;
 
-        return StreamSupport.stream(new NearbyPointOfInterestStream(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false);
+        return StreamSupport.stream(new NearbyPointOfInterestStream2(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false);
     }
 }
