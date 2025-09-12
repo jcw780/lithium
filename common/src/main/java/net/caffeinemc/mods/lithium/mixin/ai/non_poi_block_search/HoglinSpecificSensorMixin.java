@@ -6,7 +6,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.ai.sensing.HoglinSpecificSensor;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -23,6 +25,11 @@ public abstract class HoglinSpecificSensorMixin implements CheckAndCacheFindClos
     private Optional<BlockPos> lithium$findNearestRepellent(HoglinSpecificSensor instance, ServerLevel serverLevel,
                                                             Hoglin hoglin) {
         return cachedFindClosestMatch(serverLevel, hoglin, 8, 4,
-                blockState -> blockState.is(BlockTags.HOGLIN_REPELLENTS), true);
+                this::lithium$isValidRepellent, true);
+    }
+
+    @Unique
+    private boolean lithium$isValidRepellent(BlockState blockState){
+        return blockState.is(BlockTags.HOGLIN_REPELLENTS);
     }
 }

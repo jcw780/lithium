@@ -8,7 +8,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.sensing.PiglinSpecificSensor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CampfireBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -24,9 +26,12 @@ public abstract class PiglinSpecificSensorMixin implements CheckAndCacheFindClos
             target = "Lnet/minecraft/world/entity/ai/sensing/PiglinSpecificSensor;findNearestRepellent(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;)Ljava/util/Optional;"))
     public Optional<BlockPos> lithium$findNearestRepellent(ServerLevel serverLevel, LivingEntity livingEntity){
         return cachedFindClosestMatch(serverLevel, livingEntity, 8, 4,
-                (blockState) -> {
-            boolean bl = blockState.is(BlockTags.PIGLIN_REPELLENTS);
-            return bl && blockState.is(Blocks.SOUL_CAMPFIRE) ? CampfireBlock.isLitCampfire(blockState) : bl;
-        }, true);
+                this::lithium$isValidRepellent, true);
+    }
+
+    @Unique
+    private boolean lithium$isValidRepellent(BlockState blockState){
+        boolean bl = blockState.is(BlockTags.PIGLIN_REPELLENTS);
+        return bl && blockState.is(Blocks.SOUL_CAMPFIRE) ? CampfireBlock.isLitCampfire(blockState) : bl;
     }
 }
