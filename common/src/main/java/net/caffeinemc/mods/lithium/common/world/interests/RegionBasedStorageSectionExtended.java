@@ -25,5 +25,6 @@ public interface RegionBasedStorageSectionExtended<R> {
 
     BitSet lithium$getNonEmptyPOISections(int chunkX, int chunkZ);
     int lithium$getChunkYMin();
+    int lithium$getChunkYMaxInclusive();
     Optional<R> lithium$getElementAt(long sectionPos);
 }

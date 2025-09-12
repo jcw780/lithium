@@ -191,6 +191,11 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
     }
 
     @Override
+    public int lithium$getChunkYMaxInclusive(){
+        return Pos.SectionYCoord.getMaxYSectionInclusive(this.levelHeightAccessor);
+    }
+
+    @Override
     public BitSet lithium$getNonEmptyPOISections(int chunkX, int chunkZ) {
         return this.getNonEmptyPOISections(chunkX, chunkZ);
     }
