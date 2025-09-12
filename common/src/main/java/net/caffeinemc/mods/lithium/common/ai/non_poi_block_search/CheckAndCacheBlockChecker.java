@@ -1,8 +1,6 @@
 package net.caffeinemc.mods.lithium.common.ai.non_poi_block_search;
 
 import net.caffeinemc.mods.lithium.common.util.collections.FixedChunkAccessSectionStatusBuffer;
-import net.caffeinemc.mods.lithium.common.util.collections.fixed_contiguous_region.FixedChunkSectionBitset;
-import net.caffeinemc.mods.lithium.common.util.collections.fixed_contiguous_region.FixedChunkSectionBuffer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
