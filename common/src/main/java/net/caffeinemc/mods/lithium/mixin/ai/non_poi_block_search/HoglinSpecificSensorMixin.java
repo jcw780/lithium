@@ -22,7 +22,7 @@ import java.util.Optional;
 public abstract class HoglinSpecificSensorMixin implements CheckAndCacheFindClosestMatch {
     @Redirect(method = "doTick(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/monster/hoglin/Hoglin;)V",
     at= @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/sensing/HoglinSpecificSensor;findNearestRepellent(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/monster/hoglin/Hoglin;)Ljava/util/Optional;"))
-    private Optional<BlockPos> lithium$findNearestRepellent(HoglinSpecificSensor instance, ServerLevel serverLevel,
+    private Optional<BlockPos> redirectFindNearestRepellent(HoglinSpecificSensor instance, ServerLevel serverLevel,
                                                             Hoglin hoglin) {
         return cachedFindClosestMatch(serverLevel, hoglin, 8, 4,
                 this::lithium$isValidRepellent, true);

@@ -101,7 +101,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                                     && this.mob.isWithinHome(currentPos.set(x, y, z))
                                     && requiredBlock.test(levelChunkSection.getBlockState(
                                             x & 15, y & 15, z & 15))
-                                    && lithium$isValidTarget.test(chunkAccess, foundPos)) {
+                                    && lithium$isValidTarget.test(chunkAccess, currentPos)) {
                                 ringMax = ring;
                                 xMin = Math.max(center.getX()-ringMax, chunkBlockX);
                                 xMax = Math.min(center.getX()+ringMax, chunkBlockX+15);

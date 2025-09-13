@@ -1,13 +1,17 @@
 package net.caffeinemc.mods.lithium.mixin.ai.non_poi_block_search;
 
 import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.LithiumMoveToBlockGoal;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
 import net.minecraft.world.entity.ai.goal.RemoveBlockGoal;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -26,12 +30,20 @@ public abstract class RemoveBlockGoalMixin extends MoveToBlockGoal implements Li
     // Use cached ChunkAccess instead of getting it in isValidTarget since getting it is remarkably expensive
     @Redirect(method = "canUse",
     at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/goal/RemoveBlockGoal;findNearestBlock()Z"))
-    protected boolean findNearestBlock(RemoveBlockGoal removeBlockGoal) {
+    protected boolean redirectFindNearestBlock(RemoveBlockGoal removeBlockGoal) {
         return ((LithiumMoveToBlockGoal)removeBlockGoal).lithium$findNearestBlock(
-                (blockState) -> blockState.is(this.blockToRemove),
-                (chunkAccess, blockPos) ->
-                        chunkAccess.getBlockState(blockPos.above()).isAir()
-                        && chunkAccess.getBlockState(blockPos.above(2)).isAir()
+                this::lithium$isValidTargetBlock, this::lithium$isValidTargetAbove
         );
+    }
+
+    @Unique
+    private boolean lithium$isValidTargetBlock(BlockState blockState){
+        return blockState.is(this.blockToRemove);
+    }
+
+    @Unique
+    private boolean lithium$isValidTargetAbove(ChunkAccess chunkAccess, BlockPos blockPos){
+        return chunkAccess.getBlockState(blockPos.above()).isAir()
+                && chunkAccess.getBlockState(blockPos.above(2)).isAir();
     }
 }

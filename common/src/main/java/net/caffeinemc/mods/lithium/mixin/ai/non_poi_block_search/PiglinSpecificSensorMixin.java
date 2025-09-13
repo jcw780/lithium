@@ -24,7 +24,7 @@ import java.util.Optional;
 public abstract class PiglinSpecificSensorMixin implements CheckAndCacheFindClosestMatch {
     @Redirect(method = "doTick", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/entity/ai/sensing/PiglinSpecificSensor;findNearestRepellent(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;)Ljava/util/Optional;"))
-    public Optional<BlockPos> lithium$findNearestRepellent(ServerLevel serverLevel, LivingEntity livingEntity){
+    public Optional<BlockPos> redirectFindNearestRepellent(ServerLevel serverLevel, LivingEntity livingEntity){
         return cachedFindClosestMatch(serverLevel, livingEntity, 8, 4,
                 this::lithium$isValidRepellent, true);
     }
