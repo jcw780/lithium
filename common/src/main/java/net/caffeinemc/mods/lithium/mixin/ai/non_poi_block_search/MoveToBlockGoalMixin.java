@@ -18,15 +18,16 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
-import java.util.ArrayList;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
-/**[Vanilla Copy] - Search order is different, but should result in the same position
+/**
+ * [Vanilla Copy] - Search order is different, but should result in the same position
  * MoveToBlockGoal search is quite laggy if a lot of mobs are trying to start it - e.g. Portal Gold Farms
  * This is because the searched blocks are not POIs and the search range can be massive - 47x7x47 for zombies.
  * During this search both getChunk and getBlockState contribute a large portion of the lag.
- * - The current implementation optimizes it by caching the ChunkAccesses and by checking whether the ChunkSection
+ *
+ * The current implementation optimizes it by caching the ChunkAccesses and by checking whether the ChunkSection
  * has the target block using ChunkSection::maybeHas.
  * - If no ChunkSection in the search range has any target blocks, this check returns early.
  * Otherwise, the search will proceed on a layer by layer [same as vanilla] then ChunkSection basis if the

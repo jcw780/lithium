@@ -1,7 +1,6 @@
 package net.caffeinemc.mods.lithium.common.ai.non_poi_block_search;
 
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import net.caffeinemc.mods.lithium.common.util.collections.FixedChunkAccessSectionStatusBuffer;
+import net.caffeinemc.mods.lithium.common.util.collections.FixedChunkAccessSectionBitBuffer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
@@ -20,14 +19,14 @@ import java.util.function.Predicate;
  * may have the target and will chunk load then search them if and when it reaches it.
  */
 public class CheckAndCacheBlockChecker {
-    private final FixedChunkAccessSectionStatusBuffer chunkAccessSectionStatusBuffer;
+    private final FixedChunkAccessSectionBitBuffer chunkAccessSectionStatusBuffer;
     private final LevelReader levelReader;
     private final boolean shouldChunkLoad;
     private final Predicate<BlockState> blockStatePredicate;
 
     public CheckAndCacheBlockChecker(BlockPos start, BlockPos end, LevelReader levelReader,
                                      Predicate<BlockState> blockStatePredicate, boolean shouldChunkLoad){
-        this.chunkAccessSectionStatusBuffer = new FixedChunkAccessSectionStatusBuffer(start, end);
+        this.chunkAccessSectionStatusBuffer = new FixedChunkAccessSectionBitBuffer(start, end);
         this.levelReader = levelReader;
         this.shouldChunkLoad = shouldChunkLoad;
         this.blockStatePredicate = blockStatePredicate;
@@ -39,14 +38,14 @@ public class CheckAndCacheBlockChecker {
             //Never load chunks in the first pass to avoid observably altering chunk loading behavior
             ChunkAccess chunkAccess = levelReader.getChunk(x, z, ChunkStatus.FULL, false);
             if(chunkAccess != null){
-                this.chunkAccessSectionStatusBuffer.setChunkAccess(ChunkPos.asLong(x,z), chunkAccess);
-                for(int y: this.chunkAccessSectionStatusBuffer.getYSectionInRange()){
+                this.chunkAccessSectionStatusBuffer.setChunkAccess(chunkPos, chunkAccess);
+                for(int y: this.chunkAccessSectionStatusBuffer.getSectionYInRange()){
                     checkChunkSection(chunkAccess, x, y, z);
                 }
             } else if(this.shouldChunkLoad){
                 //If the search could chunk load, we cannot exclude null chunks because they may be loaded later
                 //So if the subchunk is inside build limit then it might be valid later
-                for(int y: this.chunkAccessSectionStatusBuffer.getYSectionInRange()){
+                for(int y: this.chunkAccessSectionStatusBuffer.getSectionYInRange()){
                     this.chunkAccessSectionStatusBuffer.setChunkSectionStatus(SectionPos.asLong(x, y, z),
                             !levelReader.isOutsideBuildHeight(SectionPos.sectionToBlockCoord(y)));
                 }
@@ -82,7 +81,9 @@ public class CheckAndCacheBlockChecker {
             //this chunkAccess cannot be null and reach here because it should throw earlier
             assert chunkAccess != null;
             this.chunkAccessSectionStatusBuffer.setChunkAccess(blockPos, chunkAccess);
-            if (!checkChunkSection(chunkAccess, chunkX, chunkY, chunkZ)) return false;
+            if (!checkChunkSection(chunkAccess, chunkX, chunkY, chunkZ)) {
+                return false;
+            }
         }
 
         return blockStatePredicate.test(chunkAccess.getBlockState(blockPos));

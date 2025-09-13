@@ -14,14 +14,14 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 
-public class FixedChunkAccessSectionStatusBuffer {
+public class FixedChunkAccessSectionBitBuffer {
     public final int xMin, yMin, zMin;
-    public final int xLength, yLength, zLength, length;
+    public final int xLength, yLength, zLength, chunkLength, sectionLength;
 
     public final BitSet chunkSectionStatus;
     public final ArrayList<ChunkAccess> chunkAccesses;
 
-    public FixedChunkAccessSectionStatusBuffer(int x0, int x1, int y0, int y1, int z0, int z1){
+    public FixedChunkAccessSectionBitBuffer(int x0, int x1, int y0, int y1, int z0, int z1){
         this.xMin = Math.min(x0, x1);
         this.yMin = Math.min(y0, y1);
         this.zMin = Math.min(z0, z1);
@@ -30,13 +30,14 @@ public class FixedChunkAccessSectionStatusBuffer {
         this.yLength = Math.max(y0, y1) - this.yMin + 1;
         this.zLength = Math.max(z0, z1) - this.zMin + 1;
 
-        this.length = yLength*xLength*zLength;
+        this.chunkLength = xLength*zLength;
+        this.sectionLength = yLength*xLength*zLength;
 
-        this.chunkSectionStatus = new BitSet(length);
+        this.chunkSectionStatus = new BitSet(sectionLength);
         this.chunkAccesses = new ArrayList<>(Collections.nCopies(xLength*zLength,null));
     }
 
-    public FixedChunkAccessSectionStatusBuffer(BlockPos start, BlockPos end){
+    public FixedChunkAccessSectionBitBuffer(BlockPos start, BlockPos end){
         this(SectionPos.blockToSectionCoord(start.getX()),
                 SectionPos.blockToSectionCoord(end.getX()),
                 SectionPos.blockToSectionCoord(start.getY()),
@@ -141,16 +142,16 @@ public class FixedChunkAccessSectionStatusBuffer {
         };
     }
 
-    public IntIterable getYSectionInRange(){
+    public IntIterable getSectionYInRange(){
         return new IntIterable(){
             @Override
             public @NotNull IntIterator iterator(){
-                return getYSectionInRangeIterator();
+                return getSectionYInRangeIterator();
             }
         };
     }
 
-    public IntIterator getYSectionInRangeIterator(){
+    public IntIterator getSectionYInRangeIterator(){
         final int yMin = this.yMin;
         final int yLimit = yMin + this.yLength;
         return new IntIterator(){
@@ -158,9 +159,7 @@ public class FixedChunkAccessSectionStatusBuffer {
 
             @Override
             public int nextInt(){
-                final int result = y;
-                y++;
-                return y;
+                return y++;
             }
 
             @Override
