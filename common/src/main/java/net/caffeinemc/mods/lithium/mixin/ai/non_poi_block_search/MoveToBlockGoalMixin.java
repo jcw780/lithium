@@ -1,5 +1,6 @@
 package net.caffeinemc.mods.lithium.mixin.ai.non_poi_block_search;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.LithiumMoveToBlockGoal;
 import net.caffeinemc.mods.lithium.common.util.collections.fixed_contiguous_region.FixedChunkSectionBuffer;
 import net.minecraft.core.BlockPos;
@@ -67,7 +68,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         FixedChunkSectionBuffer<Integer> chunkSectionsMinimumDistance = new FixedChunkSectionBuffer<>(Integer.MAX_VALUE,
                 corner0, corner1);
 
-        ArrayList<Long> chunksToIterate = this.initializeChunkSections(center, this.mob.level(), requiredBlock,
+        LongArrayList chunksToIterate = this.initializeChunkSections(center, this.mob.level(), requiredBlock,
                 chunkAccesses, chunkSectionsMinimumDistance);
 
         if(chunksToIterate.isEmpty()) return false; //No chunks with the target block - return early
@@ -124,11 +125,11 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
     }
 
     @Unique
-    private ArrayList<Long> initializeChunkSections(BlockPos center, LevelReader levelReader,
+    private LongArrayList initializeChunkSections(BlockPos center, LevelReader levelReader,
                                                     Predicate<BlockState> requiredBlock,
                                                     FixedChunkSectionBuffer<ChunkAccess> chunkAccesses,
                                                     FixedChunkSectionBuffer<Integer> chunkSectionsMinimumDistance){
-        ArrayList<Long> chunksToIterate = new ArrayList<>(chunkAccesses.length);
+        LongArrayList chunksToIterate = new LongArrayList(chunkAccesses.length);
         int xLimit = chunkAccesses.xMin+chunkAccesses.xLength;
         int zLimit = chunkAccesses.zMin+chunkAccesses.zLength;
         for(int x=chunkAccesses.xMin; x<xLimit; x++){

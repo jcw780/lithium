@@ -1,9 +1,14 @@
 package net.caffeinemc.mods.lithium.common.util.collections;
 
+import it.unimi.dsi.fastutil.ints.IntIterable;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.longs.LongIterable;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -98,4 +103,71 @@ public class FixedChunkAccessSectionStatusBuffer {
     public boolean hasTrueChunkSections(){
         return this.chunkSectionStatus.nextSetBit(0) == -1;
     }
+
+    public LongIterable getChunkPosInRange(){
+        return new LongIterable(){
+            @Override
+            public @NotNull LongIterator iterator(){
+                return getChunkPosInRangeIterator();
+            }
+        };
+    }
+
+    public LongIterator getChunkPosInRangeIterator(){
+        final int xMin = this.xMin;
+        final int xMax = this.xMin + this.xLength - 1;
+        final int zMin = this.zMin;
+        final int zMax = this.zMin + this.zLength - 1;
+        return new LongIterator(){
+            int x = xMin;
+            int z = zMin;
+
+            @Override
+            public long nextLong (){
+                long result = ChunkPos.asLong(x, z);
+                if(z < zMax){
+                    z++;
+                } else {
+                    z = zMin;
+                    x++;
+                }
+                return result;
+            }
+
+            @Override
+            public boolean hasNext(){
+                return x <= xMax;
+            }
+        };
+    }
+
+    public IntIterable getYSectionInRange(){
+        return new IntIterable(){
+            @Override
+            public @NotNull IntIterator iterator(){
+                return getYSectionInRangeIterator();
+            }
+        };
+    }
+
+    public IntIterator getYSectionInRangeIterator(){
+        final int yMin = this.yMin;
+        final int yLimit = yMin + this.yLength;
+        return new IntIterator(){
+            int y = yMin;
+
+            @Override
+            public int nextInt(){
+                final int result = y;
+                y++;
+                return y;
+            }
+
+            @Override
+            public boolean hasNext(){
+                return y < yLimit;
+            }
+        };
+    }
+
 }

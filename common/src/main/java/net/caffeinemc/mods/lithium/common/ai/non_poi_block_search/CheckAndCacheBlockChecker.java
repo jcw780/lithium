@@ -1,5 +1,6 @@
 package net.caffeinemc.mods.lithium.common.ai.non_poi_block_search;
 
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.caffeinemc.mods.lithium.common.util.collections.FixedChunkAccessSectionStatusBuffer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -19,8 +20,6 @@ import java.util.function.Predicate;
  * may have the target and will chunk load then search them if and when it reaches it.
  */
 public class CheckAndCacheBlockChecker {
-    //FixedChunkSectionBuffer<ChunkAccess> chunkAccesses;
-    //FixedChunkSectionBitset possibleChunkSections;
     private final FixedChunkAccessSectionStatusBuffer chunkAccessSectionStatusBuffer;
     private final LevelReader levelReader;
     private final boolean shouldChunkLoad;
@@ -28,38 +27,28 @@ public class CheckAndCacheBlockChecker {
 
     public CheckAndCacheBlockChecker(BlockPos start, BlockPos end, LevelReader levelReader,
                                      Predicate<BlockState> blockStatePredicate, boolean shouldChunkLoad){
-        /*this.chunkAccesses = new FixedChunkSectionBuffer<>(null, start.offset(0,-start.getY(),0),
-                end.offset(0,-end.getY(),0));
-        this.possibleChunkSections = new FixedChunkSectionBitset(start, end);*/
         this.chunkAccessSectionStatusBuffer = new FixedChunkAccessSectionStatusBuffer(start, end);
         this.levelReader = levelReader;
         this.shouldChunkLoad = shouldChunkLoad;
         this.blockStatePredicate = blockStatePredicate;
 
-        final int xMin = this.chunkAccessSectionStatusBuffer.xMin;
-        final int xLimit = xMin+this.chunkAccessSectionStatusBuffer.xLength;
-        final int zMin = this.chunkAccessSectionStatusBuffer.zMin;
-        final int zLimit = zMin+this.chunkAccessSectionStatusBuffer.zLength;
-        final int yMin = this.chunkAccessSectionStatusBuffer.yMin;
-        final int yMax = yMin+this.chunkAccessSectionStatusBuffer.yLength;
-        for(int x=xMin; x<xLimit; x++) {
-            for (int z = zMin; z < zLimit; z++) {
-                //Never load chunks in the first pass to avoid observably altering chunk loading behavior
-                ChunkAccess chunkAccess = levelReader.getChunk(x, z, ChunkStatus.FULL, false);
-                if(chunkAccess != null){
-                    this.chunkAccessSectionStatusBuffer.setChunkAccess(ChunkPos.asLong(x,z), chunkAccess);
-                    for(int y=yMin; y<yMax; y++){
-                        checkChunkSection(chunkAccess, x, y, z);
-                    }
-                } else if(this.shouldChunkLoad){
-                    //If the search could chunk load, we cannot exclude null chunks because they may be loaded later
-                    //So if the subchunk is inside build limit then it might be valid later
-                    for(int y=yMin; y<yMax; y++){
-                        /*this.possibleChunkSections.set(x, y, z,
-                                !levelReader.isOutsideBuildHeight(SectionPos.sectionToBlockCoord(y)));*/
-                        this.chunkAccessSectionStatusBuffer.setChunkSectionStatus(SectionPos.asLong(x, y, z),
-                                !levelReader.isOutsideBuildHeight(SectionPos.sectionToBlockCoord(y)));
-                    }
+        for (long chunkPos : this.chunkAccessSectionStatusBuffer.getChunkPosInRange()){
+            int x = ChunkPos.getX(chunkPos);
+            int z = ChunkPos.getZ(chunkPos);
+
+            //Never load chunks in the first pass to avoid observably altering chunk loading behavior
+            ChunkAccess chunkAccess = levelReader.getChunk(x, z, ChunkStatus.FULL, false);
+            if(chunkAccess != null){
+                this.chunkAccessSectionStatusBuffer.setChunkAccess(ChunkPos.asLong(x,z), chunkAccess);
+                for(int y: this.chunkAccessSectionStatusBuffer.getYSectionInRange()){
+                    checkChunkSection(chunkAccess, x, y, z);
+                }
+            } else if(this.shouldChunkLoad){
+                //If the search could chunk load, we cannot exclude null chunks because they may be loaded later
+                //So if the subchunk is inside build limit then it might be valid later
+                for(int y: this.chunkAccessSectionStatusBuffer.getYSectionInRange()){
+                    this.chunkAccessSectionStatusBuffer.setChunkSectionStatus(SectionPos.asLong(x, y, z),
+                            !levelReader.isOutsideBuildHeight(SectionPos.sectionToBlockCoord(y)));
                 }
             }
         }
