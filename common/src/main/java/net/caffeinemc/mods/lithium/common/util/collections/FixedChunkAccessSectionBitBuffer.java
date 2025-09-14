@@ -36,14 +36,14 @@ public class FixedChunkAccessSectionBitBuffer {
         this.chunkSectionBits = new BitSet(sectionLength);
         this.chunkAccesses = new ArrayList<>(Collections.nCopies(xLength*zLength,null));
     }
-
-    public FixedChunkAccessSectionBitBuffer(BlockPos start, BlockPos end){
-        this(SectionPos.blockToSectionCoord(start.getX()),
-                SectionPos.blockToSectionCoord(end.getX()),
-                SectionPos.blockToSectionCoord(start.getY()),
-                SectionPos.blockToSectionCoord(end.getY()),
-                SectionPos.blockToSectionCoord(start.getZ()),
-                SectionPos.blockToSectionCoord(end.getZ()));
+    
+    public FixedChunkAccessSectionBitBuffer(BlockPos center, int horizontalRangeInclusive, int verticalRangeInclusive){
+        this(SectionPos.blockToSectionCoord(center.getX() - horizontalRangeInclusive),
+                SectionPos.blockToSectionCoord(center.getX() + horizontalRangeInclusive),
+                SectionPos.blockToSectionCoord(center.getY() - verticalRangeInclusive),
+                SectionPos.blockToSectionCoord(center.getY() + verticalRangeInclusive),
+                SectionPos.blockToSectionCoord(center.getZ() - horizontalRangeInclusive),
+                SectionPos.blockToSectionCoord(center.getZ()) + horizontalRangeInclusive);
     }
 
     public int getSectionIndex(int x, int y, int z){

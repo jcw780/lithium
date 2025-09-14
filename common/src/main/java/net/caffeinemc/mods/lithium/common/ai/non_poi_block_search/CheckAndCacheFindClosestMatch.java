@@ -15,10 +15,10 @@ public interface CheckAndCacheFindClosestMatch {
                                                       boolean shouldChunkLoad){
         BlockPos mobPos = livingEntity.blockPosition();
         CheckAndCacheBlockChecker checker = new CheckAndCacheBlockChecker(
-                mobPos.offset(-horizontalRange,-verticalRange,-horizontalRange),
-                mobPos.offset(horizontalRange,verticalRange,horizontalRange),
-                levelReader, blockStatePredicate, shouldChunkLoad);
-        if(checker.shouldStop()) return Optional.empty();
+                mobPos, horizontalRange, verticalRange, levelReader, blockStatePredicate, shouldChunkLoad);
+        if(checker.shouldStop()) {
+            return Optional.empty();
+        }
         return BlockPos.findClosestMatch(mobPos, horizontalRange, verticalRange, checker::checkPosition);
     }
 }

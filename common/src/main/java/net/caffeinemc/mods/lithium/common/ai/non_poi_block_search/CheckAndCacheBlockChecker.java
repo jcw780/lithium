@@ -12,8 +12,10 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 
 import java.util.function.Predicate;
 
-/**This is intended to be used to optimize Non-POI block searches by pre-checking the ChunkSections, getting the
+/**
+ * This is intended to be used to optimize Non-POI block searches by pre-checking the ChunkSections, getting the
  * ChunkAccesses which then allows for returning early or only calling getBlockState in possible ChunkSections.
+ * <p>
  * Note: Please correctly specify shouldChunkLoad based on whether the getBlockState in vanilla can chunk load or not.
  * The default in game is that it can. Setting it to true will mean that the search will assume that unloaded chunks
  * may have the target and will chunk load then search them if and when it reaches it.
@@ -24,9 +26,9 @@ public class CheckAndCacheBlockChecker {
     private final boolean shouldChunkLoad;
     private final Predicate<BlockState> blockStatePredicate;
 
-    public CheckAndCacheBlockChecker(BlockPos start, BlockPos end, LevelReader levelReader,
+    public CheckAndCacheBlockChecker(BlockPos origin, int horizontalRangeInclusive, int verticalRangeInclusive, LevelReader levelReader,
                                      Predicate<BlockState> blockStatePredicate, boolean shouldChunkLoad){
-        this.chunkAccessSectionStatusBuffer = new FixedChunkAccessSectionBitBuffer(start, end);
+        this.chunkAccessSectionStatusBuffer = new FixedChunkAccessSectionBitBuffer(origin, horizontalRangeInclusive, verticalRangeInclusive);
         this.levelReader = levelReader;
         this.shouldChunkLoad = shouldChunkLoad;
         this.blockStatePredicate = blockStatePredicate;

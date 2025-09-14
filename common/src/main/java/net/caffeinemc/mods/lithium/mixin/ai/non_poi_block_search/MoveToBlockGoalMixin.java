@@ -58,12 +58,9 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         BlockPos center = this.mob.blockPosition().offset(0,-1,0);
 
         //Range is +-(searchRange - 1), +-verticalSearchRange, +-(searchRange - 1)
-        BlockPos corner0 = center.offset(-this.searchRange+1, -this.verticalSearchRange, -this.searchRange+1);
-        BlockPos corner1 = center.offset(this.searchRange-1, this.verticalSearchRange, this.searchRange-1);
-
         //Cache ChunkAccesses - getting them is surprisingly expensive - and track whether subchunks have the block
         final FixedChunkAccessSectionBitBuffer chunkAccessSectionBitBuffer =
-                new FixedChunkAccessSectionBitBuffer(corner0, corner1);
+                new FixedChunkAccessSectionBitBuffer(center, this.searchRange-1, this.verticalSearchRange);
         LongArrayList chunksToIterate = new LongArrayList(chunkAccessSectionBitBuffer.chunkLength);
         final LevelReader levelReader = this.mob.level();
         final int minSectionY = levelReader.getMinSectionY();
