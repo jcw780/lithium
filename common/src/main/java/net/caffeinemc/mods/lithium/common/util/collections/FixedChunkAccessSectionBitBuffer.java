@@ -70,6 +70,10 @@ public class FixedChunkAccessSectionBitBuffer {
         return this.chunkSectionStatus.get(this.getSectionIndex(sectionPos));
     }
 
+    public boolean getChunkSectionStatus(int x, int y, int z){
+        return this.chunkSectionStatus.get(this.getSectionIndex(x, y, z));
+    }
+
     public void setChunkSectionStatus(long sectionPos, boolean value){
         this.chunkSectionStatus.set(this.getSectionIndex(sectionPos));
     }
