@@ -8,6 +8,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+/**
+ * Uses CheckAndCacheBlockChecker to improve findClosestMatch search
+ * [Vanilla Copy] search order and chunk-loading - even though the latter is unlikely to be observable in vanilla.
+ */
 public interface CheckAndCacheFindClosestMatch {
     default Optional<BlockPos> cachedFindClosestMatch(LevelReader levelReader, LivingEntity livingEntity,
                                                       int horizontalRange, int verticalRange,

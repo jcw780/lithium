@@ -19,6 +19,7 @@ import java.util.function.Predicate;
  * Note: Please correctly specify shouldChunkLoad based on whether the getBlockState in vanilla can chunk load or not.
  * The default in game is that it can. Setting it to true will mean that the search will assume that unloaded chunks
  * may have the target and will chunk load then search them if and when it reaches it.
+ * @author jcw780
  */
 public class CheckAndCacheBlockChecker {
     private final FixedChunkAccessSectionBitBuffer chunkAccessSectionStatusBuffer;

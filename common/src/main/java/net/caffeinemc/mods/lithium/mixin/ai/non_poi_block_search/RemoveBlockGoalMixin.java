@@ -26,8 +26,6 @@ public abstract class RemoveBlockGoalMixin extends MoveToBlockGoal implements Li
         super(pathfinderMob, d, i);
     }
 
-    // Trim down isValidTarget equivalent because the block is already checked in lithium$findNearestBlock
-    // Use cached ChunkAccess instead of getting it in isValidTarget since getting it is remarkably expensive
     @Redirect(method = "canUse",
     at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/goal/RemoveBlockGoal;findNearestBlock()Z"))
     protected boolean redirectFindNearestBlock(RemoveBlockGoal removeBlockGoal) {
@@ -36,6 +34,7 @@ public abstract class RemoveBlockGoalMixin extends MoveToBlockGoal implements Li
         );
     }
 
+    //Split check condition in order to use maybeHas
     @Unique
     private boolean lithium$isValidTargetBlock(BlockState blockState){
         return blockState.is(this.blockToRemove);

@@ -43,7 +43,8 @@ public class FixedChunkAccessSectionBitBuffer {
                 SectionPos.blockToSectionCoord(center.getY() - verticalRangeInclusive),
                 SectionPos.blockToSectionCoord(center.getY() + verticalRangeInclusive),
                 SectionPos.blockToSectionCoord(center.getZ() - horizontalRangeInclusive),
-                SectionPos.blockToSectionCoord(center.getZ()) + horizontalRangeInclusive);
+                SectionPos.blockToSectionCoord(center.getZ() + horizontalRangeInclusive)
+        );
     }
 
     public int getSectionIndex(int x, int y, int z){

@@ -18,7 +18,6 @@ import java.util.Optional;
 
 /** [Vanilla Copy]
  *  Optimizes Piglin repellent search.
- *  Note: Search may chunk load in unusual circumstances - must maintain behavior
  */
 @Mixin(PiglinSpecificSensor.class)
 public abstract class PiglinSpecificSensorMixin implements CheckAndCacheFindClosestMatch {

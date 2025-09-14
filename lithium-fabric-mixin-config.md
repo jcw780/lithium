@@ -22,7 +22,7 @@ Mob AI optimizations
   
 ### `mixin.ai.non_poi_block_search`
 (default: `true`)  
-Large Non-POI block search optimization
+Optimizes Non-POI block search using maybeHas to return early or reduce block searches
   
 ### `mixin.ai.pathing`
 (default: `true`)  

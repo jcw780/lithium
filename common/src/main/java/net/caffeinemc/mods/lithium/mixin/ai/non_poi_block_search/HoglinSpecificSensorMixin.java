@@ -16,7 +16,6 @@ import java.util.Optional;
 
 /** [Vanilla Copy]
  *  Optimizes Hoglin repellent search.
- *  Note: Search may chunk load in unusual circumstances - must maintain behavior
  */
 @Mixin(HoglinSpecificSensor.class)
 public abstract class HoglinSpecificSensorMixin implements CheckAndCacheFindClosestMatch {

@@ -33,7 +33,10 @@ import java.util.function.Predicate;
  * ChunkSection has the target block.
  * - Note: If ChunkSections in the search range have A LOT of different blockStates and all ChunkSections have *had*
  * turtle eggs but the eggs are not in the search there may not be much of a benefit or even possible regression.
- * - Also note: The search implemented here will only be vanilla for non-chunk loading searches - e.g. RemoveBlockGoal
+ * - Also note: The search implemented here assumes that the search will never chunk-load - e.g. RemoveBlockGoal
+ * While unlikely to be an issue in vanilla, one might need to careful about using this for other searches if
+ * the search ranges may be modified.
+ * @author jcw780
  */
 @Mixin(MoveToBlockGoal.class)
 public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
