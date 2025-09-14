@@ -53,6 +53,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
     @Shadow
     protected BlockPos blockPos;
 
+    @Override
     public boolean lithium$findNearestBlock(Predicate<BlockState> requiredBlock, BiPredicate<ChunkAccess,
             BlockPos> lithium$isValidTarget) {
         //Center of the search starts 1 block below the mob's block position
@@ -123,7 +124,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                 final int chunkZ = ChunkPos.getZ(chunkPos);
 
                 //Current subchunk doesn't have the block
-                if(!chunkAccessSectionBitBuffer.getChunkSectionStatus(chunkX, chunkY, chunkZ)){
+                if(!chunkAccessSectionBitBuffer.getChunkSectionBit(chunkX, chunkY, chunkZ)){
                     continue;
                 }
 

@@ -18,7 +18,7 @@ public class FixedChunkAccessSectionBitBuffer {
     public final int xMin, yMin, zMin;
     public final int xLength, yLength, zLength, chunkLength, sectionLength;
 
-    public final BitSet chunkSectionStatus;
+    public final BitSet chunkSectionBits;
     public final ArrayList<ChunkAccess> chunkAccesses;
 
     public FixedChunkAccessSectionBitBuffer(int x0, int x1, int y0, int y1, int z0, int z1){
@@ -33,7 +33,7 @@ public class FixedChunkAccessSectionBitBuffer {
         this.chunkLength = xLength*zLength;
         this.sectionLength = yLength*xLength*zLength;
 
-        this.chunkSectionStatus = new BitSet(sectionLength);
+        this.chunkSectionBits = new BitSet(sectionLength);
         this.chunkAccesses = new ArrayList<>(Collections.nCopies(xLength*zLength,null));
     }
 
@@ -62,20 +62,20 @@ public class FixedChunkAccessSectionBitBuffer {
         );
     }
 
-    public boolean getChunkSectionStatus(BlockPos blockPos){
-        return this.getChunkSectionStatus(SectionPos.blockToSection(blockPos.asLong()));
+    public boolean getChunkSectionBit(BlockPos blockPos){
+        return this.getChunkSectionBit(SectionPos.blockToSection(blockPos.asLong()));
     }
 
-    public boolean getChunkSectionStatus(long sectionPos){
-        return this.chunkSectionStatus.get(this.getSectionIndex(sectionPos));
+    public boolean getChunkSectionBit(long sectionPos){
+        return this.chunkSectionBits.get(this.getSectionIndex(sectionPos));
     }
 
-    public boolean getChunkSectionStatus(int x, int y, int z){
-        return this.chunkSectionStatus.get(this.getSectionIndex(x, y, z));
+    public boolean getChunkSectionBit(int x, int y, int z){
+        return this.chunkSectionBits.get(this.getSectionIndex(x, y, z));
     }
 
     public void setChunkSectionStatus(long sectionPos, boolean value){
-        this.chunkSectionStatus.set(this.getSectionIndex(sectionPos));
+        this.chunkSectionBits.set(this.getSectionIndex(sectionPos));
     }
 
     public int getChunkIndex(int x, int z){
@@ -106,7 +106,7 @@ public class FixedChunkAccessSectionBitBuffer {
     }
 
     public boolean hasTrueChunkSections(){
-        return this.chunkSectionStatus.nextSetBit(0) == -1;
+        return this.chunkSectionBits.nextSetBit(0) == -1;
     }
 
     public LongIterable getChunkPosInRange(){

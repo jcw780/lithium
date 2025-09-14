@@ -71,7 +71,7 @@ public class CheckAndCacheBlockChecker {
     }
 
     public boolean checkPosition(BlockPos blockPos){
-        if(!this.chunkAccessSectionStatusBuffer.getChunkSectionStatus(blockPos)) return false;
+        if(!this.chunkAccessSectionStatusBuffer.getChunkSectionBit(blockPos)) return false;
         ChunkAccess chunkAccess = this.chunkAccessSectionStatusBuffer.getChunkAccess(blockPos);
         if(chunkAccess == null && this.shouldChunkLoad){
             int chunkX = SectionPos.blockToSectionCoord(blockPos.getX());
