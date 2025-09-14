@@ -2,7 +2,7 @@ package net.caffeinemc.mods.lithium.mixin.ai.non_poi_block_search;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.LithiumMoveToBlockGoal;
-import net.caffeinemc.mods.lithium.common.util.Distances;
+import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.NonPOISearchDistances.MoveToBlockGoalDistances;
 import net.caffeinemc.mods.lithium.common.util.collections.FixedChunkAccessSectionBitBuffer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -17,7 +17,6 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -27,7 +26,6 @@ import java.util.function.Predicate;
  * MoveToBlockGoal search is quite laggy if a lot of mobs are trying to start it - e.g. Portal Gold Farms
  * This is because the searched blocks are not POIs and the search range can be massive - 47x7x47 for zombies.
  * During this search both getChunk and getBlockState contribute a large portion of the lag.
- *
  * The current implementation optimizes it by caching the ChunkAccesses and by checking whether the ChunkSection
  * has the target block using ChunkSection::maybeHas.
  * - If no ChunkSection in the search range has any target blocks, this check returns early.
@@ -101,8 +99,9 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         }
 
         //Sort chunks by closest possible relative distance
-        chunksToIterate.sort((chunkLong0, chunkLong1) -> getMinimumDistanceOfChunk(center, chunkLong0)
-                - getMinimumDistanceOfChunk(center, chunkLong1)
+        chunksToIterate.sort((chunkLong0, chunkLong1) ->
+                MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkLong0)
+                - MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkLong1)
         );
 
         if(chunksToIterate.isEmpty()) return false; //No chunks with the target block - return early
@@ -114,14 +113,13 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
             int closestFound = Integer.MAX_VALUE;
             int ringMax = this.searchRange-1;
             for(long chunkPos: chunksToIterate){
-                //No subsequent chunks can be closer since it's sorted
-                if(closestFound < this.getMinimumDistanceOfChunk(center, chunkPos)){
-                    break;
-                }
-
                 final int chunkX = ChunkPos.getX(chunkPos);
                 final int chunkY = SectionPos.blockToSectionCoord(y);
                 final int chunkZ = ChunkPos.getZ(chunkPos);
+                //No subsequent chunks can be closer since it's sorted
+                if(closestFound < MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkX, chunkZ)){
+                    break;
+                }
 
                 //Current subchunk doesn't have the block
                 if(!chunkAccessSectionBitBuffer.getChunkSectionBit(chunkX, chunkY, chunkZ)){
@@ -141,8 +139,8 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                     for(int x = xMin; x <= xMax; x++){
                         int dX = x - center.getX();
                         int dZ = z - center.getZ();
-                        int ring = this.getRing(dX, dZ);
-                        int currentDistance = this.getRelativeDistance(ring, dX, dZ);
+                        int ring = MoveToBlockGoalDistances.getRing(dX, dZ);
+                        int currentDistance = MoveToBlockGoalDistances.getRelativeDistance(ring, dX, dZ);
                         if (currentDistance < closestFound
                                 && this.mob.isWithinHome(currentPos.set(x, y, z))
                                 && requiredBlock.test(levelChunkSection.getBlockState(x & 15, y & 15, z & 15))
@@ -166,50 +164,4 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
 
         return false;
     }
-
-    @Unique
-    private int getMinimumDistanceOfChunk(BlockPos center, long chunkPos){
-        return this.getMinimumDistanceOfChunk(center, ChunkPos.getX(chunkPos), ChunkPos.getZ(chunkPos));
-    }
-
-    @Unique
-    private int getMinimumDistanceOfChunk(BlockPos center, int chunkX, int chunkZ){
-        long closest = Distances.getClosestPositionWithinChunk(center, chunkX, chunkZ);
-
-        int dX = BlockPos.getX(closest) - center.getX();
-        int dZ = BlockPos.getZ(closest) - center.getZ();
-
-        //This will always get the closest one due to the nature of the search
-        return this.getRelativeDistance(this.getRing(dX, dZ), dX, dZ);
-    }
-
-    @Unique
-    private int getRing(int dX, int dZ){
-        return Math.max(Math.abs(dX), Math.abs(dZ));
-    }
-
-    @Unique
-    private int getRelativeDistance(int ring, int dX, int dZ){
-        /** This is equivalent to:
-         * int ringX = Math.abs(dX) * 2 - Boolean.compare(dX > 0, false);
-         * int ringZ = Math.abs(dZ) * 2 - Boolean.compare(dZ > 0, false);
-         * return ring << 16 | ringX << 8 | ringZ;
-         *
-         * This works because the search prioritizes in order of:
-         * 1. The distance of y from the center - Not used
-         * 2. Whether y is - or + (- is closer) - Not used
-         * 3. The square ring that the block is in (outer is further)
-         * 4. The distance of x from the center
-         * 5. Whether x is - or + (- is closer)
-         * 6. The distance of z from the center
-         * 7. Whether z is - or + (- is closer)
-         *
-         * Note: The bit-packing only works for horizontal search ranges of <=128.
-         * You can convert to longs if you somehow exceed that, but also seriously consider POIs instead.
-         */
-        return (((Math.abs(dX) << 9) | (Math.abs(dZ) << 1))
-                - ((Boolean.compare(dX > 0, false) << 8) | (Boolean.compare(dZ > 0, false))))
-                | (ring << 16);
-    }
-
 }
