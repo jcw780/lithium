@@ -8,6 +8,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+/**
+ * Uses CheckAndCacheBlockChecker to improve findClosestMatch search
+ * [Vanilla Copy] search order and chunk-loading - even though the latter is unlikely to be observable in vanilla.
+ */
 public interface CheckAndCacheFindClosestMatch {
     default Optional<BlockPos> cachedFindClosestMatch(LevelReader levelReader, LivingEntity livingEntity,
                                                       int horizontalRange, int verticalRange,
@@ -15,10 +19,10 @@ public interface CheckAndCacheFindClosestMatch {
                                                       boolean shouldChunkLoad){
         BlockPos mobPos = livingEntity.blockPosition();
         CheckAndCacheBlockChecker checker = new CheckAndCacheBlockChecker(
-                mobPos.offset(-horizontalRange,-verticalRange,-horizontalRange),
-                mobPos.offset(horizontalRange,verticalRange,horizontalRange),
-                levelReader, blockStatePredicate, shouldChunkLoad);
-        if(checker.shouldStop()) return Optional.empty();
+                mobPos, horizontalRange, verticalRange, levelReader, blockStatePredicate, shouldChunkLoad);
+        if(checker.shouldStop()) {
+            return Optional.empty();
+        }
         return BlockPos.findClosestMatch(mobPos, horizontalRange, verticalRange, checker::checkPosition);
     }
 }
