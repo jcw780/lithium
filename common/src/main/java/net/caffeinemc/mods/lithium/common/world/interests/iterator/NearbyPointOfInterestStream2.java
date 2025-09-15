@@ -71,17 +71,22 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         this.origin = origin;
         this.originSubchunk = SectionPos.blockToSection(origin.asLong());
         this.chunkYMin = this.storage.lithium$getChunkYMin();
+
+        // If the origin is outside of build limit (e.g. 1.18+ overworld to nether portal teleport) in the target dimension,
+        // the min Y distance is not zero for a chunk.
         final int minChunkYDist = Math.clamp(
                 this.origin.getY(), SectionPos.sectionToBlockCoord(this.chunkYMin),
                 SectionPos.sectionToBlockCoord(this.storage.lithium$getChunkYMaxInclusive(), 15)) - this.origin.getY();
-
         this.minChunkYDistSq = minChunkYDist * minChunkYDist;
 
+        //Todo: Remove allocations from offsets
         long sectionCorner = SectionPos.blockToSection(origin.offset(radius, 0, radius).asLong());
         this.chunkCornerMax = ChunkPos.asLong(SectionPos.x(sectionCorner), SectionPos.z(sectionCorner));
         sectionCorner = SectionPos.blockToSection(origin.offset(-radius, 0, -radius).asLong());
         this.chunkCornerMin = ChunkPos.asLong(SectionPos.x(sectionCorner), SectionPos.z(sectionCorner));
 
+        // Chunk searches will expand in a concentric square rings around the origin
+        // Subchunks with POIs will be put into the priority queue to be searched when no more possible subchunks are closer
         this.ring = 0;
         int originSubchunkX = SectionPos.x(originSubchunk);
         int originSubchunkZ = SectionPos.z(originSubchunk);
@@ -90,7 +95,9 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                         Math.max(ChunkPos.getZ(chunkCornerMax) - originSubchunkZ, originSubchunkZ - ChunkPos.getZ(chunkCornerMin)));
         this.lowestWaitingDistance = Double.MAX_VALUE;
         this.subchunksToCheck = new LongHeapPriorityQueue(
-                (s0, s1) -> Double.compare(this.getSubChunkDistanceSq(s0), this.getSubChunkDistanceSq(s1)));
+                (s0, s1) -> Double.compare(Distances.getMinSubChunkDistanceSq(this.origin, s0),
+                        Distances.getMinSubChunkDistanceSq(this.origin, s1)
+                ));
 
         if (useSquareDistanceLimit) {
             this.collector = (point) -> {
@@ -179,6 +186,8 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
             }
 
             if (this.points.size() == previousSize) {
+                // Advance more aggressively - search may have already ensured that the next POI is closer even if it does
+                // not add more POIs.
                 if(this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()){
                     continue;
                 }
@@ -214,10 +223,15 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         }
         return false; //No more points. Scan more chunks
     }
-
+    /*
+     * Keep searching for POI subchunks in concentric square rings around the origin
+     * Continue if: There are more rings to scan.
+     * and the queue is either empty or the first subchunk is not closer than unchecked possible subchunks
+     */
     private void keepAddingRingsUntilSufficient(){
         while (this.ring <= this.ringMax && (this.subchunksToCheck.isEmpty() ||
-                this.getSubChunkDistanceSq(this.subchunksToCheck.firstLong()) >= this.getPotentialRingDistanceSq())){
+                Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck.firstLong()) >=
+                        this.getPotentialRingDistanceSq())){
             for (int x = 0; x <= this.ring + 1; x = x > 0 ? -x : 1 - x) {
                 int currentChunkX = SectionPos.x(this.originSubchunk) + x;
                 if(currentChunkX > ChunkPos.getX(this.chunkCornerMax) ||
@@ -231,8 +245,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                             currentChunkZ < ChunkPos.getZ(this.chunkCornerMin)){
                         continue;
                     }
-                    long currentChunk = ChunkPos.asLong(currentChunkX, currentChunkZ);
-                    if(this.distanceLimitL2Sq >= this.getChunkDistanceSq(currentChunk, false)){
+                    if(this.distanceLimitL2Sq >= Distances.getMinChunkToBlockDistanceL2Sq(this.origin, currentChunkX, currentChunkZ)){
                         BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
                         int nextBit = poiSections.nextSetBit(0);
                         while (nextBit >= 0){
@@ -249,34 +262,10 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         }
     }
 
-    private double getSubChunkDistanceSq(long sectionPos){
-        int distX = getDistanceOnAxis(SectionPos.x(sectionPos), this.origin.getX());
-        int distY = getDistanceOnAxis(SectionPos.y(sectionPos), this.origin.getY());
-        int distZ = getDistanceOnAxis(SectionPos.z(sectionPos), this.origin.getZ());
-
-        return distX * distX + distY * distY + distZ * distZ;
-    }
-
-    private double getChunkDistanceSq(long chunkPos, boolean addY){
-        int distX = getDistanceOnAxis(ChunkPos.getX(chunkPos), this.origin.getX());
-        int distZ = getDistanceOnAxis(ChunkPos.getZ(chunkPos), this.origin.getZ());
-        return distX * distX + distZ * distZ + (addY ? this.minChunkYDistSq : 0);
-    }
-
-    private int getDistanceOnAxis(int chunkMin, int chunkMax, int origin){
-        int closest = Math.clamp(origin,
-                SectionPos.sectionToBlockCoord(chunkMin),
-                SectionPos.sectionToBlockCoord(chunkMax, 15));
-        return closest - origin;
-    }
-
-    private int getDistanceOnAxis(int chunk, int origin){
-        return getDistanceOnAxis(chunk, chunk, origin);
-    }
-
+    // Minimum of the next [closest] subchunk in the queue or the closest potential unchecked chunks [next ring]
     private double getMinimumNextPotentialDistance(){
         return Math.min(this.subchunksToCheck.isEmpty() ?
-                        Double.MAX_VALUE : this.getSubChunkDistanceSq(this.subchunksToCheck.firstLong())
+                        Double.MAX_VALUE : Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck.firstLong())
                 , this.getPotentialRingDistanceSq());
     }
 

@@ -29,4 +29,41 @@ public class Distances {
     public static boolean isWithinCircleRadius(BlockPos origin, double radiusSq, BlockPos pos) {
         return origin.distSqr(pos) <= radiusSq;
     }
+
+    public static int getClosestAlongSectionAxis(int originAxis, int chunkMinAxis){
+        return Math.clamp(originAxis, chunkMinAxis, chunkMinAxis+15);
+    }
+
+    public static long getClosestPositionWithinChunk(BlockPos origin, int chunkX, int chunkZ){
+        int chunkMinX = SectionPos.sectionToBlockCoord(chunkX);
+        int chunkMinZ = SectionPos.sectionToBlockCoord(chunkZ);
+
+        return BlockPos.asLong(getClosestAlongSectionAxis(origin.getX(), chunkMinX),
+                origin.getY(), getClosestAlongSectionAxis(origin.getZ(), chunkMinZ));
+
+    }
+
+    public static double getMinSubChunkDistanceSq(BlockPos origin, long sectionPos){
+        return getMinSubChunkDistanceSq(origin, SectionPos.x(sectionPos), SectionPos.y(sectionPos), SectionPos.z(sectionPos));
+    }
+
+    public static double getMinSubChunkDistanceSq(BlockPos origin, int chunkX, int chunkY, int chunkZ){
+        int distX = getClosestAlongSectionAxis(origin.getX(), chunkX);
+        int distY = getClosestAlongSectionAxis(origin.getY(), chunkY);
+        int distZ = getClosestAlongSectionAxis(origin.getZ(), chunkZ);
+
+        return distX * distX + distY * distY + distZ * distZ;
+    }
+
+    public static long getClosestPositionWithinSubchunk(BlockPos origin, int chunkX, int chunkY, int chunkZ){
+        int chunkMinX = SectionPos.sectionToBlockCoord(chunkX);
+        int chunkMinY = SectionPos.sectionToBlockCoord(chunkY);
+        int chunkMinZ = SectionPos.sectionToBlockCoord(chunkZ);
+
+        return BlockPos.asLong(getClosestAlongSectionAxis(origin.getX(), chunkMinX),
+                getClosestAlongSectionAxis(origin.getY(), chunkMinY),
+                getClosestAlongSectionAxis(origin.getZ(), chunkMinZ));
+    }
+
+
 }
