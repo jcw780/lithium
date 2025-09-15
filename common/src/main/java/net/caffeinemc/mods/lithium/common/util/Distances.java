@@ -43,13 +43,4 @@ public class Distances {
 
     }
 
-    public static long getClosestPositionWithinSubchunk(BlockPos origin, int chunkX, int chunkY, int chunkZ){
-        int chunkMinX = SectionPos.sectionToBlockCoord(chunkX);
-        int chunkMinY = SectionPos.sectionToBlockCoord(chunkY);
-        int chunkMinZ = SectionPos.sectionToBlockCoord(chunkZ);
-
-        return BlockPos.asLong(getClosestAlongSectionAxis(origin.getX(), chunkMinX),
-                getClosestAlongSectionAxis(origin.getY(), chunkMinY),
-                getClosestAlongSectionAxis(origin.getZ(), chunkMinZ));
-    }
 }
