@@ -76,7 +76,7 @@ public class FixedChunkAccessSectionBitBuffer {
     }
 
     public void setChunkSectionStatus(long sectionPos, boolean value){
-        this.chunkSectionBits.set(this.getSectionIndex(sectionPos));
+        this.chunkSectionBits.set(this.getSectionIndex(sectionPos), value);
     }
 
     public int getChunkIndex(int x, int z){
@@ -106,7 +106,7 @@ public class FixedChunkAccessSectionBitBuffer {
         this.setChunkAccess(ChunkPos.asLong(blockPos), chunkAccess);
     }
 
-    public boolean hasTrueChunkSections(){
+    public boolean hasNoTrueChunkSections(){
         return this.chunkSectionBits.nextSetBit(0) == -1;
     }
 

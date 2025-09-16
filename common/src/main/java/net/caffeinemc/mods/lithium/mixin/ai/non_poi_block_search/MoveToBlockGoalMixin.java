@@ -28,14 +28,28 @@ import java.util.function.Predicate;
  * During this search both getChunk and getBlockState contribute a large portion of the lag.
  * The current implementation optimizes it by caching the ChunkAccesses and by checking whether the ChunkSection
  * has the target block using ChunkSection::maybeHas.
- * - If no ChunkSection in the search range has any target blocks, this check returns early.
- * Otherwise, the search will proceed on a layer by layer [same as vanilla] then ChunkSection basis if the
- * ChunkSection has the target block.
- * - Note: If ChunkSections in the search range have A LOT of different blockStates and all ChunkSections have *had*
+ * <p>
+ * Basic Logic:
+ * <p>
+ * - Prescan chunks and ChunkSections - cache the ChunkAccess and if a ChunkSection has the target block(s) then flag it.
+ * <p>
+ * - If no ChunkSection in the search range has any target block(s), then return early.
+ * <p>
+ * - Otherwise, the search will proceed on a layer by layer [same as vanilla] then ChunkSection basis if the
+ * ChunkSection has the target block - "empty" ChunkSections will not be iterated through.
+ * <p>
+ * Note: If ChunkSections in the search range have A LOT of different blockStates and all ChunkSections have *had*
  * turtle eggs but the eggs are not in the search there may not be much of a benefit or even possible regression.
- * - Also note: The search implemented here assumes that the search will never chunk-load - e.g. RemoveBlockGoal
+ * <p>
+ * Also note: The search implemented here assumes that the search will never chunk-load
+ * Currently the only goal that uses this new search pattern is RemoveBlockGoal which does not chunkload in vanilla MC.
  * While unlikely to be an issue in vanilla, one might need to careful about using this for other searches if
  * the search ranges may be modified.
+ * <p>
+ * If one were to optimize other related goals that may chunk load. One should check
+ * whether there are any unloaded chunks in the first pass through the chunks. If there are not, then use the
+ * optimized search pattern here. If there are, then use the vanilla search pattern and optimize similar to
+ * CheckAndCacheFindClosestMatch.
  * @author jcw780
  */
 @Mixin(MoveToBlockGoal.class)
@@ -98,13 +112,13 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
 
         }
 
+        if(chunksToIterate.isEmpty()) return false; //No chunks with the target block - return early
+
         //Sort chunks by closest possible relative distance
         chunksToIterate.sort((chunkLong0, chunkLong1) ->
                 MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkLong0)
                 - MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkLong1)
         );
-
-        if(chunksToIterate.isEmpty()) return false; //No chunks with the target block - return early
 
         BlockPos.MutableBlockPos foundPos = new BlockPos.MutableBlockPos();
         BlockPos.MutableBlockPos currentPos = new BlockPos.MutableBlockPos();

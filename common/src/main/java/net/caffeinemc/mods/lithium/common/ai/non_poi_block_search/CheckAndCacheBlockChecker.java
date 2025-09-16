@@ -39,6 +39,7 @@ public class CheckAndCacheBlockChecker {
             int z = ChunkPos.getZ(chunkPos);
 
             //Never load chunks in the first pass to avoid observably altering chunk loading behavior
+            //Otherwise full region will be loaded vs partial region if the search finds the block early.
             ChunkAccess chunkAccess = levelReader.getChunk(x, z, ChunkStatus.FULL, false);
             if(chunkAccess != null){
                 this.chunkAccessSectionStatusBuffer.setChunkAccess(chunkPos, chunkAccess);
@@ -46,8 +47,11 @@ public class CheckAndCacheBlockChecker {
                     checkChunkSection(chunkAccess, x, y, z);
                 }
             } else if(this.shouldChunkLoad){
-                //If the search could chunk load, we cannot exclude null chunks because they may be loaded later
-                //So if the subchunk is inside build limit then it might be valid later
+                /* If the search may chunk load then it is possible that target blocks may be revealed when the search
+                 * reaches it. Since we cannot load the chunks and check now, we cannot definitively exclude subchunks
+                 * inside the chunk. This means that we must flag subchunks that are within build limit - otherwise air
+                 * anyway - for the search.
+                 */
                 for(int y: this.chunkAccessSectionStatusBuffer.getSectionYInRange()){
                     this.chunkAccessSectionStatusBuffer.setChunkSectionStatus(SectionPos.asLong(x, y, z),
                             !levelReader.isOutsideBuildHeight(SectionPos.sectionToBlockCoord(y)));
@@ -70,7 +74,7 @@ public class CheckAndCacheBlockChecker {
     }
 
     public boolean shouldStop(){
-        return this.chunkAccessSectionStatusBuffer.hasTrueChunkSections();
+        return this.chunkAccessSectionStatusBuffer.hasNoTrueChunkSections();
     }
 
     public boolean checkPosition(BlockPos blockPos){
