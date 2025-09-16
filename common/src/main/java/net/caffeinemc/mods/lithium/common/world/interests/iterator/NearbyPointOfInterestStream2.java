@@ -180,7 +180,9 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
             int previousSize = this.points.size();
             if(!this.subchunksToCheck.isEmpty()) {
-                this.storage.lithium$getElementAt(subchunksToCheck.dequeueLong())
+                long subchunk = subchunksToCheck.dequeueLong();
+                double dist = Distances.getMinSubChunkDistanceSq(this.origin, subchunk);
+                this.storage.lithium$getElementAt(subchunk)
                         .ifPresent(section -> ((PointOfInterestSetExtended) section)
                                 .lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector));
             }
@@ -232,14 +234,14 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         while (this.ring <= this.ringMax && (this.subchunksToCheck.isEmpty() ||
                 Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck.firstLong()) >=
                         this.getPotentialRingDistanceSq())){
-            for (int x = 0; x <= this.ring + 1; x = x > 0 ? -x : 1 - x) {
+            for (int x = 0; x <= this.ring; x = x > 0 ? -x : 1 - x) {
                 int currentChunkX = SectionPos.x(this.originSubchunk) + x;
                 if(currentChunkX > ChunkPos.getX(this.chunkCornerMax) ||
                         currentChunkX < ChunkPos.getX(this.chunkCornerMin)){
                     continue;
                 }
-                for (int z = x < this.ring + 1 && x > -this.ring + 1 ? this.ring + 1 : 0;
-                     z <= this.ring + 1; z = z > 0 ? -z : 1 - z) {
+                for (int z = x < this.ring && x > -this.ring ? this.ring : 0;
+                     z <= this.ring; z = z > 0 ? -z : 1 - z) {
                     int currentChunkZ = SectionPos.z(this.originSubchunk) + z;
                     if(currentChunkZ > ChunkPos.getZ(this.chunkCornerMax) ||
                             currentChunkZ < ChunkPos.getZ(this.chunkCornerMin)){
@@ -249,8 +251,8 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                         BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
                         int nextBit = poiSections.nextSetBit(0);
                         while (nextBit >= 0){
-                            this.subchunksToCheck.enqueue(SectionPos.asLong(
-                                    currentChunkX, nextBit + this.chunkYMin, currentChunkZ)
+                            this.subchunksToCheck.enqueue(
+                                    SectionPos.asLong(currentChunkX, nextBit + this.chunkYMin, currentChunkZ)
                             );
                             nextBit = poiSections.nextSetBit(nextBit+1);
                         }
