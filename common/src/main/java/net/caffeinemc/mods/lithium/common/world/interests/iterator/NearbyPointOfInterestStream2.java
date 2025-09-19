@@ -1,6 +1,7 @@
 
 package net.caffeinemc.mods.lithium.common.world.interests.iterator;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongHeapPriorityQueue;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongPriorityQueue;
@@ -16,6 +17,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiSection;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.level.ChunkPos;
+import org.gradle.internal.impldep.bsh.Primitive;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -44,7 +46,11 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private final int chunkYMin;
     private final double minChunkYDistSq;
 
-    private final LongPriorityQueue subchunksToCheck;
+    //private final LongPriorityQueue subchunksToCheck;
+    private final Long[] subchunksToCheck = new Long[256];
+    private int subChunksSearched = 0;
+    private int subChunksQueued = 0;
+    private boolean forciblyDeplete = false;
     private int ring;
     private final int ringMax;
     private final LongIterator ringIterator;
@@ -97,10 +103,11 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                         Math.max(ChunkPos.getZ(chunkCornerMax) - originSubchunkZ, originSubchunkZ - ChunkPos.getZ(chunkCornerMin)));
         this.ringIterator = getRingsOfChunksIterator();
         this.lowestWaitingDistance = Double.MAX_VALUE;
-        this.subchunksToCheck = new LongHeapPriorityQueue(
+        /*this.subchunksToCheck = new LongHeapPriorityQueue(
                 (s0, s1) -> Double.compare(Distances.getMinSubChunkDistanceSq(this.origin, s0),
                         Distances.getMinSubChunkDistanceSq(this.origin, s1)
-                ));
+                ));*/
+        //this.subchunksToCheck = new LongArrayList(Collections.nCopies(256, 0L));
 
         if (useSquareDistanceLimit) {
             this.collector = (point) -> {
@@ -178,16 +185,20 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
             }
         }
 
-        while (this.ringIterator.hasNext() || !this.subchunksToCheck.isEmpty()){
+        while (this.ringIterator.hasNext() || !this.isSubchunkListEmpty()){
             this.keepAddingRingsUntilSufficient();
 
             int previousSize = this.points.size();
-            if(!this.subchunksToCheck.isEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
-                long subchunk = subchunksToCheck.dequeueLong();
-                double dist = Distances.getMinSubChunkDistanceSq(this.origin, subchunk);
+            if(!this.isSubchunkListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
+                long subchunk = subchunksToCheck[this.subChunksSearched++];
+                //double dist = Distances.getMinSubChunkDistanceSq(this.origin, subchunk);
                 this.storage.lithium$getElementAt(subchunk)
                         .ifPresent(section -> ((PointOfInterestSetExtended) section)
                                 .lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector));
+
+                if(this.forciblyDeplete && this.isSubchunkListEmpty()){
+                    forciblyDeplete = false;
+                }
             }
 
             if (this.points.size() == previousSize) {
@@ -234,37 +245,62 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
      * and the queue is either empty or the first subchunk is not closer than unchecked possible subchunks
      */
     private void keepAddingRingsUntilSufficient(){
-        while (this.ringIterator.hasNext() && (this.subchunksToCheck.isEmpty() ||
-                Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck.firstLong()) >=
-                        this.getPotentialRingDistanceSq())){
-            final int ringStart = this.ring;
-            while (this.ringIterator.hasNext()){
-                final long chunkPos = this.ringIterator.nextLong();
-                final int currentChunkX = ChunkPos.getX(chunkPos);
-                final int currentChunkZ = ChunkPos.getZ(chunkPos);
+        if (!this.forciblyDeplete && this.ringIterator.hasNext() && (this.isSubchunkListEmpty() ||
+                Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck[this.subChunksSearched]) >=
+                        this.getPotentialRingDistanceSq())
+        ){
+            if(!isSubchunkListEmpty()) {
+                System.arraycopy(
+                        this.subchunksToCheck, this.subChunksSearched,
+                        this.subchunksToCheck, 0, this.subChunksQueued - this.subChunksSearched);
+            }
+            this.subChunksQueued -= this.subChunksSearched;
+            this.subChunksSearched = 0;
+            postLoop: do {
+                final int ringStart = this.ring;
+                while (this.ringIterator.hasNext()) {
+                    final long chunkPos = this.ringIterator.nextLong();
+                    final int currentChunkX = ChunkPos.getX(chunkPos);
+                    final int currentChunkZ = ChunkPos.getZ(chunkPos);
 
-                if(this.distanceLimitL2Sq >= Distances.getMinChunkToBlockDistanceL2Sq(this.origin, currentChunkX, currentChunkZ)){
-                    BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
-                    int nextBit = poiSections.nextSetBit(0);
-                    while (nextBit >= 0){
-                        this.subchunksToCheck.enqueue(
-                                SectionPos.asLong(currentChunkX, nextBit + this.chunkYMin, currentChunkZ)
-                        );
-                        nextBit = poiSections.nextSetBit(nextBit+1);
+                    if (this.distanceLimitL2Sq >= Distances.getMinChunkToBlockDistanceL2Sq(this.origin, currentChunkX, currentChunkZ)) {
+                        BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
+                        int nextBit = poiSections.nextSetBit(0);
+                        while (nextBit >= 0) {
+                            this.subchunksToCheck[this.subChunksQueued++] =
+                                    SectionPos.asLong(currentChunkX, nextBit + this.chunkYMin, currentChunkZ)
+                            ;
+                            nextBit = poiSections.nextSetBit(nextBit + 1);
+                        }
+                    }
+
+                    if (this.subChunksQueued > 200){
+                        this.forciblyDeplete = true;
+                        break postLoop;
+                    }
+
+                    if (this.ring > ringStart) {
+                        break;
                     }
                 }
+            }while (this.ringIterator.hasNext() && (this.isSubchunkListEmpty() ||
+                    Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck[this.subChunksSearched]) >=
+                            this.getPotentialRingDistanceSq()));
 
-                if(this.ring > ringStart){
-                    break;
-                }
-            }
+            Arrays.sort(this.subchunksToCheck, this.subChunksSearched, this.subChunksQueued,
+                    (s0, s1) -> Double.compare(Distances.getMinSubChunkDistanceSq(this.origin, s0),
+                    Distances.getMinSubChunkDistanceSq(this.origin, s1)));
         }
+    }
+
+    private boolean isSubchunkListEmpty(){
+        return this.subChunksQueued <= this.subChunksSearched;
     }
 
     // Minimum of the next [closest] subchunk in the queue or the closest potential unchecked chunks [next ring]
     private double getMinimumNextPotentialDistance(){
-        return Math.min(this.subchunksToCheck.isEmpty() ?
-                        Double.MAX_VALUE : Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck.firstLong())
+        return Math.min(this.subChunksQueued == this.subChunksSearched ?
+                        Double.MAX_VALUE : Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck[this.subChunksSearched])
                 , this.getPotentialRingDistanceSq());
     }
 
