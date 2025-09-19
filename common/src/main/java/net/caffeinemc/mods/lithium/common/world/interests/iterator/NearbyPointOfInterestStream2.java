@@ -47,10 +47,10 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private final double minChunkYDistSq;
 
     //private final LongPriorityQueue subchunksToCheck;
-    private final Long[] subchunksToCheck = new Long[256];
+    private final LongArrayList subchunksToCheck;
     private int subChunksSearched = 0;
-    private int subChunksQueued = 0;
     private boolean forciblyDeplete = false;
+    private final int forciblyDepleteTrigger;
     private int ring;
     private final int ringMax;
     private final LongIterator ringIterator;
@@ -79,12 +79,13 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         this.origin = origin;
         this.originSubchunk = SectionPos.blockToSection(origin.asLong());
         this.chunkYMin = this.storage.lithium$getChunkYMin();
+        final int chunkYMax = this.storage.lithium$getChunkYMaxInclusive();
 
         // If the origin is outside of build limit (e.g. 1.18+ overworld to nether portal teleport) in the target dimension,
         // the min Y distance is not zero for a chunk.
         final int minChunkYDist = Math.clamp(
                 this.origin.getY(), SectionPos.sectionToBlockCoord(this.chunkYMin),
-                SectionPos.sectionToBlockCoord(this.storage.lithium$getChunkYMaxInclusive(), 15)) - this.origin.getY();
+                SectionPos.sectionToBlockCoord(chunkYMax, 15)) - this.origin.getY();
         this.minChunkYDistSq = minChunkYDist * minChunkYDist;
 
         //Todo: Remove allocations from offsets
@@ -107,7 +108,10 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                 (s0, s1) -> Double.compare(Distances.getMinSubChunkDistanceSq(this.origin, s0),
                         Distances.getMinSubChunkDistanceSq(this.origin, s1)
                 ));*/
-        //this.subchunksToCheck = new LongArrayList(Collections.nCopies(256, 0L));
+        final int subchunksPerChunk = chunkYMax - chunkYMin + 1;
+        final int listSize = Math.max(16,subchunksPerChunk) * 4;
+        this.subchunksToCheck = new LongArrayList(Collections.nCopies(listSize, 0L));
+        this.forciblyDepleteTrigger = listSize - subchunksPerChunk;
 
         if (useSquareDistanceLimit) {
             this.collector = (point) -> {
@@ -190,15 +194,12 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
             int previousSize = this.points.size();
             if(!this.isSubchunkListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
-                long subchunk = subchunksToCheck[this.subChunksSearched++];
+                long subchunk = subchunksToCheck.getLong(this.subChunksSearched++);
                 //double dist = Distances.getMinSubChunkDistanceSq(this.origin, subchunk);
                 this.storage.lithium$getElementAt(subchunk)
                         .ifPresent(section -> ((PointOfInterestSetExtended) section)
                                 .lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector));
-
-                if(this.forciblyDeplete && this.isSubchunkListEmpty()){
-                    forciblyDeplete = false;
-                }
+                this.forciblyDeplete = (!this.forciblyDeplete || !this.isSubchunkListEmpty()) && this.forciblyDeplete;
             }
 
             if (this.points.size() == previousSize) {
@@ -246,19 +247,14 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
      */
     private void keepAddingRingsUntilSufficient(){
         if (!this.forciblyDeplete && this.ringIterator.hasNext() && (this.isSubchunkListEmpty() ||
-                Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck[this.subChunksSearched]) >=
+                Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck.getLong(this.subChunksSearched)) >=
                         this.getPotentialRingDistanceSq())
         ){
-            if(!isSubchunkListEmpty()) {
-                System.arraycopy(
-                        this.subchunksToCheck, this.subChunksSearched,
-                        this.subchunksToCheck, 0, this.subChunksQueued - this.subChunksSearched);
-            }
-            this.subChunksQueued -= this.subChunksSearched;
+            this.subchunksToCheck.removeElements(0, this.subChunksSearched);
             this.subChunksSearched = 0;
             postLoop: do {
                 final int ringStart = this.ring;
-                while (this.ringIterator.hasNext()) {
+                do {
                     final long chunkPos = this.ringIterator.nextLong();
                     final int currentChunkX = ChunkPos.getX(chunkPos);
                     final int currentChunkZ = ChunkPos.getZ(chunkPos);
@@ -267,41 +263,46 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                         BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
                         int nextBit = poiSections.nextSetBit(0);
                         while (nextBit >= 0) {
-                            this.subchunksToCheck[this.subChunksQueued++] =
+                            this.subchunksToCheck.add(
                                     SectionPos.asLong(currentChunkX, nextBit + this.chunkYMin, currentChunkZ)
-                            ;
+                            );
                             nextBit = poiSections.nextSetBit(nextBit + 1);
                         }
                     }
 
-                    if (this.subChunksQueued > 200){
+                    if (this.subchunksToCheck.size() > this.forciblyDepleteTrigger){
                         this.forciblyDeplete = true;
-                        break postLoop;
+                        break;
                     }
 
                     if (this.ring > ringStart) {
                         break;
                     }
+                } while (this.ringIterator.hasNext());
+                subchunksToCheck.subList(this.subChunksSearched, this.subchunksToCheck.size())
+                        .sort((s0, s1) ->
+                                Double.compare(
+                                        Distances.getMinSubChunkDistanceSq(this.origin, s0),
+                                        Distances.getMinSubChunkDistanceSq(this.origin, s1)));
+                if(this.forciblyDeplete){
+                    break;
                 }
             }while (this.ringIterator.hasNext() && (this.isSubchunkListEmpty() ||
-                    Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck[this.subChunksSearched]) >=
+                    Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck.getLong(subChunksSearched)) >=
                             this.getPotentialRingDistanceSq()));
-
-            Arrays.sort(this.subchunksToCheck, this.subChunksSearched, this.subChunksQueued,
-                    (s0, s1) -> Double.compare(Distances.getMinSubChunkDistanceSq(this.origin, s0),
-                    Distances.getMinSubChunkDistanceSq(this.origin, s1)));
         }
     }
 
     private boolean isSubchunkListEmpty(){
-        return this.subChunksQueued <= this.subChunksSearched;
+        return this.subchunksToCheck.size() <= this.subChunksSearched;
     }
 
     // Minimum of the next [closest] subchunk in the queue or the closest potential unchecked chunks [next ring]
     private double getMinimumNextPotentialDistance(){
-        return Math.min(this.subChunksQueued == this.subChunksSearched ?
-                        Double.MAX_VALUE : Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck[this.subChunksSearched])
-                , this.getPotentialRingDistanceSq());
+        return Math.min(this.isSubchunkListEmpty() ?
+                        Double.MAX_VALUE : Distances.getMinSubChunkDistanceSq(
+                                this.origin, this.subchunksToCheck.getLong(this.subChunksSearched)
+                ), this.getPotentialRingDistanceSq());
     }
 
     private double getPotentialRingDistanceSq(){
