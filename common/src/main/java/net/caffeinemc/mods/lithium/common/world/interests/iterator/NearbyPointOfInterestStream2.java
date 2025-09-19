@@ -182,7 +182,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
             this.keepAddingRingsUntilSufficient();
 
             int previousSize = this.points.size();
-            if(!this.subchunksToCheck.isEmpty()) {
+            if(!this.subchunksToCheck.isEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
                 long subchunk = subchunksToCheck.dequeueLong();
                 double dist = Distances.getMinSubChunkDistanceSq(this.origin, subchunk);
                 this.storage.lithium$getElementAt(subchunk)
