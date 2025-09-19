@@ -2,6 +2,7 @@
 package net.caffeinemc.mods.lithium.common.world.interests.iterator;
 
 import it.unimi.dsi.fastutil.longs.LongHeapPriorityQueue;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongPriorityQueue;
 import net.caffeinemc.mods.lithium.common.util.Distances;
 import net.caffeinemc.mods.lithium.common.util.tuples.SortedPointOfInterest;
@@ -46,6 +47,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private final LongPriorityQueue subchunksToCheck;
     private int ring;
     private final int ringMax;
+    private final LongIterator ringIterator;
     private final long chunkCornerMax;
     private final long chunkCornerMin;
     private double lowestWaitingDistance;
@@ -93,6 +95,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         this.ringMax =
                 Math.max(Math.max(ChunkPos.getX(chunkCornerMax) - originSubchunkX, originSubchunkX - ChunkPos.getX(chunkCornerMin)),
                         Math.max(ChunkPos.getZ(chunkCornerMax) - originSubchunkZ, originSubchunkZ - ChunkPos.getZ(chunkCornerMin)));
+        this.ringIterator = getRingsOfChunksIterator();
         this.lowestWaitingDistance = Double.MAX_VALUE;
         this.subchunksToCheck = new LongHeapPriorityQueue(
                 (s0, s1) -> Double.compare(Distances.getMinSubChunkDistanceSq(this.origin, s0),
@@ -175,7 +178,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
             }
         }
 
-        while (this.ring <= this.ringMax || !this.subchunksToCheck.isEmpty()){
+        while (this.ringIterator.hasNext() || !this.subchunksToCheck.isEmpty()){
             this.keepAddingRingsUntilSufficient();
 
             int previousSize = this.points.size();
@@ -231,36 +234,30 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
      * and the queue is either empty or the first subchunk is not closer than unchecked possible subchunks
      */
     private void keepAddingRingsUntilSufficient(){
-        while (this.ring <= this.ringMax && (this.subchunksToCheck.isEmpty() ||
+        while (this.ringIterator.hasNext() && (this.subchunksToCheck.isEmpty() ||
                 Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck.firstLong()) >=
                         this.getPotentialRingDistanceSq())){
-            for (int x = 0; x <= this.ring; x = x > 0 ? -x : 1 - x) {
-                int currentChunkX = SectionPos.x(this.originSubchunk) + x;
-                if(currentChunkX > ChunkPos.getX(this.chunkCornerMax) ||
-                        currentChunkX < ChunkPos.getX(this.chunkCornerMin)){
-                    continue;
+            final int ringStart = this.ring;
+            while (this.ringIterator.hasNext()){
+                final long chunkPos = this.ringIterator.nextLong();
+                final int currentChunkX = ChunkPos.getX(chunkPos);
+                final int currentChunkZ = ChunkPos.getZ(chunkPos);
+
+                if(this.distanceLimitL2Sq >= Distances.getMinChunkToBlockDistanceL2Sq(this.origin, currentChunkX, currentChunkZ)){
+                    BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
+                    int nextBit = poiSections.nextSetBit(0);
+                    while (nextBit >= 0){
+                        this.subchunksToCheck.enqueue(
+                                SectionPos.asLong(currentChunkX, nextBit + this.chunkYMin, currentChunkZ)
+                        );
+                        nextBit = poiSections.nextSetBit(nextBit+1);
+                    }
                 }
-                for (int z = x < this.ring && x > -this.ring ? this.ring : 0;
-                     z <= this.ring; z = z > 0 ? -z : 1 - z) {
-                    int currentChunkZ = SectionPos.z(this.originSubchunk) + z;
-                    if(currentChunkZ > ChunkPos.getZ(this.chunkCornerMax) ||
-                            currentChunkZ < ChunkPos.getZ(this.chunkCornerMin)){
-                        continue;
-                    }
-                    if(this.distanceLimitL2Sq >= Distances.getMinChunkToBlockDistanceL2Sq(this.origin, currentChunkX, currentChunkZ)){
-                        BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
-                        int nextBit = poiSections.nextSetBit(0);
-                        while (nextBit >= 0){
-                            this.subchunksToCheck.enqueue(
-                                    SectionPos.asLong(currentChunkX, nextBit + this.chunkYMin, currentChunkZ)
-                            );
-                            nextBit = poiSections.nextSetBit(nextBit+1);
-                        }
-                    }
+
+                if(this.ring > ringStart){
+                    break;
                 }
             }
-
-            this.ring++;
         }
     }
 
@@ -280,6 +277,44 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         int ringDistance = Math.max(this.ring - 1,0) * 16 + (ring > 0 ? closestEdgeDistance : 0);
 
         return this.ring > this.ringMax ? Double.MAX_VALUE : ringDistance * ringDistance + this.minChunkYDistSq;
+    }
+
+    private LongIterator getRingsOfChunksIterator(){
+        return new LongIterator() {
+            int x = 0;
+            final int cx = SectionPos.x(originSubchunk);
+            final int maxX = ChunkPos.getX(chunkCornerMax);
+            final int minX = ChunkPos.getX(chunkCornerMin);
+            int fx = cx;
+            int z = 0;
+            final int cz = SectionPos.z(originSubchunk);
+            final int maxZ = ChunkPos.getZ(chunkCornerMax);
+            final int minZ = ChunkPos.getZ(chunkCornerMin);
+            int fz = cz;
+            @Override
+            public long nextLong() {
+                long res = ChunkPos.asLong(fx, fz);
+                do {
+                    z = z > 0 ? -z : 1 - z;
+                    if (z > ring) {
+                        x = x > 0 ? -x : 1 - x;
+                        if (x > ring) {
+                            x = 0;
+                            ring++;
+                        }
+                        z = x < ring && x > -ring ? ring : 0;
+                    }
+                    fx = cx + x;
+                    fz = cz + z;
+                } while (ring <= ringMax && fx < minX || fx > maxX || fz < minZ || fz > maxZ);
+                return res;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return ring <= ringMax;
+            }
+        };
     }
 
 }
