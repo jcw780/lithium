@@ -54,10 +54,10 @@ public class Pos {
             return view.getMinSectionY();
         }
         public static int getMaxYSectionInclusive(LevelHeightAccessor view) {
-            return view.getMaxSectionY() - 1;
+            return view.getMaxSectionY();
         }
         public static int getMaxYSectionExclusive(LevelHeightAccessor view) {
-            return view.getMaxSectionY();
+            return view.getMaxSectionY() + 1;
         }
 
         public static int fromSectionIndex(LevelHeightAccessor view, int sectionCoord) {

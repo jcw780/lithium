@@ -44,7 +44,7 @@ public abstract class LevelMixin implements LevelHeightAccessor {
 
     @Override
     public int getSectionsCount() {
-        return ((this.topYInclusive >> 4) + 1) - (this.bottomY >> 4);
+        return (this.topYInclusive >> 4) + 1 - (this.bottomY >> 4);
     }
 
     @Override
@@ -53,8 +53,8 @@ public abstract class LevelMixin implements LevelHeightAccessor {
     }
 
     @Override
-    public int getMaxSectionY() {
-        return (this.topYInclusive >> 4) + 1;
+    public int getMaxSectionY() { //Inclusive
+        return (this.topYInclusive >> 4);
     }
 
     @Override
