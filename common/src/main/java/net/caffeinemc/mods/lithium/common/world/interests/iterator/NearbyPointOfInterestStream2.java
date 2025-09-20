@@ -192,25 +192,23 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
             this.keepAddingRingsUntilSufficient();
 
             final int previousSize = this.points.size();
-            if(!this.isSubchunkListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
+            while (!this.isSubchunkListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
                 final long subchunk = subchunksToCheck.get(this.subChunksSearched++).subchunk;
                 final Optional<PoiSection> poiSection = this.storage.lithium$getElementAt(subchunk);
-                if (poiSection.isPresent()){ // This is actually better than ifpresent
+                if (poiSection.isPresent()){
                     ((PointOfInterestSetExtended)poiSection.get())
                             .lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector);
                 }
 
                 this.forciblyDeplete = (!this.forciblyDeplete || !this.isSubchunkListEmpty()) && this.forciblyDeplete;
-            }
-
-            if (this.points.size() == previousSize) {
-                // Advance more aggressively - search may have already ensured that the next POI is closer even if it does
-                // not add more POIs.
-                if(this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()){
-                    continue;
+                if(this.points.size() > previousSize){
+                    this.points.subList(this.pointIndex, this.points.size()).sort(this.pointComparator);
+                    break;
                 }
-            } else {
-                this.points.subList(this.pointIndex, this.points.size()).sort(this.pointComparator);
+
+                if(!forciblyDeplete && this.getNextSubchunkDistanceSq() > this.getPotentialRingDistanceSq()){
+                    break;
+                }
             }
 
             // Return the first point in the chunk
