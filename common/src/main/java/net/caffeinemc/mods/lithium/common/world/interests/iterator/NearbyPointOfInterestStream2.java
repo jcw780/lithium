@@ -110,7 +110,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                 ));*/
         final int subchunksPerChunk = chunkYMax - chunkYMin + 1;
         final int listSize = Math.max(16,subchunksPerChunk) * 4;
-        this.subchunksToCheck = new LongArrayList(Collections.nCopies(listSize, 0L));
+        this.subchunksToCheck = new LongArrayList(listSize);
         this.forciblyDepleteTrigger = listSize - subchunksPerChunk;
 
         if (useSquareDistanceLimit) {
@@ -192,7 +192,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         while (this.ringIterator.hasNext() || !this.isSubchunkListEmpty()){
             this.keepAddingRingsUntilSufficient();
 
-            int previousSize = this.points.size();
+            final int previousSize = this.points.size();
             if(!this.isSubchunkListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
                 long subchunk = subchunksToCheck.getLong(this.subChunksSearched++);
                 //double dist = Distances.getMinSubChunkDistanceSq(this.origin, subchunk);
@@ -252,7 +252,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         ){
             this.subchunksToCheck.removeElements(0, this.subChunksSearched);
             this.subChunksSearched = 0;
-            postLoop: do {
+            do {
                 final int ringStart = this.ring;
                 do {
                     final long chunkPos = this.ringIterator.nextLong();
@@ -287,9 +287,11 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                 if(this.forciblyDeplete){
                     break;
                 }
-            }while (this.ringIterator.hasNext() && (this.isSubchunkListEmpty() ||
-                    Distances.getMinSubChunkDistanceSq(this.origin, this.subchunksToCheck.getLong(subChunksSearched)) >=
-                            this.getPotentialRingDistanceSq()));
+            }while (this.ringIterator.hasNext() &&
+                    (Math.min(this.lowestWaitingDistance, this.getNextSubchunkDistance())
+                            >= this.getPotentialRingDistanceSq())
+
+            );
         }
     }
 
@@ -299,10 +301,13 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
     // Minimum of the next [closest] subchunk in the queue or the closest potential unchecked chunks [next ring]
     private double getMinimumNextPotentialDistance(){
-        return Math.min(this.isSubchunkListEmpty() ?
-                        Double.MAX_VALUE : Distances.getMinSubChunkDistanceSq(
-                                this.origin, this.subchunksToCheck.getLong(this.subChunksSearched)
-                ), this.getPotentialRingDistanceSq());
+        return Math.min(this.getNextSubchunkDistance(), this.getPotentialRingDistanceSq());
+    }
+
+    private double getNextSubchunkDistance(){
+        return this.isSubchunkListEmpty() ?
+                Double.MAX_VALUE : Distances.getMinSubChunkDistanceSq(
+                this.origin, this.subchunksToCheck.getLong(this.subChunksSearched));
     }
 
     private double getPotentialRingDistanceSq(){
