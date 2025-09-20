@@ -1,8 +1,10 @@
 
 package net.caffeinemc.mods.lithium.common.world.interests.iterator;
 
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.caffeinemc.mods.lithium.common.util.Distances;
 import net.caffeinemc.mods.lithium.common.util.tuples.SortedPointOfInterest;
 import net.caffeinemc.mods.lithium.common.world.interests.PointOfInterestSetExtended;
@@ -44,7 +46,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private final double minChunkYDistSq;
 
     //private final LongPriorityQueue subchunksToCheck;
-    private final LongArrayList subchunksToCheck;
+    private final ObjectArrayList<QueuedSubchunk> subchunksToCheck;
     private int subChunksSearched = 0;
     private boolean forciblyDeplete = false;
     private final int forciblyDepleteTrigger;
@@ -107,7 +109,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                 ));*/
         final int subchunksPerChunk = chunkYMax - chunkYMin + 1;
         final int listSize = Math.max(16,subchunksPerChunk) * 4;
-        this.subchunksToCheck = new LongArrayList(listSize);
+        this.subchunksToCheck = new ObjectArrayList<>(listSize);
         this.forciblyDepleteTrigger = listSize - subchunksPerChunk;
 
         if (useSquareDistanceLimit) {
@@ -191,7 +193,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
             final int previousSize = this.points.size();
             if(!this.isSubchunkListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
-                long subchunk = subchunksToCheck.getLong(this.subChunksSearched++);
+                final long subchunk = subchunksToCheck.get(this.subChunksSearched++).subchunk;
                 final Optional<PoiSection> poiSection = this.storage.lithium$getElementAt(subchunk);
                 if (poiSection.isPresent()){ // This is actually better than ifpresent
                     ((PointOfInterestSetExtended)poiSection.get())
@@ -262,8 +264,12 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                     BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
                     int nextBit = poiSections.nextSetBit(0);
                     while (nextBit >= 0) {
+                        final int currentChunkY = nextBit + this.chunkYMin;
                         this.subchunksToCheck.add(
-                                SectionPos.asLong(currentChunkX, nextBit + this.chunkYMin, currentChunkZ)
+                                new QueuedSubchunk(
+                                        SectionPos.asLong(currentChunkX, currentChunkY, currentChunkZ),
+                                        Distances.getMinSubChunkDistanceSq(this.origin, currentChunkX, currentChunkY, currentChunkZ)
+                                )
                         );
                         nextBit = poiSections.nextSetBit(nextBit + 1);
                     }
@@ -293,10 +299,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
     private void sortSubchunkList(){
         subchunksToCheck.subList(this.subChunksSearched, this.subchunksToCheck.size())
-                .sort((s0, s1) ->
-                        Double.compare(
-                                Distances.getMinSubChunkDistanceSq(this.origin, s0),
-                                Distances.getMinSubChunkDistanceSq(this.origin, s1)));
+                .sort(Comparator.comparingDouble(qS -> qS.minDistance));
     }
 
     private boolean isSubchunkListEmpty(){
@@ -310,8 +313,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
     private double getNextSubchunkDistanceSq(){
         return this.isSubchunkListEmpty() ?
-                Double.MAX_VALUE : Distances.getMinSubChunkDistanceSq(
-                this.origin, this.subchunksToCheck.getLong(this.subChunksSearched));
+                Double.MAX_VALUE : this.subchunksToCheck.get(this.subChunksSearched).minDistance;
     }
 
     private double getPotentialRingDistanceSq(){
@@ -363,4 +365,5 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         };
     }
 
+    private record QueuedSubchunk(long subchunk, double minDistance){}
 }
