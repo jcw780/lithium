@@ -1,8 +1,6 @@
 
 package net.caffeinemc.mods.lithium.common.world.interests.iterator;
 
-import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.caffeinemc.mods.lithium.common.util.Distances;
@@ -53,6 +51,10 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private int ring;
     private final int ringMax;
     private final LongIterator ringIterator;
+
+    private final int ringClosestEdgeDistance;
+    private double closestRingDistanceSq;
+
     private final long chunkCornerMax;
     private final long chunkCornerMin;
     private double lowestWaitingDistance;
@@ -102,6 +104,14 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                 Math.max(Math.max(ChunkPos.getX(chunkCornerMax) - originSubchunkX, originSubchunkX - ChunkPos.getX(chunkCornerMin)),
                         Math.max(ChunkPos.getZ(chunkCornerMax) - originSubchunkZ, originSubchunkZ - ChunkPos.getZ(chunkCornerMin)));
         this.ringIterator = getRingsOfChunksIterator();
+
+        // Initialize Ring Distances
+        final int x = this.origin.getX();
+        final int z = this.origin.getZ();
+        this.ringClosestEdgeDistance = Math.min(Math.min((x&15)+1, 16 - x&15),
+                Math.min((z&15)+1, 16 - z&15));
+        this.closestRingDistanceSq = this.getPotentialRingDistanceSq();
+
         this.lowestWaitingDistance = Double.MAX_VALUE;
         /*this.subchunksToCheck = new LongHeapPriorityQueue(
                 (s0, s1) -> Double.compare(Distances.getMinSubChunkDistanceSq(this.origin, s0),
@@ -206,7 +216,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                     break;
                 }
 
-                if(!forciblyDeplete && this.getNextSubchunkDistanceSq() > this.getPotentialRingDistanceSq()){
+                if(!forciblyDeplete && this.getNextSubchunkDistanceSq() > this.closestRingDistanceSq){
                     break;
                 }
             }
@@ -246,7 +256,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
      */
     private void keepAddingRingsUntilSufficient(){
         if (!this.forciblyDeplete && this.ringIterator.hasNext() &&
-                (Math.min(this.lowestWaitingDistance, this.getNextSubchunkDistanceSq()) >= this.getPotentialRingDistanceSq())
+                (Math.min(this.lowestWaitingDistance, this.getNextSubchunkDistanceSq()) >= this.closestRingDistanceSq)
         ){
             this.subchunksToCheck.removeElements(0, this.subChunksSearched);
             this.subChunksSearched = 0;
@@ -281,9 +291,10 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                 }
 
                 if (this.ring > ringStart) {
+                    this.closestRingDistanceSq = this.getPotentialRingDistanceSq();
                     this.sortSubchunkList();
                     if(Math.min(this.lowestWaitingDistance, this.getNextSubchunkDistanceSq())
-                            < this.getPotentialRingDistanceSq()){
+                            < this.closestRingDistanceSq){
                         break;
                     }
                     ringStart = this.ring;
@@ -306,7 +317,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
     // Minimum of the next [closest] subchunk in the queue or the closest potential unchecked chunks [next ring]
     private double getMinimumNextPotentialDistance(){
-        return Math.min(this.getNextSubchunkDistanceSq(), this.getPotentialRingDistanceSq());
+        return Math.min(this.getNextSubchunkDistanceSq(), this.closestRingDistanceSq);
     }
 
     private double getNextSubchunkDistanceSq(){
@@ -315,13 +326,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     }
 
     private double getPotentialRingDistanceSq(){
-        int x = this.origin.getX();
-        int z = this.origin.getZ();
-        int closestEdgeDistance = Math.min(Math.min((x&15)+1, 16 - x&15),
-                Math.min((z&15)+1, 16 - z&15));
-
-        int ringDistance = Math.max(this.ring - 1,0) * 16 + (ring > 0 ? closestEdgeDistance : 0);
-
+        int ringDistance = Math.max(this.ring - 1,0) * 16 + (ring > 0 ? this.ringClosestEdgeDistance : 0);
         return this.ring > this.ringMax ? Double.MAX_VALUE : ringDistance * ringDistance + this.minChunkYDistSq;
     }
 
