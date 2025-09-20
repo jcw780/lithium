@@ -192,10 +192,12 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
             final int previousSize = this.points.size();
             if(!this.isSubchunkListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
                 long subchunk = subchunksToCheck.getLong(this.subChunksSearched++);
-                //double dist = Distances.getMinSubChunkDistanceSq(this.origin, subchunk);
-                this.storage.lithium$getElementAt(subchunk)
-                        .ifPresent(section -> ((PointOfInterestSetExtended) section)
-                                .lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector));
+                final Optional<PoiSection> poiSection = this.storage.lithium$getElementAt(subchunk);
+                if (poiSection.isPresent()){ // This is actually better than ifpresent
+                    ((PointOfInterestSetExtended)poiSection.get())
+                            .lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector);
+                }
+
                 this.forciblyDeplete = (!this.forciblyDeplete || !this.isSubchunkListEmpty()) && this.forciblyDeplete;
             }
 
