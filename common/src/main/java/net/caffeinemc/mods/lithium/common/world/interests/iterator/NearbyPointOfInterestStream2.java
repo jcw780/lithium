@@ -3,6 +3,7 @@ package net.caffeinemc.mods.lithium.common.world.interests.iterator;
 
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import net.caffeinemc.mods.lithium.common.util.Distances;
 import net.caffeinemc.mods.lithium.common.util.tuples.SortedPointOfInterest;
 import net.caffeinemc.mods.lithium.common.world.interests.PointOfInterestSetExtended;
@@ -112,6 +113,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
         // Note: This is much faster than PriorityHeapQueue because dequeues become very expensive
         // Also keep track of square distances because otherwise comparisons become very expensive
+        // Todo: If and when value records are thing convert over to it
         final int subchunksPerChunk = chunkYMax - chunkYMin + 1;
         final int listSize = Math.max(16,subchunksPerChunk) * 4;
         this.subchunksToCheck = new ObjectArrayList<>(listSize);
@@ -266,7 +268,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
                 if (this.distanceLimitL2Sq >= Distances.getMinChunkToBlockDistanceL2Sq(this.origin, currentChunkX, currentChunkZ)) {
                     // This iterates the column in order of the closest subchunk
-                    // Doing this noticeably reduces sorting duration later on because parts of the list will already be sorted
+                    // Doing so noticeably reduces sorting duration later on because parts of the list will already be sorted
                     final BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
                     int upperBit = poiSections.nextSetBit(this.clampedOriginChunkY - this.chunkYMin);
                     int upperDist = this.getYDistanceFromBitIndex(upperBit);
@@ -297,8 +299,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                 if (forciblyDeplete || this.ring > ringStart) {
                     this.sortSubchunkList();
                     if(forciblyDeplete ||
-                            Math.min(this.lowestWaitingDistance, this.getNextSubchunkDistanceSq()) <
-                                    this.closestRingDistanceSq){
+                            Math.min(this.lowestWaitingDistance, this.getNextSubchunkDistanceSq()) < this.closestRingDistanceSq){
                         break;
                     }
                     ringStart = this.ring;
@@ -308,6 +309,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     }
 
     private void sortSubchunkList(){
+        // Note: Do not use unstable sort - the quicksort is quite a bit slower
         subchunksToCheck.subList(this.subChunksSearched, this.subchunksToCheck.size())
                 .sort(Comparator.comparingDouble(qS -> qS.minDistance));
     }
