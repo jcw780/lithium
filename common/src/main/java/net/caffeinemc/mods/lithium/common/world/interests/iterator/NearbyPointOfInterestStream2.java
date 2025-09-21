@@ -55,6 +55,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private final int ringClosestEdgeDistance;
     private double closestRingDistanceSq;
 
+    private double nextSubchunkDistanceSq;
     private double lowestWaitingDistance;
     private final double distanceLimitL2Sq;
     private int pointIndex;
@@ -84,8 +85,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
         // If the origin is outside of build limit (e.g. 1.18+ overworld to nether portal teleport) in the target dimension,
         // the min Y distance is not zero for a chunk.
-        final int minChunkYDist = Math.clamp(
-                this.origin.getY(), SectionPos.sectionToBlockCoord(this.chunkYMin),
+        final int minChunkYDist = Math.min(Math.max(this.origin.getY(), SectionPos.sectionToBlockCoord(this.chunkYMin)),
                 SectionPos.sectionToBlockCoord(chunkYMax, 15)) - this.origin.getY();
         this.minChunkYDistSq = minChunkYDist * minChunkYDist;
 
@@ -108,6 +108,8 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         this.ringClosestEdgeDistance = Math.min(Math.min((originX & 15) + 1, 16 - originX & 15),
                 Math.min((originZ & 15) + 1, 16 - originZ & 15));
         this.closestRingDistanceSq = this.getPotentialRingDistanceSq();
+
+        this.nextSubchunkDistanceSq = Double.MAX_VALUE;
         this.lowestWaitingDistance = Double.MAX_VALUE;
 
         // Note: This is much faster than PriorityHeapQueue because dequeues become very expensive
@@ -200,6 +202,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
             final int previousSize = this.points.size();
             while (!this.isSubchunkListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
                 final long subchunk = subchunksToCheck.get(this.subChunksSearched++).subchunk;
+                this.nextSubchunkDistanceSq = this.getNextSubchunkDistanceSq();
                 final Optional<PoiSection> poiSection = this.storage.lithium$getElementAt(subchunk);
                 if (poiSection.isPresent()){
                     ((PointOfInterestSetExtended)poiSection.get())
@@ -212,7 +215,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                     break;
                 }
 
-                if(!forciblyDeplete && this.getNextSubchunkDistanceSq() > this.closestRingDistanceSq){
+                if(!forciblyDeplete && this.nextSubchunkDistanceSq > this.closestRingDistanceSq){
                     break;
                 }
             }
@@ -248,14 +251,19 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     }
 
     /*
-     * Keep searching for POI subchunks in concentric square rings of chunks around the origin. Continue if:
+     * Keep searching for POI subchunks in concentric rings of chunks around the origin. Continue if:
      * List is empty
      * There are more rings to scan.
-     * The closer of the next subchunk and the closest POI in the list is not closer than unchecked possible subchunks
+     * The closer of:
+     * - The next subchunk
+     * - The closest POI in the point list
+     * is not closer than:
+     * - Unchecked possible subchunks in the list
+     * - Chunks in next ring
      */
     private void keepAddingRingsUntilSufficient(){
         if (!this.forciblyDeplete && this.ringIterator.hasNext() &&
-                (Math.min(this.lowestWaitingDistance, this.getNextSubchunkDistanceSq()) >= this.closestRingDistanceSq)
+                (Math.min(this.lowestWaitingDistance, this.nextSubchunkDistanceSq) >= this.closestRingDistanceSq)
         ){
             this.subchunksToCheck.removeElements(0, this.subChunksSearched);
             this.subChunksSearched = 0;
@@ -297,8 +305,9 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
                 if (forciblyDeplete || this.ring > ringStart) {
                     this.sortSubchunkList();
+                    this.nextSubchunkDistanceSq = this.getNextSubchunkDistanceSq();
                     if(forciblyDeplete ||
-                            Math.min(this.lowestWaitingDistance, this.getNextSubchunkDistanceSq()) < this.closestRingDistanceSq){
+                            Math.min(this.lowestWaitingDistance, this.nextSubchunkDistanceSq) < this.closestRingDistanceSq){
                         break;
                     }
                     ringStart = this.ring;
@@ -319,7 +328,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
     // Minimum of the next [closest] subchunk in the queue or the closest potential unchecked chunks [next ring]
     private double getMinimumNextPotentialDistance(){
-        return Math.min(this.getNextSubchunkDistanceSq(), this.closestRingDistanceSq);
+        return Math.min(this.nextSubchunkDistanceSq, this.closestRingDistanceSq);
     }
 
     private double getNextSubchunkDistanceSq(){
@@ -333,6 +342,8 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                 Distances.getClosestDistanceAlongSectionAxis(this.originY, bitIndex + this.chunkYMin);
     }
 
+    // Expand chunks to search in concentric square rings
+    // Todo: Gap-less circle drawing algorithms may have better performance
     private double getPotentialRingDistanceSq(){
         int ringDistance = Math.max(this.ring - 1,0) * 16 + (ring > 0 ? this.ringClosestEdgeDistance : 0);
         return this.ring > this.ringMax ? Double.MAX_VALUE : ringDistance * ringDistance + this.minChunkYDistSq;

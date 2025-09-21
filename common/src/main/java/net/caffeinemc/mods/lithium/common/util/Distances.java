@@ -2,6 +2,7 @@ package net.caffeinemc.mods.lithium.common.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.util.Mth;
 
 public class Distances {
 
@@ -32,15 +33,11 @@ public class Distances {
 
     public static int getClosestAlongSectionAxis(int originBlockAxis, int chunkMinAxis){
         final int blockMinAxis = SectionPos.sectionToBlockCoord(chunkMinAxis);
-        return Math.clamp(originBlockAxis, blockMinAxis, blockMinAxis+15);
-    }
-
-    public static int getClosestDifferenceAlongSectionAxis(int originBlockAxis, int chunkMinAxis){
-        return Math.abs(getClosestAlongSectionAxis(originBlockAxis, chunkMinAxis) - originBlockAxis);
+        return Math.min(Math.max(originBlockAxis, blockMinAxis), blockMinAxis+15);
     }
 
     public static int getClosestDistanceAlongSectionAxis(int originBlockAxis, int chunkMinAxis){
-        return Math.abs(getClosestDifferenceAlongSectionAxis(originBlockAxis, chunkMinAxis));
+        return Math.abs(getClosestAlongSectionAxis(originBlockAxis, chunkMinAxis) - originBlockAxis);
     }
 
     public static double getMinSubChunkDistanceSq(BlockPos origin, long sectionPos){
@@ -48,9 +45,10 @@ public class Distances {
     }
 
     public static double getMinSubChunkDistanceSq(BlockPos origin, int chunkX, int chunkY, int chunkZ){
-        final int distX = getClosestDifferenceAlongSectionAxis(origin.getX(), chunkX);
-        final int distY = getClosestDifferenceAlongSectionAxis(origin.getY(), chunkY);
-        final int distZ = getClosestDifferenceAlongSectionAxis(origin.getZ(), chunkZ);
+        final int originX = origin.getX(), originY = origin.getY(), originZ = origin.getZ();
+        final int distX = getClosestAlongSectionAxis(originX, chunkX) - originX;
+        final int distY = getClosestAlongSectionAxis(originY, chunkY) - originY;
+        final int distZ = getClosestAlongSectionAxis(originZ, chunkZ) - originZ;
 
         return distX * distX + distY * distY + distZ * distZ;
     }
