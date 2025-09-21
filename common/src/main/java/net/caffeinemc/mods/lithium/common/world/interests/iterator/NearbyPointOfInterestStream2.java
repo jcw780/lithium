@@ -3,7 +3,6 @@ package net.caffeinemc.mods.lithium.common.world.interests.iterator;
 
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import net.caffeinemc.mods.lithium.common.util.Distances;
 import net.caffeinemc.mods.lithium.common.util.tuples.SortedPointOfInterest;
 import net.caffeinemc.mods.lithium.common.world.interests.PointOfInterestSetExtended;
