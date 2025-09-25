@@ -1,6 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.ai.non_poi_block_search;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.CheckAndCacheBlockChecker;
 import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.LithiumMoveToBlockGoal;
 import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.NonPOISearchDistances.MoveToBlockGoalDistances;
 import net.caffeinemc.mods.lithium.common.util.collections.FixedChunkAccessSectionBitBuffer;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -41,15 +43,8 @@ import java.util.function.Predicate;
  * Note: If ChunkSections in the search range have A LOT of different blockStates and all ChunkSections have *had*
  * turtle eggs but the eggs are not in the search there may not be much of a benefit or even possible regression.
  * <p>
- * Also note: The search implemented here assumes that the search will never chunk-load
- * Currently the only goal that uses this new search pattern is RemoveBlockGoal which does not chunkload in vanilla MC.
- * While unlikely to be an issue in vanilla, one might need to careful about using this for other searches if
- * the search ranges may be modified.
- * <p>
- * If one were to optimize other related goals that may chunk load. One should check
- * whether there are any unloaded chunks in the first pass through the chunks. If there are not, then use the
- * optimized search pattern here. If there are, then use the vanilla search pattern and optimize similar to
- * CheckAndCacheFindClosestMatch.
+ * Additional Note: Please correctly specify whether the search may chunk-load to avoid observably altering behavior
+ * in unusual situations. Default getBlockState will chunk-load.
  * @author jcw780
  */
 @Mixin(MoveToBlockGoal.class)
@@ -70,85 +65,105 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
 
     @Override
     public boolean lithium$findNearestBlock(Predicate<BlockState> requiredBlock, BiPredicate<ChunkAccess,
-            BlockPos> lithium$isValidTarget) {
+            BlockPos> lithium$isValidTarget, final boolean shouldChunkLoad) {
         //Center of the search starts 1 block below the mob's block position
         BlockPos center = this.mob.blockPosition().offset(0,-1,0);
 
         //Range is +-(searchRange - 1), +-verticalSearchRange, +-(searchRange - 1)
         //Cache ChunkAccesses - getting them is surprisingly expensive - and track whether subchunks have the block
-        final FixedChunkAccessSectionBitBuffer chunkAccessSectionBitBuffer =
-                new FixedChunkAccessSectionBitBuffer(center, this.searchRange-1, this.verticalSearchRange);
-        LongArrayList chunksToIterate = new LongArrayList(chunkAccessSectionBitBuffer.chunkLength);
         final LevelReader levelReader = this.mob.level();
-        final int minSectionY = levelReader.getMinSectionY();
-        for(long chunkPos: chunkAccessSectionBitBuffer.getChunkPosInRange()){
-            final int x = ChunkPos.getX(chunkPos);
-            final int z = ChunkPos.getZ(chunkPos);
-            // This is originally made to match the chunk-loading behavior in RemoveBlockGoal
-            // However other goals can chunk-load if their search range is [made] large enough
-            ChunkAccess chunkAccess = levelReader.getChunk(
-                    x, z, ChunkStatus.FULL, false
-            );
+        CheckAndCacheBlockChecker checker = new CheckAndCacheBlockChecker(center,
+                this.searchRange-1, this.verticalSearchRange,
+                levelReader, requiredBlock, shouldChunkLoad);
+        LongArrayList chunksToIterate = new LongArrayList(checker.getChunkSize());
+        checker.initializeChunks(chunksToIterate::addLast);
 
-            //RemoveBlockGoal::isValidTarget will also return false if chunkAccess is null regardless of block type
-            if(chunkAccess != null){
-                boolean hasSubchunks = false;
-                chunkAccessSectionBitBuffer.setChunkAccess(chunkPos, chunkAccess);
-                for(int y : chunkAccessSectionBitBuffer.getSectionYInRange()){
-                    final int chunkSectionYIndex = y - minSectionY;
-                    LevelChunkSection[] chunkSections = chunkAccess.getSections();
-                    if (chunkSectionYIndex >= 0
-                            && chunkSectionYIndex < chunkSections.length
-                            && chunkSections[chunkSectionYIndex].maybeHas(requiredBlock)) {
-                        chunkAccessSectionBitBuffer.setChunkSectionStatus(SectionPos.asLong(x, y, z), true);
-                        hasSubchunks = true;
-                    }
-                }
+        if(checker.shouldStop()) return false; //No chunks with the target block - return early
 
-                if(hasSubchunks){
-                    chunksToIterate.add(chunkPos);
-                }
-            }
-
+        // Prefer chunk aware search because it also cuts iterations inside "empty" chunk sections
+        if(!checker.hasUnloadedPossibleChunks()){
+            return this.lithium$chunkAwareSearch(center, lithium$isValidTarget, checker, chunksToIterate);
         }
 
-        if(chunksToIterate.isEmpty()) return false; //No chunks with the target block - return early
+        // Use vanilla search because unordered search may observably alter chunk-loading behavior
+        return this.lithium$vanillaOrderSearch(center, lithium$isValidTarget, checker);
+    }
 
-        //Sort chunks by closest possible relative distance
+    @Unique
+    private boolean lithium$vanillaOrderSearch(BlockPos center, BiPredicate<ChunkAccess, BlockPos> lithium$isValidTarget,
+                                               CheckAndCacheBlockChecker checker){
+        final int i = this.searchRange;
+        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
+
+        for (int k = this.verticalSearchStart; k <= this.verticalSearchRange; k = k > 0 ? -k : 1 - k) {
+            for (int l = 0; l < i; l++) {
+                for (int m = 0; m <= l; m = m > 0 ? -m : 1 - m) {
+                    for (int n = m < l && m > -l ? l : 0; n <= l; n = n > 0 ? -n : 1 - n) {
+                        mutableBlockPos.setWithOffset(center, m, k, n);
+                        if (this.mob.isWithinHome(mutableBlockPos) && checker.checkPosition(mutableBlockPos)) {
+                            // ChunkAccess is always loaded at this point
+                            ChunkAccess chunkAccess = checker.getCachedChunkAccess(mutableBlockPos);
+                            if (lithium$isValidTarget.test(chunkAccess, mutableBlockPos)){
+                                this.blockPos = mutableBlockPos;
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    @Unique
+    private boolean lithium$chunkAwareSearch(BlockPos center, BiPredicate<ChunkAccess, BlockPos> lithium$isValidTarget,
+                                            CheckAndCacheBlockChecker checker, LongArrayList chunksToIterate){
+        // Sort chunks by closest possible relative distance
+        // Note: In this search order, the closest point normally is also the closest point in the search
         chunksToIterate.sort((chunkLong0, chunkLong1) ->
                 MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkLong0)
-                - MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkLong1)
+                        - MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkLong1)
         );
+
+        Predicate<BlockState> requiredBlock = checker.blockStatePredicate;
+        final int minSectionY = checker.minSectionY;
 
         BlockPos.MutableBlockPos foundPos = new BlockPos.MutableBlockPos();
         BlockPos.MutableBlockPos currentPos = new BlockPos.MutableBlockPos();
+
+        // Same layer order as vanilla - saves iterations if targets are found in the first layer
         for (int k = this.verticalSearchStart; k <= this.verticalSearchRange; k = k > 0 ? -k : 1 - k) {
             final int y = center.getY() + k;
+            final int chunkY = SectionPos.blockToSectionCoord(y);
+            final int ySectionIndex = chunkY - minSectionY;
+
             int closestFound = Integer.MAX_VALUE;
             int ringMax = this.searchRange-1;
+
+            // Iterate through slices of chunks that may have the target blockState
             for(long chunkPos: chunksToIterate){
                 final int chunkX = ChunkPos.getX(chunkPos);
-                final int chunkY = SectionPos.blockToSectionCoord(y);
                 final int chunkZ = ChunkPos.getZ(chunkPos);
                 //No subsequent chunks can be closer since it's sorted
                 if(closestFound < MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkX, chunkZ)){
                     break;
                 }
 
-                //Current subchunk doesn't have the block
-                if(!chunkAccessSectionBitBuffer.getChunkSectionBit(chunkX, chunkY, chunkZ)){
+                //Current subchunk does not have the block
+                if(!checker.checkCachedSection(chunkX, chunkY, chunkZ)){
                     continue;
                 }
 
-                ChunkAccess chunkAccess = chunkAccessSectionBitBuffer.getChunkAccess(chunkPos);
-                //If ChunkSection may have close enough targets, iterate layer in Paletted Container (xz) order
+                ChunkAccess chunkAccess = checker.getCachedChunkAccess(chunkPos);
+                //If ChunkSection may have close enough targets, iterate layer in Paletted Container (x then z) order
                 final int chunkBlockX = SectionPos.sectionToBlockCoord(chunkX);
                 int xMin = Math.max(center.getX()-ringMax, chunkBlockX);
                 int xMax = Math.min(center.getX()+ringMax, chunkBlockX+15);
                 final int chunkBlockZ = SectionPos.sectionToBlockCoord(chunkZ);
                 int zMin = Math.max(center.getZ()-ringMax, chunkBlockZ);
                 int zMax = Math.min(center.getZ()+ringMax, chunkBlockZ+15);
-                LevelChunkSection levelChunkSection = chunkAccess.getSections()[chunkY - minSectionY];
+                LevelChunkSection levelChunkSection = chunkAccess.getSections()[ySectionIndex];
                 for(int z = zMin; z <= zMax; z++){
                     for(int x = xMin; x <= xMax; x++){
                         int dX = x - center.getX();
@@ -170,7 +185,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                 }
             }
 
-            if(closestFound < Integer.MAX_VALUE){
+             if(closestFound < Integer.MAX_VALUE){
                 this.blockPos = foundPos;
                 return true;
             }

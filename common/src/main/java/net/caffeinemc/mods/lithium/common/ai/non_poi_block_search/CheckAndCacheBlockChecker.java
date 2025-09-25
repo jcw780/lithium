@@ -10,6 +10,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -24,8 +25,10 @@ import java.util.function.Predicate;
 public class CheckAndCacheBlockChecker {
     private final FixedChunkAccessSectionBitBuffer chunkAccessSectionStatusBuffer;
     private final LevelReader levelReader;
-    private final boolean shouldChunkLoad;
-    private final Predicate<BlockState> blockStatePredicate;
+    public final boolean shouldChunkLoad;
+    public final Predicate<BlockState> blockStatePredicate;
+    private int unloadedPossibleChunkSections = 0;
+    public final int minSectionY;
 
     public CheckAndCacheBlockChecker(BlockPos origin, int horizontalRangeInclusive, int verticalRangeInclusive, LevelReader levelReader,
                                      Predicate<BlockState> blockStatePredicate, boolean shouldChunkLoad){
@@ -33,44 +36,79 @@ public class CheckAndCacheBlockChecker {
         this.levelReader = levelReader;
         this.shouldChunkLoad = shouldChunkLoad;
         this.blockStatePredicate = blockStatePredicate;
+        this.minSectionY = levelReader.getMinSectionY();
+    }
 
+    public void initializeChunks(){
+        this.initializeChunks(null);
+    }
+
+    public void initializeChunks(Consumer<Long> chunkCollector){
+        final boolean nullChunkCollector = chunkCollector == null;
         for (long chunkPos : this.chunkAccessSectionStatusBuffer.getChunkPosInRange()){
             int x = ChunkPos.getX(chunkPos);
             int z = ChunkPos.getZ(chunkPos);
+            boolean chunkMaybeHas = false;
 
             //Never load chunks in the first pass to avoid observably altering chunk loading behavior
             //Otherwise full region will be loaded vs partial region if the search finds the block early.
             ChunkAccess chunkAccess = levelReader.getChunk(x, z, ChunkStatus.FULL, false);
-            if(chunkAccess != null){
+            if (chunkAccess != null){
                 this.chunkAccessSectionStatusBuffer.setChunkAccess(chunkPos, chunkAccess);
-                for(int y: this.chunkAccessSectionStatusBuffer.getSectionYInRange()){
-                    checkChunkSection(chunkAccess, x, y, z);
+                for (int y: this.chunkAccessSectionStatusBuffer.getSectionYInRange()){
+                    chunkMaybeHas = this.checkChunkSection(chunkAccess, x, y, z) || chunkMaybeHas;
                 }
-            } else if(this.shouldChunkLoad){
+            } else if (this.shouldChunkLoad){
                 /* If the search may chunk load then it is possible that target blocks may be revealed when the search
                  * reaches it. Since we cannot load the chunks and check now, we cannot definitively exclude subchunks
                  * inside the chunk. This means that we must flag subchunks that are within build limit - otherwise air
                  * anyway - for the search.
                  */
-                for(int y: this.chunkAccessSectionStatusBuffer.getSectionYInRange()){
+                for (int y: this.chunkAccessSectionStatusBuffer.getSectionYInRange()){
                     this.chunkAccessSectionStatusBuffer.setChunkSectionStatus(SectionPos.asLong(x, y, z),
                             !levelReader.isOutsideBuildHeight(SectionPos.sectionToBlockCoord(y)));
+                    ++this.unloadedPossibleChunkSections;
                 }
+                chunkMaybeHas = true;
+
+            }
+
+            if(!nullChunkCollector && chunkMaybeHas){
+                chunkCollector.accept(chunkPos);
             }
         }
     }
 
+    public int getChunkSize(){
+        return this.chunkAccessSectionStatusBuffer.chunkLength;
+    }
+
+    public boolean hasUnloadedPossibleChunks(){
+        return this.unloadedPossibleChunkSections > 0;
+    }
+
     private boolean checkChunkSection(ChunkAccess chunkAccess, int chunkX, int chunkY, int chunkZ){
-        final int chunkSectionYIndex = chunkAccess.getSectionIndexFromSectionY(chunkY);
+        final int chunkSectionYIndex = chunkY - this.minSectionY;
         LevelChunkSection[] chunkSections = chunkAccess.getSections();
-        if (chunkSectionYIndex >= 0
-                && chunkSectionYIndex < chunkSections.length
+        if (chunkSectionYIndex >= 0 && chunkSectionYIndex < chunkSections.length
                 && chunkSections[chunkSectionYIndex].maybeHas(blockStatePredicate)) {
             this.chunkAccessSectionStatusBuffer.setChunkSectionStatus(
                     SectionPos.asLong(chunkX, chunkY, chunkZ), true);
             return true;
         }
         return false;
+    }
+
+    public boolean checkCachedSection(int chunkX, int chunkY, int chunkZ){
+        return this.chunkAccessSectionStatusBuffer.getChunkSectionBit(chunkX, chunkY, chunkZ);
+    }
+
+    public ChunkAccess getCachedChunkAccess(long chunkPos){
+        return this.chunkAccessSectionStatusBuffer.getChunkAccess(chunkPos);
+    }
+
+    public ChunkAccess getCachedChunkAccess(BlockPos blockPos){
+        return this.chunkAccessSectionStatusBuffer.getChunkAccess(blockPos);
     }
 
     public boolean shouldStop(){
@@ -80,7 +118,10 @@ public class CheckAndCacheBlockChecker {
     public boolean checkPosition(BlockPos blockPos){
         if(!this.chunkAccessSectionStatusBuffer.getChunkSectionBit(blockPos)) return false;
         ChunkAccess chunkAccess = this.chunkAccessSectionStatusBuffer.getChunkAccess(blockPos);
-        if(chunkAccess == null && this.shouldChunkLoad){
+        if(chunkAccess == null){
+            if (!this.shouldChunkLoad){
+                return false;
+            }
             int chunkX = SectionPos.blockToSectionCoord(blockPos.getX());
             int chunkY = SectionPos.blockToSectionCoord(blockPos.getY());
             int chunkZ = SectionPos.blockToSectionCoord(blockPos.getZ());
@@ -89,6 +130,7 @@ public class CheckAndCacheBlockChecker {
             assert chunkAccess != null;
             this.chunkAccessSectionStatusBuffer.setChunkAccess(blockPos, chunkAccess);
             if (!checkChunkSection(chunkAccess, chunkX, chunkY, chunkZ)) {
+                --this.unloadedPossibleChunkSections;
                 return false;
             }
         }

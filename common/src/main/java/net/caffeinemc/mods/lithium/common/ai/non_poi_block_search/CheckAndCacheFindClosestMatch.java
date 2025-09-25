@@ -20,6 +20,7 @@ public interface CheckAndCacheFindClosestMatch {
         BlockPos mobPos = livingEntity.blockPosition();
         CheckAndCacheBlockChecker checker = new CheckAndCacheBlockChecker(
                 mobPos, horizontalRange, verticalRange, levelReader, blockStatePredicate, shouldChunkLoad);
+        checker.initializeChunks();
         if(checker.shouldStop()) {
             return Optional.empty();
         }

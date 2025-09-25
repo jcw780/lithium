@@ -8,5 +8,6 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 public interface LithiumMoveToBlockGoal {
-    boolean lithium$findNearestBlock(Predicate<BlockState> requiredBlock, BiPredicate<ChunkAccess, BlockPos> lithium$isValidTarget);
+    boolean lithium$findNearestBlock(Predicate<BlockState> requiredBlock, BiPredicate<ChunkAccess, BlockPos> lithium$isValidTarget,
+                                     final boolean shouldChunkLoad);
 }
