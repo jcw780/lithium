@@ -30,11 +30,11 @@ public class FixedChunkAccessSectionBitBuffer {
         this.yLength = Math.max(y0, y1) - this.yMin + 1;
         this.zLength = Math.max(z0, z1) - this.zMin + 1;
 
-        this.numChunks = xLength*zLength;
-        this.numSections = yLength*xLength*zLength;
+        this.numChunks = xLength * zLength;
+        this.numSections = yLength * xLength * zLength;
 
         this.chunkSectionBits = new BitSet(numSections);
-        this.chunkAccesses = new ArrayList<>(Collections.nCopies(xLength*zLength,null));
+        this.chunkAccesses = new ArrayList<>(Collections.nCopies(xLength * zLength,null));
     }
 
     public FixedChunkAccessSectionBitBuffer(BlockPos center, int horizontalRangeInclusive, int verticalRangeInclusive) {
