@@ -44,7 +44,7 @@ public class CheckAndCacheBlockChecker {
         this.initializeChunks(null);
     }
 
-    public void initializeChunks(Consumer<Long> chunkCollector){
+    public void initializeChunks(Consumer<Long> chunkCollector) {
         final boolean nullChunkCollector = chunkCollector == null;
         for (long chunkPos : this.chunkSections2MaybeContainsMatchingBlock.getChunkPosInRange()) {
             int x = ChunkPos.getX(chunkPos);
@@ -120,8 +120,8 @@ public class CheckAndCacheBlockChecker {
     public boolean checkPosition(BlockPos blockPos) {
         if(!this.chunkSections2MaybeContainsMatchingBlock.getChunkSectionBit(blockPos)) return false;
         ChunkAccess chunkAccess = this.chunkSections2MaybeContainsMatchingBlock.getChunkAccess(blockPos);
-        if(chunkAccess == null){
-            if (!this.shouldChunkLoad){
+        if(chunkAccess == null) {
+            if (!this.shouldChunkLoad) {
                 return false;
             }
             int chunkX = SectionPos.blockToSectionCoord(blockPos.getX());
