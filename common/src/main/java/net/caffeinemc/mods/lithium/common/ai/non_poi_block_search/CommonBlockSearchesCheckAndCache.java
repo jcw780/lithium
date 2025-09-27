@@ -10,10 +10,12 @@ import java.util.function.Predicate;
 
 /**
  * Uses CheckAndCacheBlockChecker to improve common block searches
- * [Vanilla Copy] search order and chunk-loading - even though the latter is unlikely to be observable in vanilla.
  */
-public class CommonVanillaCheckAndCache {
-    // Optimizes BlockPos::findClosestMatch
+public class CommonBlockSearchesCheckAndCache {
+    /**
+     * Optimizes BlockPos::findClosestMatch
+     * [Vanilla Copy] search order and chunk-loading - even though the latter is unlikely to be observable in vanilla.
+     */
     public static Optional<BlockPos> blockPosFindClosestMatch(LevelReader levelReader, LivingEntity livingEntity,
                                                               int horizontalRange, int verticalRange,
                                                               Predicate<BlockState> blockStatePredicate,
