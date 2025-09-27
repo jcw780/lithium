@@ -9,17 +9,21 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
- * Uses CheckAndCacheBlockChecker to improve findClosestMatch search
- * [Vanilla Copy] search order and chunk-loading - even though the latter is unlikely to be observable in vanilla.
+ * Uses CheckAndCacheBlockChecker to improve common block searches
  */
-public interface CheckAndCacheFindClosestMatch {
-    default Optional<BlockPos> cachedFindClosestMatch(LevelReader levelReader, LivingEntity livingEntity,
-                                                      int horizontalRange, int verticalRange,
-                                                      Predicate<BlockState> blockStatePredicate,
-                                                      boolean shouldChunkLoad){
+public class CommonBlockSearchesCheckAndCache {
+    /**
+     * Optimizes BlockPos::findClosestMatch
+     * [Vanilla Copy] search order and chunk-loading - even though the latter is unlikely to be observable in vanilla.
+     */
+    public static Optional<BlockPos> blockPosFindClosestMatch(LevelReader levelReader, LivingEntity livingEntity,
+                                                              int horizontalRange, int verticalRange,
+                                                              Predicate<BlockState> blockStatePredicate,
+                                                              boolean shouldChunkLoad){
         BlockPos mobPos = livingEntity.blockPosition();
         CheckAndCacheBlockChecker checker = new CheckAndCacheBlockChecker(
                 mobPos, horizontalRange, verticalRange, levelReader, blockStatePredicate, shouldChunkLoad);
+        checker.initializeChunks();
         if(checker.shouldStop()) {
             return Optional.empty();
         }

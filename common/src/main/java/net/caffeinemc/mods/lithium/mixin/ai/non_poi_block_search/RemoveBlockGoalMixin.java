@@ -15,12 +15,18 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import java.util.function.BiPredicate;
+
 
 @Mixin(RemoveBlockGoal.class)
 public abstract class RemoveBlockGoalMixin extends MoveToBlockGoal implements LithiumMoveToBlockGoal {
     @Shadow
     @Final
     private Block blockToRemove;
+
+    @Unique
+    private static final BiPredicate<ChunkAccess, BlockPos.MutableBlockPos> IS_VALID_TARGET_ABOVE_BIPREDICATE =
+            RemoveBlockGoalMixin::lithium$isValidTargetAbove;
 
     public RemoveBlockGoalMixin(PathfinderMob pathfinderMob, double d, int i) {
         super(pathfinderMob, d, i);
@@ -29,8 +35,8 @@ public abstract class RemoveBlockGoalMixin extends MoveToBlockGoal implements Li
     @Redirect(method = "canUse",
     at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/goal/RemoveBlockGoal;findNearestBlock()Z"))
     protected boolean redirectFindNearestBlock(RemoveBlockGoal removeBlockGoal) {
-        return ((LithiumMoveToBlockGoal)removeBlockGoal).lithium$findNearestBlock(
-                this::lithium$isValidTargetBlock, this::lithium$isValidTargetAbove
+        return ((LithiumMoveToBlockGoal) removeBlockGoal).lithium$findNearestBlock(
+                this::lithium$isValidTargetBlock, IS_VALID_TARGET_ABOVE_BIPREDICATE, false
         );
     }
 
@@ -41,8 +47,8 @@ public abstract class RemoveBlockGoalMixin extends MoveToBlockGoal implements Li
     }
 
     @Unique
-    private boolean lithium$isValidTargetAbove(ChunkAccess chunkAccess, BlockPos blockPos){
-        return chunkAccess.getBlockState(blockPos.above()).isAir()
-                && chunkAccess.getBlockState(blockPos.above(2)).isAir();
+    private static boolean lithium$isValidTargetAbove(ChunkAccess chunkAccess, BlockPos.MutableBlockPos mutable) {
+        return chunkAccess.getBlockState(mutable.move(0, 1, 0)).isAir()
+                && chunkAccess.getBlockState(mutable.move(0, 1, 0)).isAir();
     }
 }

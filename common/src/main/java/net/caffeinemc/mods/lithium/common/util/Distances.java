@@ -31,7 +31,7 @@ public class Distances {
     }
 
     public static int getClosestAlongSectionAxis(int originAxis, int chunkMinAxis){
-        return Math.clamp(originAxis, chunkMinAxis, chunkMinAxis+15);
+        return Math.min(Math.max(originAxis, chunkMinAxis), chunkMinAxis+15);
     }
 
     public static long getClosestPositionWithinChunk(BlockPos origin, int chunkX, int chunkZ){
