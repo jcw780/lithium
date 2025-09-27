@@ -124,9 +124,10 @@ public class CheckAndCacheBlockChecker {
             if (!this.shouldChunkLoad) {
                 return false;
             }
-            int chunkX = SectionPos.blockToSectionCoord(blockPos.getX());
-            int chunkY = SectionPos.blockToSectionCoord(blockPos.getY());
-            int chunkZ = SectionPos.blockToSectionCoord(blockPos.getZ());
+
+            final int chunkX = SectionPos.blockToSectionCoord(blockPos.getX());
+            final int chunkY = SectionPos.blockToSectionCoord(blockPos.getY());
+            final int chunkZ = SectionPos.blockToSectionCoord(blockPos.getZ());
             chunkAccess = levelReader.getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
             //this chunkAccess cannot be null and reach here because it should throw earlier
             assert chunkAccess != null;
