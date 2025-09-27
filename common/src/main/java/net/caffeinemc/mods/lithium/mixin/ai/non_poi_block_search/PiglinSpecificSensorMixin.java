@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.lithium.mixin.ai.non_poi_block_search;
 
-import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.CheckAndCacheFindClosestMatch;
+import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.CommonVanillaCheckAndCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
@@ -22,7 +22,7 @@ import java.util.function.Predicate;
  * Optimizes Piglin repellent search.
  */
 @Mixin(PiglinSpecificSensor.class)
-public abstract class PiglinSpecificSensorMixin implements CheckAndCacheFindClosestMatch {
+public abstract class PiglinSpecificSensorMixin {
     @Unique
     private static final Predicate<BlockState> IS_VALID_REPELLENT_PREDICATE =
             PiglinSpecificSensorMixin::lithium$isValidRepellent;
@@ -30,7 +30,7 @@ public abstract class PiglinSpecificSensorMixin implements CheckAndCacheFindClos
     @Redirect(method = "doTick", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/entity/ai/sensing/PiglinSpecificSensor;findNearestRepellent(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;)Ljava/util/Optional;"))
     public Optional<BlockPos> redirectFindNearestRepellent(ServerLevel serverLevel, LivingEntity livingEntity) {
-        return cachedFindClosestMatch(serverLevel, livingEntity, 8, 4,
+        return CommonVanillaCheckAndCache.blockPosFindClosestMatch(serverLevel, livingEntity, 8, 4,
                 IS_VALID_REPELLENT_PREDICATE, true);
     }
 

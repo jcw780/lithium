@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.lithium.mixin.ai.non_poi_block_search;
 
-import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.CheckAndCacheFindClosestMatch;
+import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.CommonVanillaCheckAndCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
@@ -19,7 +19,7 @@ import java.util.Optional;
  * Optimizes Hoglin repellent search.
  */
 @Mixin(HoglinSpecificSensor.class)
-public abstract class HoglinSpecificSensorMixin implements CheckAndCacheFindClosestMatch {
+public abstract class HoglinSpecificSensorMixin {
     @Unique
     private static final java.util.function.Predicate<BlockState> IS_VALID_REPELLENT_PREDICATE =
             HoglinSpecificSensorMixin::lithium$isValidRepellent;
@@ -28,7 +28,7 @@ public abstract class HoglinSpecificSensorMixin implements CheckAndCacheFindClos
     at= @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/sensing/HoglinSpecificSensor;findNearestRepellent(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/monster/hoglin/Hoglin;)Ljava/util/Optional;"))
     private Optional<BlockPos> redirectFindNearestRepellent(HoglinSpecificSensor instance, ServerLevel serverLevel,
                                                             Hoglin hoglin) {
-        return cachedFindClosestMatch(serverLevel, hoglin, 8, 4,
+        return CommonVanillaCheckAndCache.blockPosFindClosestMatch(serverLevel, hoglin, 8, 4,
                 IS_VALID_REPELLENT_PREDICATE, true);
     }
 
