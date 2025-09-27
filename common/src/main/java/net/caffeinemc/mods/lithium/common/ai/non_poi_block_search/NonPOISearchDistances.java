@@ -48,9 +48,7 @@ public class NonPOISearchDistances {
          * @param dZ Relative z position of the block to the center
          */
         public static int getVanillaSortOrderInt(final int ring, final int dX, final int dZ) {
-            return (ring << 16)
-                    | (Math.abs(dX) << 9 | Math.abs(dZ) << 1)
-                    - ((dX > 0 ? 1 : 0) << 8 | (dZ > 0 ? 1 : 0));
+            return (ring << 16 | Math.abs(dX) << 9 | Math.abs(dZ) << 1) - ((dX > 0 ? 1 : 0) << 8 | (dZ > 0 ? 1 : 0));
         }
     }
 }

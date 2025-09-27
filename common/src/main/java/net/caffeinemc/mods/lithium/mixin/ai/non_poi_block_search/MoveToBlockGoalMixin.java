@@ -145,7 +145,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                                              BiPredicate<ChunkAccess, BlockPos.MutableBlockPos> lithium$isValidTarget,
                                              CheckAndCacheBlockChecker checker, LongArrayList sortedChunksMaybeWithBlock,
                                              final int minY, final int maxY) {
-        // Sort chunks by closest possible relative distance
+        // Sort chunks by lowest sort order - has the earliest searched position
         // Note: In this search order, the closest point normally is also the closest point in the search
         sortedChunksMaybeWithBlock.sort((chunkLong0, chunkLong1) ->
                 MoveToBlockGoalDistances.getMinimumSortOrderOfChunk(center, chunkLong0)
@@ -172,7 +172,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
             final int ySectionIndex = chunkY - minSectionY;
 
             int closestFound = Integer.MAX_VALUE;
-            int ringMax = this.searchRange-1;
+            int ringMax = this.searchRange - 1;
 
             // Iterate through slices of chunks that may have the target blockState
             for (long chunkPos: sortedChunksMaybeWithBlock) {
@@ -220,8 +220,9 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                 }
             }
 
-             if (closestFound < Integer.MAX_VALUE) {
-                this.blockPos = foundPos.immutable();
+            if (closestFound < Integer.MAX_VALUE) {
+                // Vanilla does this so surely it's fine...
+                this.blockPos = foundPos;
                 return true;
             }
         }

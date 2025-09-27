@@ -35,7 +35,7 @@ public abstract class RemoveBlockGoalMixin extends MoveToBlockGoal implements Li
     @Redirect(method = "canUse",
     at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/goal/RemoveBlockGoal;findNearestBlock()Z"))
     protected boolean redirectFindNearestBlock(RemoveBlockGoal removeBlockGoal) {
-        return ((LithiumMoveToBlockGoal)removeBlockGoal).lithium$findNearestBlock(
+        return ((LithiumMoveToBlockGoal) removeBlockGoal).lithium$findNearestBlock(
                 this::lithium$isValidTargetBlock, IS_VALID_TARGET_ABOVE_BIPREDICATE, false
         );
     }
