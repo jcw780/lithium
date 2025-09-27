@@ -14,21 +14,26 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Optional;
 
-/** [Vanilla Copy]
- *  Optimizes Hoglin repellent search.
+/**
+ * [Vanilla Copy]
+ * Optimizes Hoglin repellent search.
  */
 @Mixin(HoglinSpecificSensor.class)
 public abstract class HoglinSpecificSensorMixin implements CheckAndCacheFindClosestMatch {
+    @Unique
+    private static final java.util.function.Predicate<BlockState> IS_VALID_REPELLENT_PREDICATE =
+            HoglinSpecificSensorMixin::lithium$isValidRepellent;
+
     @Redirect(method = "doTick(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/monster/hoglin/Hoglin;)V",
     at= @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/sensing/HoglinSpecificSensor;findNearestRepellent(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/monster/hoglin/Hoglin;)Ljava/util/Optional;"))
     private Optional<BlockPos> redirectFindNearestRepellent(HoglinSpecificSensor instance, ServerLevel serverLevel,
                                                             Hoglin hoglin) {
         return cachedFindClosestMatch(serverLevel, hoglin, 8, 4,
-                this::lithium$isValidRepellent, true);
+                IS_VALID_REPELLENT_PREDICATE, true);
     }
 
     @Unique
-    private boolean lithium$isValidRepellent(BlockState blockState){
+    private static boolean lithium$isValidRepellent(BlockState blockState) {
         return blockState.is(BlockTags.HOGLIN_REPELLENTS);
     }
 }

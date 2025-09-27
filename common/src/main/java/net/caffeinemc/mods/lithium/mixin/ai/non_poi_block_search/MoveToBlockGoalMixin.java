@@ -64,7 +64,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
 
     @Override
     public boolean lithium$findNearestBlock(Predicate<BlockState> requiredBlock, BiPredicate<ChunkAccess,
-            BlockPos> lithium$isValidTarget, final boolean shouldChunkLoad) {
+            BlockPos.MutableBlockPos> lithium$isValidTarget, final boolean shouldChunkLoad) {
         //Center of the search starts 1 block below the mob's block position
         BlockPos center = this.mob.blockPosition().offset(0,-1,0);
 
@@ -92,7 +92,8 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
     }
 
     @Unique
-    private boolean lithium$vanillaOrderSearch(BlockPos center, BiPredicate<ChunkAccess, BlockPos> lithium$isValidTarget,
+    private boolean lithium$vanillaOrderSearch(BlockPos center,
+                                               BiPredicate<ChunkAccess, BlockPos.MutableBlockPos> lithium$isValidTarget,
                                                CheckAndCacheBlockChecker checker, final int minY, final int maxY){
         BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
         final int centerY = center.getY();
@@ -125,7 +126,8 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
     }
 
     @Unique
-    private boolean lithium$chunkAwareSearch(BlockPos center, BiPredicate<ChunkAccess, BlockPos> lithium$isValidTarget,
+    private boolean lithium$chunkAwareSearch(BlockPos center,
+                                             BiPredicate<ChunkAccess, BlockPos.MutableBlockPos> lithium$isValidTarget,
                                              CheckAndCacheBlockChecker checker, LongArrayList chunksToIterate,
                                              final int minY, final int maxY){
         // Sort chunks by closest possible relative distance

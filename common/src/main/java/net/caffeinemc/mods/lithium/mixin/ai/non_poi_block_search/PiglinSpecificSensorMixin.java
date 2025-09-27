@@ -15,22 +15,29 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
-/** [Vanilla Copy]
- *  Optimizes Piglin repellent search.
+/**
+ * [Vanilla Copy]
+ * Optimizes Piglin repellent search.
  */
 @Mixin(PiglinSpecificSensor.class)
 public abstract class PiglinSpecificSensorMixin implements CheckAndCacheFindClosestMatch {
+    @Unique
+    private static final Predicate<BlockState> IS_VALID_REPELLENT_PREDICATE =
+            PiglinSpecificSensorMixin::lithium$isValidRepellent;
+
     @Redirect(method = "doTick", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/entity/ai/sensing/PiglinSpecificSensor;findNearestRepellent(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;)Ljava/util/Optional;"))
-    public Optional<BlockPos> redirectFindNearestRepellent(ServerLevel serverLevel, LivingEntity livingEntity){
+    public Optional<BlockPos> redirectFindNearestRepellent(ServerLevel serverLevel, LivingEntity livingEntity) {
         return cachedFindClosestMatch(serverLevel, livingEntity, 8, 4,
-                this::lithium$isValidRepellent, true);
+                IS_VALID_REPELLENT_PREDICATE, true);
     }
 
     @Unique
-    private boolean lithium$isValidRepellent(BlockState blockState){
-        boolean bl = blockState.is(BlockTags.PIGLIN_REPELLENTS);
-        return bl && blockState.is(Blocks.SOUL_CAMPFIRE) ? CampfireBlock.isLitCampfire(blockState) : bl;
+    private static boolean lithium$isValidRepellent(BlockState blockState){
+        final boolean isPiglinRepellent = blockState.is(BlockTags.PIGLIN_REPELLENTS);
+        return isPiglinRepellent && blockState.is(Blocks.SOUL_CAMPFIRE) ?
+                CampfireBlock.isLitCampfire(blockState) : isPiglinRepellent;
     }
 }
