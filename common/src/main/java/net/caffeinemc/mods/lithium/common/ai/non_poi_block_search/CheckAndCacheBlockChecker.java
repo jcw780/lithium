@@ -81,7 +81,7 @@ public class CheckAndCacheBlockChecker {
     }
 
     public int getChunkSize(){
-        return this.chunkSections2MaybeContainsMatchingBlock.chunkLength;
+        return this.chunkSections2MaybeContainsMatchingBlock.numChunks;
     }
 
     public boolean hasUnloadedPossibleChunks(){

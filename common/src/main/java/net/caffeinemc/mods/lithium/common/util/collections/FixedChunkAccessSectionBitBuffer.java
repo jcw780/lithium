@@ -16,12 +16,12 @@ import java.util.Collections;
 
 public class FixedChunkAccessSectionBitBuffer {
     public final int xMin, yMin, zMin;
-    public final int xLength, yLength, zLength, chunkLength, sectionLength;
+    public final int xLength, yLength, zLength, numChunks, numSections;
 
     public final BitSet chunkSectionBits;
     public final ArrayList<ChunkAccess> chunkAccesses;
 
-    public FixedChunkAccessSectionBitBuffer(int x0, int x1, int y0, int y1, int z0, int z1){
+    public FixedChunkAccessSectionBitBuffer(int x0, int x1, int y0, int y1, int z0, int z1) {
         this.xMin = Math.min(x0, x1);
         this.yMin = Math.min(y0, y1);
         this.zMin = Math.min(z0, z1);
@@ -30,14 +30,14 @@ public class FixedChunkAccessSectionBitBuffer {
         this.yLength = Math.max(y0, y1) - this.yMin + 1;
         this.zLength = Math.max(z0, z1) - this.zMin + 1;
 
-        this.chunkLength = xLength*zLength;
-        this.sectionLength = yLength*xLength*zLength;
+        this.numChunks = xLength*zLength;
+        this.numSections = yLength*xLength*zLength;
 
-        this.chunkSectionBits = new BitSet(sectionLength);
+        this.chunkSectionBits = new BitSet(numSections);
         this.chunkAccesses = new ArrayList<>(Collections.nCopies(xLength*zLength,null));
     }
 
-    public FixedChunkAccessSectionBitBuffer(BlockPos center, int horizontalRangeInclusive, int verticalRangeInclusive){
+    public FixedChunkAccessSectionBitBuffer(BlockPos center, int horizontalRangeInclusive, int verticalRangeInclusive) {
         this(SectionPos.blockToSectionCoord(center.getX() - horizontalRangeInclusive),
                 SectionPos.blockToSectionCoord(center.getX() + horizontalRangeInclusive),
                 SectionPos.blockToSectionCoord(center.getY() - verticalRangeInclusive),
@@ -47,7 +47,7 @@ public class FixedChunkAccessSectionBitBuffer {
         );
     }
 
-    public int getSectionIndex(int x, int y, int z){
+    public int getSectionIndex(int x, int y, int z) {
         int dx = x - this.xMin;
         int dy = y - this.yMin;
         int dz = z - this.zMin;
@@ -55,7 +55,7 @@ public class FixedChunkAccessSectionBitBuffer {
         return (dx * this.zLength + dz) * this.yLength + dy;
     }
 
-    public int getSectionIndex(long sectionPos){
+    public int getSectionIndex(long sectionPos) {
         return this.getSectionIndex(
                 SectionPos.x(sectionPos),
                 SectionPos.y(sectionPos),
@@ -63,30 +63,30 @@ public class FixedChunkAccessSectionBitBuffer {
         );
     }
 
-    public boolean getChunkSectionBit(BlockPos blockPos){
+    public boolean getChunkSectionBit(BlockPos blockPos) {
         return this.getChunkSectionBit(SectionPos.blockToSection(blockPos.asLong()));
     }
 
-    public boolean getChunkSectionBit(long sectionPos){
+    public boolean getChunkSectionBit(long sectionPos) {
         return this.chunkSectionBits.get(this.getSectionIndex(sectionPos));
     }
 
-    public boolean getChunkSectionBit(int x, int y, int z){
+    public boolean getChunkSectionBit(int x, int y, int z) {
         return this.chunkSectionBits.get(this.getSectionIndex(x, y, z));
     }
 
-    public void setChunkSectionStatus(long sectionPos, boolean value){
+    public void setChunkSectionStatus(long sectionPos, boolean value) {
         this.chunkSectionBits.set(this.getSectionIndex(sectionPos), value);
     }
 
-    public int getChunkIndex(int x, int z){
+    public int getChunkIndex(int x, int z) {
         int dx = x - this.xMin;
         int dz = z - this.zMin;
 
         return dx * this.zLength + dz;
     }
 
-    public int getChunkIndex(long chunkPos){
+    public int getChunkIndex(long chunkPos) {
         return this.getChunkIndex(ChunkPos.getX(chunkPos), ChunkPos.getZ(chunkPos));
     }
 
@@ -98,11 +98,11 @@ public class FixedChunkAccessSectionBitBuffer {
         return this.getChunkAccess(ChunkPos.asLong(blockPos));
     }
 
-    public void setChunkAccess(long chunkPos, ChunkAccess chunkAccess){
+    public void setChunkAccess(long chunkPos, ChunkAccess chunkAccess) {
         this.chunkAccesses.set(this.getChunkIndex(chunkPos), chunkAccess);
     }
 
-    public void setChunkAccess(BlockPos blockPos, ChunkAccess chunkAccess){
+    public void setChunkAccess(BlockPos blockPos, ChunkAccess chunkAccess) {
         this.setChunkAccess(ChunkPos.asLong(blockPos), chunkAccess);
     }
 
@@ -110,8 +110,8 @@ public class FixedChunkAccessSectionBitBuffer {
         return this.chunkSectionBits.nextSetBit(0) == -1;
     }
 
-    public LongIterable getChunkPosInRange(){
-        return new LongIterable(){
+    public LongIterable getChunkPosInRange() {
+        return new LongIterable() {
             @Override
             public @NotNull LongIterator iterator(){
                 return getChunkPosInRangeIterator();
@@ -119,19 +119,19 @@ public class FixedChunkAccessSectionBitBuffer {
         };
     }
 
-    public LongIterator getChunkPosInRangeIterator(){
+    public LongIterator getChunkPosInRangeIterator() {
         final int xMin = this.xMin;
         final int xMax = this.xMin + this.xLength - 1;
         final int zMin = this.zMin;
         final int zMax = this.zMin + this.zLength - 1;
-        return new LongIterator(){
+        return new LongIterator() {
             int x = xMin;
             int z = zMin;
 
             @Override
-            public long nextLong (){
+            public long nextLong () {
                 long result = ChunkPos.asLong(x, z);
-                if(z < zMax){
+                if (z < zMax) {
                     z++;
                 } else {
                     z = zMin;
@@ -147,8 +147,8 @@ public class FixedChunkAccessSectionBitBuffer {
         };
     }
 
-    public IntIterable getSectionYInRange(){
-        return new IntIterable(){
+    public IntIterable getSectionYInRange() {
+        return new IntIterable() {
             @Override
             public @NotNull IntIterator iterator(){
                 return getSectionYInRangeIterator();
@@ -156,10 +156,10 @@ public class FixedChunkAccessSectionBitBuffer {
         };
     }
 
-    public IntIterator getSectionYInRangeIterator(){
+    public IntIterator getSectionYInRangeIterator() {
         final int yMin = this.yMin;
         final int yLimit = yMin + this.yLength;
-        return new IntIterator(){
+        return new IntIterator() {
             int y = yMin;
 
             @Override
