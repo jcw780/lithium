@@ -90,7 +90,9 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         LongArrayList sortedChunksMaybeWithBlock = new LongArrayList(checker.getChunkSize());
         checker.initializeChunks(sortedChunksMaybeWithBlock::addLast);
 
-        if(checker.shouldStop()) return false; //No chunks with the target block - return early
+        if (checker.shouldStop()) {
+            return false; //No chunks with the target block - return early
+        }
 
         final int minY = Pos.BlockCoord.getMinY(levelReader);
         final int maxY = Pos.BlockCoord.getMaxYInclusive(levelReader);
