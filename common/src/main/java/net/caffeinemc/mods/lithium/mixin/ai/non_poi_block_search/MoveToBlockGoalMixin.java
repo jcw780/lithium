@@ -5,7 +5,6 @@ import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.CheckAndCacheB
 import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.LithiumMoveToBlockGoal;
 import net.caffeinemc.mods.lithium.common.ai.non_poi_block_search.NonPOISearchDistances.MoveToBlockGoalDistances;
 import net.caffeinemc.mods.lithium.common.util.Pos;
-import net.caffeinemc.mods.lithium.common.util.collections.FixedChunkAccessSectionBitBuffer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.PathfinderMob;
@@ -15,7 +14,6 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -133,8 +131,8 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
         // Sort chunks by closest possible relative distance
         // Note: In this search order, the closest point normally is also the closest point in the search
         chunksToIterate.sort((chunkLong0, chunkLong1) ->
-                MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkLong0)
-                        - MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkLong1)
+                MoveToBlockGoalDistances.getMinimumSortOrderOfChunk(center, chunkLong0)
+                        - MoveToBlockGoalDistances.getMinimumSortOrderOfChunk(center, chunkLong1)
         );
 
         Predicate<BlockState> requiredBlock = checker.blockStatePredicate;
@@ -162,7 +160,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                 final int chunkX = ChunkPos.getX(chunkPos);
                 final int chunkZ = ChunkPos.getZ(chunkPos);
                 //No subsequent chunks can be closer since it's sorted
-                if(closestFound < MoveToBlockGoalDistances.getMinimumDistanceOfChunk(center, chunkX, chunkZ)){
+                if(closestFound < MoveToBlockGoalDistances.getMinimumSortOrderOfChunk(center, chunkX, chunkZ)){
                     break;
                 }
 
@@ -185,7 +183,7 @@ public abstract class MoveToBlockGoalMixin implements LithiumMoveToBlockGoal {
                         int dX = x - center.getX();
                         int dZ = z - center.getZ();
                         int ring = MoveToBlockGoalDistances.getRing(dX, dZ);
-                        int currentDistance = MoveToBlockGoalDistances.getRelativeDistance(ring, dX, dZ);
+                        int currentDistance = MoveToBlockGoalDistances.getVanillaSortOrderInt(ring, dX, dZ);
                         if (currentDistance < closestFound
                                 && this.mob.isWithinHome(currentPos.set(x, y, z))
                                 && requiredBlock.test(levelChunkSection.getBlockState(x & 15, y & 15, z & 15))
