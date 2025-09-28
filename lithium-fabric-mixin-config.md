@@ -671,6 +671,10 @@ Several changes to the chunk manager to speed up chunk access
 (default: `true`)  
 Various optimizations to chunk ticking
   
+### `mixin.world.chunk_ticking.precipitation`
+(default: `true`)  
+Optimize ice creation and weather checks when it is not raining.
+  
 ### `mixin.world.chunk_ticking.random_block_ticking`
 (default: `true`)  
 Speed up random ticks by evaluating random chances early and using a fast block search.  
