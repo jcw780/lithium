@@ -20,6 +20,10 @@ mixin.gen.biome_noise_cache=false
 (default: `true`)  
 Mob AI optimizations
   
+### `mixin.ai.non_poi_block_search`
+(default: `true`)  
+Optimizes Non-POI block search using maybeHas to return early or reduce block searches
+  
 ### `mixin.ai.pathing`
 (default: `true`)  
 A faster code path is used for determining what kind of path-finding node type is associated with a
@@ -547,7 +551,8 @@ Chunk sections count certain blocks inside them and provide a method to quickly 
 Requirements:
 - `mixin.util.data_storage=true`
 - `mixin.util.chunk_status_tracking=true`
-- `mixin.util.initialization=true`  
+- `mixin.util.initialization=true`
+- `mixin.util.section_data_storage=true`  
   
 ### `mixin.util.chunk_access`
 (default: `true`)  
@@ -595,6 +600,10 @@ Requirements:
 ### `mixin.util.item_component_and_count_tracking`
 (default: `true`)  
 Implements a subscription / publishing system for changes of item stack components and item entity item type.
+  
+### `mixin.util.section_data_storage`
+(default: `true`)  
+Stores lithium's extra data used for various optimizations on a per-chunk section basis. The data is not saved, but allows optimizations to quickly store and access data.
   
 ### `mixin.util.world_border_listener`
 (default: `true`)  
@@ -665,6 +674,16 @@ Several changes to the chunk manager to speed up chunk access
 ### `mixin.world.chunk_ticking`
 (default: `true`)  
 Various optimizations to chunk ticking
+  
+### `mixin.world.chunk_ticking.precipitation`
+(default: `true`)  
+Optimize ice creation and weather checks when it is not raining.
+  
+### `mixin.world.chunk_ticking.random_block_ticking`
+(default: `true`)  
+Speed up random ticks by evaluating random chances early and using a fast block search.  
+Requirements:
+- `mixin.util.section_data_storage=true`  
   
 ### `mixin.world.chunk_ticking.spread_ice`
 (default: `true`)  

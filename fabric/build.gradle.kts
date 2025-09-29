@@ -54,14 +54,15 @@ dependencies {
     implementation(project.project(":common").sourceSets.getByName("main").output)
 
     compileOnly("net.caffeinemc:mixin-config-plugin:1.0-SNAPSHOT")
+
+    testImplementation("net.fabricmc:fabric-loader-junit:${FABRIC_LOADER_VERSION}")
 }
 
-tasks.named("compileTestJava").configure {
-    enabled = false
-}
+tasks.test {
+    useJUnitPlatform()
 
-tasks.named("test").configure {
-    enabled = false
+    // Disable caching to ensure tests always run
+    outputs.upToDateWhen { false }
 }
 
 //Mixin hotswap
@@ -87,11 +88,23 @@ sourceSets {
         compileClasspath += parent.compileClasspath
         runtimeClasspath += parent.runtimeClasspath
     }
+
+    test {
+        java.srcDir("src/test/java")
+        resources.srcDir("src/test/resources")
+    }
 }
 
 tasks.named<Copy>("processGametestResources") {
     from(project(":common").sourceSets.getByName("gametest").resources.srcDirs)
     into("build/resources/gametest")
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named<Copy>("processTestResources") {
+    from(project(":common").sourceSets.getByName("test").resources.srcDirs)
+    into("build/resources/test")
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

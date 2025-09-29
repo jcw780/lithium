@@ -30,33 +30,17 @@ public class Distances {
         return origin.distSqr(pos) <= radiusSq;
     }
 
-    public static int getClosestAlongSectionAxis(int originBlockAxis, int chunkMinAxis){
-        final int blockMinAxis = SectionPos.sectionToBlockCoord(chunkMinAxis);
-        return Math.min(Math.max(originBlockAxis, blockMinAxis), blockMinAxis+15);
+    public static int getClosestAlongSectionAxis(int originAxis, int chunkMinAxis){
+        return Math.min(Math.max(originAxis, chunkMinAxis), chunkMinAxis+15);
     }
 
-    public static int getClosestDistanceAlongSectionAxis(int originBlockAxis, int chunkMinAxis){
-        return Math.abs(getClosestAlongSectionAxis(originBlockAxis, chunkMinAxis) - originBlockAxis);
+    public static long getClosestPositionWithinChunk(BlockPos origin, int chunkX, int chunkZ){
+        int chunkMinX = SectionPos.sectionToBlockCoord(chunkX);
+        int chunkMinZ = SectionPos.sectionToBlockCoord(chunkZ);
+
+        return BlockPos.asLong(getClosestAlongSectionAxis(origin.getX(), chunkMinX),
+                origin.getY(), getClosestAlongSectionAxis(origin.getZ(), chunkMinZ));
+
     }
-
-    public static double getMinSectionDistanceSq(BlockPos origin, long sectionPos){
-        return getMinSectionDistanceSq(origin, SectionPos.x(sectionPos), SectionPos.y(sectionPos), SectionPos.z(sectionPos));
-    }
-
-    public static double getMinSectionDistanceSq(BlockPos origin, int chunkX, int chunkY, int chunkZ){
-        final int originX = origin.getX(), originY = origin.getY(), originZ = origin.getZ();
-        final int distX = getClosestAlongSectionAxis(originX, chunkX) - originX;
-        final int distY = getClosestAlongSectionAxis(originY, chunkY) - originY;
-        final int distZ = getClosestAlongSectionAxis(originZ, chunkZ) - originZ;
-
-        return distX * distX + distY * distY + distZ * distZ;
-    }
-
-    public static long getClosestPositionWithinSection(BlockPos origin, int chunkX, int chunkY, int chunkZ){
-        return BlockPos.asLong(getClosestAlongSectionAxis(origin.getX(), chunkX),
-                getClosestAlongSectionAxis(origin.getY(), chunkY),
-                getClosestAlongSectionAxis(origin.getZ(), chunkZ));
-    }
-
 
 }
