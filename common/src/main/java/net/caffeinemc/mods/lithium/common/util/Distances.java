@@ -30,17 +30,29 @@ public class Distances {
         return origin.distSqr(pos) <= radiusSq;
     }
 
-    public static int getClosestAlongSectionAxis(int originAxis, int chunkMinAxis){
+    public static int getClosestAlongSectionAxis(int originAxis, int chunkAxis){
+        final int chunkMinAxis = SectionPos.blockToSectionCoord(chunkAxis);
         return Math.min(Math.max(originAxis, chunkMinAxis), chunkMinAxis+15);
     }
 
     public static long getClosestPositionWithinChunk(BlockPos origin, int chunkX, int chunkZ){
-        int chunkMinX = SectionPos.sectionToBlockCoord(chunkX);
-        int chunkMinZ = SectionPos.sectionToBlockCoord(chunkZ);
-
-        return BlockPos.asLong(getClosestAlongSectionAxis(origin.getX(), chunkMinX),
-                origin.getY(), getClosestAlongSectionAxis(origin.getZ(), chunkMinZ));
+        return BlockPos.asLong(getClosestAlongSectionAxis(origin.getX(), chunkX),
+                origin.getY(), getClosestAlongSectionAxis(origin.getZ(), chunkZ));
 
     }
 
+    public static double getMinSectionDistanceSq(BlockPos origin, int chunkX, int chunkY, int chunkZ){
+        final int originX = origin.getX(), originY = origin.getY(), originZ = origin.getZ();
+        final int distX = getClosestAlongSectionAxis(originX, chunkX) - originX;
+        final int distY = getClosestAlongSectionAxis(originY, chunkY) - originY;
+        final int distZ = getClosestAlongSectionAxis(originZ, chunkZ) - originZ;
+
+        return distX * distX + distY * distY + distZ * distZ;
+    }
+
+    public static long getClosestPositionWithinSubchunk(BlockPos origin, int chunkX, int chunkY, int chunkZ){
+        return BlockPos.asLong(getClosestAlongSectionAxis(origin.getX(), chunkX),
+                getClosestAlongSectionAxis(origin.getY(), chunkY),
+                getClosestAlongSectionAxis(origin.getZ(), chunkZ));
+    }
 }

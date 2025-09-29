@@ -341,7 +341,8 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private int getYDistanceFromBitIndex(final int bitIndex) {
         return bitIndex == -1 ?
                 Integer.MAX_VALUE :
-                Distances.getClosestDistanceAlongSectionAxis(this.origin.getY(), bitIndex + this.chunkYMin);
+                Math.abs(Distances.getClosestAlongSectionAxis(
+                        this.origin.getY(), bitIndex + this.chunkYMin) - this.origin.getY());
     }
 
     // Expand chunks to search in concentric square rings
