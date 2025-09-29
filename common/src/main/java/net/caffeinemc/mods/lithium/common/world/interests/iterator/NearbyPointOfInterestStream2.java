@@ -38,15 +38,14 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private final Consumer<PoiRecord> collector;
     private final BlockPos origin;
 
-    private final int originY;
     private final int clampedOriginChunkY;
 
     private final int chunkYMin;
     private final double minChunkYDistSq;
 
-    private final ObjectArrayList<QueuedSubchunk> subchunksToCheck;
-    private int subChunksSearched = 0;
-    private boolean forciblyDeplete = false;
+    private final ObjectArrayList<QueuedSection> queuedPOISections;
+    private int queuedSectionsSearched;
+    private boolean forciblyDeplete;
     private final int forciblyDepleteTrigger;
     private int ring;
     private final int ringMax;
@@ -55,7 +54,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private final int ringClosestEdgeDistance;
     private double closestRingDistanceSq;
 
-    private double nextSubchunkDistanceSq;
+    private double nextSectionDistanceSq;
     private double lowestWaitingDistance;
     private final double distanceLimitL2Sq;
     private int pointIndex;
@@ -77,7 +76,6 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         this.typeSelector = typeSelector;
 
         this.origin = origin;
-        this.originY = origin.getY();
         this.chunkYMin = this.storage.lithium$getChunkYMin();
         final int chunkYMax = this.storage.lithium$getChunkYMaxInclusive();
 
@@ -96,7 +94,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         final int chunkMaxZ = SectionPos.blockToSectionCoord(origin.getZ()+radius);
         final int chunkMinZ = SectionPos.blockToSectionCoord(origin.getZ()-radius);
 
-        // Chunk searches will expand in a concentric square rings around the origin
+        // Chunk searches will expand in a concentric rings around the origin chunk
         this.ring = 0;
         final int originChunkX = SectionPos.blockToSectionCoord(originX);
         final int originChunkZ = SectionPos.blockToSectionCoord(originZ);
@@ -105,20 +103,23 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         this.ringIterator = getRingsOfChunksIterator(originChunkX, chunkMaxX, chunkMinX, originChunkZ, chunkMaxZ, chunkMinZ);
 
         // Initialize Ring Distances
+        // This is used to decide the minimum distance to possible POI located in the next ring
         this.ringClosestEdgeDistance = Math.min(Math.min((originX & 15) + 1, 16 - originX & 15),
                 Math.min((originZ & 15) + 1, 16 - originZ & 15));
         this.closestRingDistanceSq = this.getPotentialRingDistanceSq();
 
-        this.nextSubchunkDistanceSq = Double.MAX_VALUE;
+        this.nextSectionDistanceSq = Double.MAX_VALUE;
         this.lowestWaitingDistance = Double.MAX_VALUE;
 
         // Note: This is much faster than PriorityHeapQueue because dequeues become very expensive
         // Also keep track of square distances because otherwise comparisons become very expensive
         // Todo: If and when value records are thing convert over to it
-        final int subchunksPerChunk = chunkYMax - chunkYMin + 1;
-        final int listSize = Math.max(16,subchunksPerChunk) * 4;
-        this.subchunksToCheck = new ObjectArrayList<>(listSize);
-        this.forciblyDepleteTrigger = listSize - subchunksPerChunk;
+        final int sectionsPerChunk = chunkYMax - chunkYMin + 1;
+        final int listSize = Math.max(16, sectionsPerChunk) * 4;
+        this.queuedPOISections = new ObjectArrayList<>(listSize);
+        this.queuedSectionsSearched = 0; // Also the index for the next queued section
+        this.forciblyDeplete = false;
+        this.forciblyDepleteTrigger = listSize - sectionsPerChunk; // Leave 1 chunk's worth left to avoid resizing
 
         if (useSquareDistanceLimit) {
             this.collector = (point) -> {
@@ -196,26 +197,26 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
             }
         }
 
-        while (this.ringIterator.hasNext() || !this.isSubchunkListEmpty()){
+        while (this.ringIterator.hasNext() || !this.isSectionListEmpty()) {
             this.keepAddingRingsUntilSufficient();
 
             final int previousSize = this.points.size();
-            while (!this.isSubchunkListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
-                final long subchunk = subchunksToCheck.get(this.subChunksSearched++).subchunk;
-                this.nextSubchunkDistanceSq = this.getNextSubchunkDistanceSq();
-                final Optional<PoiSection> poiSection = this.storage.lithium$getElementAt(subchunk);
-                if (poiSection.isPresent()){
+            while (!this.isSectionListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
+                final long sectionPos = queuedPOISections.get(this.queuedSectionsSearched++).sectionPos;
+                this.nextSectionDistanceSq = this.getNextSectionDistanceSq();
+                final Optional<PoiSection> poiSection = this.storage.lithium$getElementAt(sectionPos);
+                if (poiSection.isPresent()) {
                     ((PointOfInterestSetExtended)poiSection.get())
                             .lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector);
                 }
 
-                this.forciblyDeplete = (!this.forciblyDeplete || !this.isSubchunkListEmpty()) && this.forciblyDeplete;
-                if(this.points.size() > previousSize){
+                this.forciblyDeplete = (!this.forciblyDeplete || !this.isSectionListEmpty()) && this.forciblyDeplete;
+                if(this.points.size() > previousSize) {
                     this.points.subList(this.pointIndex, this.points.size()).sort(this.pointComparator);
                     break;
                 }
 
-                if(!forciblyDeplete && this.nextSubchunkDistanceSq > this.closestRingDistanceSq){
+                if(!forciblyDeplete && this.nextSectionDistanceSq > this.closestRingDistanceSq) {
                     break;
                 }
             }
@@ -251,22 +252,21 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     }
 
     /*
-     * Keep searching for POI subchunks in concentric rings of chunks around the origin. Continue if:
+     * Keep searching for POI section in concentric rings of chunks around the origin. Continue if:
      * List is empty
      * There are more rings to scan.
      * The closer of:
-     * - The next subchunk
+     * - The next section
      * - The closest POI in the point list
      * is not closer than:
-     * - Unchecked possible subchunks in the list
+     * - Unchecked possible sections in the list
      * - Chunks in next ring
      */
-    private void keepAddingRingsUntilSufficient(){
+    private void keepAddingRingsUntilSufficient() {
         if (!this.forciblyDeplete && this.ringIterator.hasNext() &&
-                (Math.min(this.lowestWaitingDistance, this.nextSubchunkDistanceSq) >= this.closestRingDistanceSq)
-        ){
-            this.subchunksToCheck.removeElements(0, this.subChunksSearched);
-            this.subChunksSearched = 0;
+                (Math.min(this.lowestWaitingDistance, this.nextSectionDistanceSq) >= this.closestRingDistanceSq)) {
+            this.queuedPOISections.removeElements(0, this.queuedSectionsSearched);
+            this.queuedSectionsSearched = 0;
             int ringStart = this.ring;
             do {
                 final long chunkPos = this.ringIterator.nextLong();
@@ -274,7 +274,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                 final int currentChunkZ = ChunkPos.getZ(chunkPos);
 
                 if (this.distanceLimitL2Sq >= Distances.getMinChunkToBlockDistanceL2Sq(this.origin, currentChunkX, currentChunkZ)) {
-                    // This iterates the column in order of the closest subchunk
+                    // This iterates the column in order of the closest section
                     // Doing so noticeably reduces sorting duration later on because parts of the list will already be sorted
                     final BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
                     int upperBit = poiSections.nextSetBit(this.clampedOriginChunkY - this.chunkYMin);
@@ -283,7 +283,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                     int lowerDist = this.getYDistanceFromBitIndex(lowerBit);
                     while (upperBit != -1 || lowerBit != -1) {
                         final int currentChunkY;
-                        if(lowerDist <= upperDist){
+                        if(lowerDist <= upperDist) {
                             currentChunkY = lowerBit + this.chunkYMin;
                             lowerBit = lowerBit == -1 ? -1 : poiSections.previousSetBit(lowerBit-1);
                             lowerDist = this.getYDistanceFromBitIndex(lowerBit);
@@ -292,22 +292,24 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                             upperBit = upperBit == -1 ? -1 : poiSections.nextSetBit(upperBit+1);
                             upperDist = this.getYDistanceFromBitIndex(upperBit);
                         }
-                        this.subchunksToCheck.add(
-                                new QueuedSubchunk(
+                        this.queuedPOISections.add(
+                                new QueuedSection(
                                         SectionPos.asLong(currentChunkX, currentChunkY, currentChunkZ),
-                                        Distances.getMinSubChunkDistanceSq(this.origin, currentChunkX, currentChunkY, currentChunkZ)
+                                        Distances.getMinSectionDistanceSq(
+                                                this.origin, currentChunkX, currentChunkY, currentChunkZ)
                                 )
                         );
                     }
 
-                    this.forciblyDeplete = this.subchunksToCheck.size() > this.forciblyDepleteTrigger;
+                    this.forciblyDeplete = this.queuedPOISections.size() > this.forciblyDepleteTrigger;
                 }
 
                 if (forciblyDeplete || this.ring > ringStart) {
-                    this.sortSubchunkList();
-                    this.nextSubchunkDistanceSq = this.getNextSubchunkDistanceSq();
-                    if(forciblyDeplete ||
-                            Math.min(this.lowestWaitingDistance, this.nextSubchunkDistanceSq) < this.closestRingDistanceSq){
+                    this.sortSectionList();
+                    this.nextSectionDistanceSq = this.getNextSectionDistanceSq();
+                    if(forciblyDeplete
+                            || Math.min(this.lowestWaitingDistance, this.nextSectionDistanceSq)
+                            < this.closestRingDistanceSq) {
                         break;
                     }
                     ringStart = this.ring;
@@ -316,41 +318,41 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         }
     }
 
-    private void sortSubchunkList(){
-        // Note: Do not use unstable sort - the quicksort is quite a bit slower
-        subchunksToCheck.subList(this.subChunksSearched, this.subchunksToCheck.size())
+    private void sortSectionList() {
+        // Note: Do not use unstable sort - the fastutils quicksort is quite a bit slower
+        queuedPOISections.subList(this.queuedSectionsSearched, this.queuedPOISections.size())
                 .sort(Comparator.comparingDouble(qS -> qS.minDistance));
     }
 
-    private boolean isSubchunkListEmpty(){
-        return this.subchunksToCheck.size() <= this.subChunksSearched;
+    private boolean isSectionListEmpty(){
+        return this.queuedPOISections.size() <= this.queuedSectionsSearched;
     }
 
-    // Minimum of the next [closest] subchunk in the queue or the closest potential unchecked chunks [next ring]
-    private double getMinimumNextPotentialDistance(){
-        return Math.min(this.nextSubchunkDistanceSq, this.closestRingDistanceSq);
+    // Minimum of the next [closest] section in the queue or the closest potential unchecked chunks [next ring]
+    private double getMinimumNextPotentialDistance() {
+        return Math.min(this.nextSectionDistanceSq, this.closestRingDistanceSq);
     }
 
-    private double getNextSubchunkDistanceSq(){
-        return this.isSubchunkListEmpty() ?
-                Double.MAX_VALUE : this.subchunksToCheck.get(this.subChunksSearched).minDistance;
+    private double getNextSectionDistanceSq() {
+        return this.isSectionListEmpty() ?
+                Double.MAX_VALUE : this.queuedPOISections.get(this.queuedSectionsSearched).minDistance;
     }
 
-    private int getYDistanceFromBitIndex(final int bitIndex){
+    private int getYDistanceFromBitIndex(final int bitIndex) {
         return bitIndex == -1 ?
                 Integer.MAX_VALUE :
-                Distances.getClosestDistanceAlongSectionAxis(this.originY, bitIndex + this.chunkYMin);
+                Distances.getClosestDistanceAlongSectionAxis(this.origin.getY(), bitIndex + this.chunkYMin);
     }
 
     // Expand chunks to search in concentric square rings
     // Todo: Gap-less circle drawing algorithms may have better performance
-    private double getPotentialRingDistanceSq(){
-        int ringDistance = Math.max(this.ring - 1,0) * 16 + (ring > 0 ? this.ringClosestEdgeDistance : 0);
+    private double getPotentialRingDistanceSq() {
+        final int ringDistance = Math.max(this.ring - 1,0) * 16 + (ring > 0 ? this.ringClosestEdgeDistance : 0);
         return this.ring > this.ringMax ? Double.MAX_VALUE : ringDistance * ringDistance + this.minChunkYDistSq;
     }
 
     private LongIterator getRingsOfChunksIterator(final int cx, final int maxX, final int minX,
-                                                  final int cz, final int maxZ, final int minZ){
+                                                  final int cz, final int maxZ, final int minZ) {
         return new LongIterator() {
             int x = 0;
             int fx = cx;
@@ -383,5 +385,5 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         };
     }
 
-    private record QueuedSubchunk(long subchunk, double minDistance){}
+    private record QueuedSection(long sectionPos, double minDistance) {}
 }
