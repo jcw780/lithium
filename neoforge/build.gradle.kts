@@ -21,6 +21,7 @@ project.sourceSets {
     }
 
     val main by getting
+    val parent = project(":common").sourceSets.getByName("gametest")
 
     create("gametest") {
         java.srcDirs("src/gametest/java")
@@ -30,17 +31,19 @@ project.sourceSets {
         runtimeClasspath += main.runtimeClasspath
         compileClasspath += main.output
         runtimeClasspath += main.output
+        compileClasspath += parent.compileClasspath
+        runtimeClasspath += parent.runtimeClasspath
     }
 }
 
+tasks.named<Copy>("processGametestResources") {
+    from(project(":common").sourceSets.getByName("gametest").resources.srcDirs)
+    into("build/resources/gametest")
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 repositories {
-    maven("https://maven.pkg.github.com/ims212/Forge_Fabric_API") {
-        credentials {
-            username = "IMS212"
-            // Read only token
-            password = "ghp_" + "DEuGv0Z56vnSOYKLCXdsS9svK4nb9K39C1Hn"
-        }
-    }
     maven("https://maven.su5ed.dev/releases")
     maven("https://maven.neoforged.net/releases/")
 
@@ -101,7 +104,7 @@ neoForge {
 
             sourceSet = sourceSets.getByName("gametest")
             systemProperty("neoforge.enabledGameTestNamespaces", "lithium-gametest")
-            environment("LITHIUM_GAMETEST_RESOURCES", project(":common").path + "src/gametest/resources/data")
+            environment("LITHIUM_GAMETEST_RESOURCES", project.parent!!.findProject(":common")!!.projectDir.absolutePath + "/src/gametest/resources/data/lithium-gametest/structure")
         }
         create("gametestServer") {
             type = "gameTestServer"
@@ -109,7 +112,7 @@ neoForge {
 
             sourceSet = sourceSets.getByName("gametest")
             systemProperty("neoforge.enabledGameTestNamespaces", "lithium-gametest")
-            environment("LITHIUM_GAMETEST_RESOURCES", project(":common").path + "src/gametest/resources/data")
+            environment("LITHIUM_GAMETEST_RESOURCES", project.parent!!.findProject(":common")!!.projectDir.absolutePath + "/src/gametest/resources/data/lithium-gametest/structure")
         }
     }
 
