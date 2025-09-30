@@ -214,10 +214,6 @@ Skip bounds validation when accessing blocks
 (default: `true`)  
 Replaces the vanilla hash palette with an optimized variant
   
-### `mixin.chunk.serialization`
-(default: `true`)  
-Optimizes chunk palette compaction when serializing chunks
-  
 ### `mixin.collections`
 (default: `true`)  
 Various collection optimizations

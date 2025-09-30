@@ -4,14 +4,13 @@ import net.caffeinemc.mods.lithium.common.services.PlatformRuntimeInformation;
 import net.neoforged.fml.loading.FMLConfig;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.FMLPaths;
-import net.neoforged.fml.loading.LoadingModList;
 
 import java.nio.file.Path;
 
 public class NeoForgeRuntimeInformation implements PlatformRuntimeInformation {
     @Override
     public boolean isDevelopmentEnvironment() {
-        return !FMLLoader.isProduction();
+        return !FMLLoader.getCurrent().isProduction();
     }
 
     @Override
@@ -36,7 +35,7 @@ public class NeoForgeRuntimeInformation implements PlatformRuntimeInformation {
 
     @Override
     public boolean isModInLoadingList(String modId) {
-        return LoadingModList.get().getModFileById(modId) != null;
+        return FMLLoader.getCurrent().getLoadingModList().getModFileById(modId) != null;
     }
 
     @Override
