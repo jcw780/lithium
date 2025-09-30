@@ -2,6 +2,7 @@ package net.caffeinemc.mods.lithium.common.world.listeners;
 
 import net.minecraft.world.level.border.BorderChangeListener;
 import net.minecraft.world.level.border.WorldBorder;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.WeakHashMap;
 
@@ -25,42 +26,42 @@ public class WorldBorderPositionListenerMulti implements BorderChangeListener {
     }
 
     @Override
-    public void onBorderSizeSet(WorldBorder border, double size) {
+    public void onSetSize(@NotNull WorldBorder border, double size) {
         for (WorldBorderListenerOnce listener : this.delegate.keySet()) {
-            listener.onBorderSizeSet(border, size);
+            listener.onSetSize(border, size);
         }
         this.delegate.clear();
     }
 
     @Override
-    public void onBorderSizeLerping(WorldBorder border, double fromSize, double toSize, long time) {
+    public void onLerpSize(@NotNull WorldBorder border, double fromSize, double toSize, long time) {
         for (WorldBorderListenerOnce listener : this.delegate.keySet()) {
-            listener.onBorderSizeLerping(border, fromSize, toSize, time);
+            listener.onLerpSize(border, fromSize, toSize, time);
         }
         this.delegate.clear();
     }
 
     @Override
-    public void onBorderCenterSet(WorldBorder border, double centerX, double centerZ) {
+    public void onSetCenter(@NotNull WorldBorder border, double centerX, double centerZ) {
         for (WorldBorderListenerOnce listener : this.delegate.keySet()) {
-            listener.onBorderCenterSet(border, centerX, centerZ);
+            listener.onSetCenter(border, centerX, centerZ);
         }
         this.delegate.clear();
     }
 
     @Override
-    public void onBorderSetWarningTime(WorldBorder border, int warningTime) {
+    public void onSetWarningTime(@NotNull WorldBorder border, int warningTime) {
     }
 
     @Override
-    public void onBorderSetWarningBlocks(WorldBorder border, int warningBlockDistance) {
+    public void onSetWarningBlocks(@NotNull WorldBorder border, int warningBlockDistance) {
     }
 
     @Override
-    public void onBorderSetDamagePerBlock(WorldBorder border, double damagePerBlock) {
+    public void onSetDamagePerBlock(@NotNull WorldBorder border, double damagePerBlock) {
     }
 
     @Override
-    public void onBorderSetDamageSafeZOne(WorldBorder border, double safeZoneRadius) {
+    public void onSetSafeZone(@NotNull WorldBorder border, double safeZoneRadius) {
     }
 }

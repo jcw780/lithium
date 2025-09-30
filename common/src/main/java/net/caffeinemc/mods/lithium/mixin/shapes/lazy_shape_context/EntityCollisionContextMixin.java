@@ -4,7 +4,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
@@ -15,19 +14,12 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.function.Predicate;
-
 @Mixin(EntityCollisionContext.class)
 public class EntityCollisionContextMixin {
     @Mutable
     @Shadow
     @Final
     private ItemStack heldItem;
-
-    @Mutable
-    @Shadow
-    @Final
-    private Predicate<FluidState> canStandOnFluid;
 
     @Shadow
     @Final
@@ -47,28 +39,17 @@ public class EntityCollisionContextMixin {
         return false;
     }
 
-    @SuppressWarnings("InvalidInjectorMethodSignature")
-    @ModifyConstant(
-            method = "<init>(Lnet/minecraft/world/entity/Entity;ZZ)V",
-            constant = @Constant(classValue = LivingEntity.class, ordinal = 2)
-    )
-    private static boolean redirectInstanceOf2(Object obj, Class<?> clazz) {
-        return false;
-    }
 
     @Inject(
             method = "<init>(Lnet/minecraft/world/entity/Entity;ZZ)V",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/shapes/EntityCollisionContext;<init>(ZZDLnet/minecraft/world/item/ItemStack;Ljava/util/function/Predicate;Lnet/minecraft/world/entity/Entity;)V",
+                    target = "Lnet/minecraft/world/phys/shapes/EntityCollisionContext;<init>(ZZDLnet/minecraft/world/item/ItemStack;ZLnet/minecraft/world/entity/Entity;)V",
                     shift = At.Shift.AFTER
             )
     )
     private void initFields(Entity entity, boolean standOnEveryFluid, boolean isPlacement, CallbackInfo ci) {
         this.heldItem = null;
-        if (!standOnEveryFluid) {
-            this.canStandOnFluid = null;
-        }
     }
 
     @Inject(
@@ -97,20 +78,6 @@ public class EntityCollisionContextMixin {
     private void initHeldItem() {
         if (this.heldItem == null) {
             this.heldItem = this.entity instanceof LivingEntity ? ((LivingEntity) this.entity).getMainHandItem() : ItemStack.EMPTY;
-        }
-    }
-
-    @Inject(
-            method = "canStandOnFluid(Lnet/minecraft/world/level/material/FluidState;Lnet/minecraft/world/level/material/FluidState;)Z",
-            at = @At("HEAD")
-    )
-    public void canWalkOnFluid(FluidState state, FluidState fluidState, CallbackInfoReturnable<Boolean> cir) {
-        if (this.canStandOnFluid == null) {
-            if (this.entity instanceof LivingEntity livingEntity) {
-                this.canStandOnFluid = livingEntity::canStandOnFluid;
-            } else {
-                this.canStandOnFluid = (liquid) -> false;
-            }
         }
     }
 }

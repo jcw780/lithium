@@ -2,47 +2,50 @@ package net.caffeinemc.mods.lithium.common.world.listeners;
 
 import net.minecraft.world.level.border.BorderChangeListener;
 import net.minecraft.world.level.border.WorldBorder;
+import org.jetbrains.annotations.NotNull;
 
 public interface WorldBorderListenerOnce extends BorderChangeListener {
 
-    void lithium$onWorldBorderShapeChange(WorldBorder worldBorder);
+    default void lithium$onWorldBorderShapeChange(WorldBorder worldBorder) {
+
+    }
 
     default void onAreaReplaced(WorldBorder border) {
         this.lithium$onWorldBorderShapeChange(border);
     }
 
     @Override
-    default void onBorderSizeSet(WorldBorder border, double size) {
+    default void onSetSize(@NotNull WorldBorder border, double size) {
         this.lithium$onWorldBorderShapeChange(border);
     }
 
     @Override
-    default void onBorderSizeLerping(WorldBorder border, double fromSize, double toSize, long time) {
+    default void onLerpSize(@NotNull WorldBorder border, double fromSize, double toSize, long time) {
         this.lithium$onWorldBorderShapeChange(border);
     }
 
     @Override
-    default void onBorderCenterSet(WorldBorder border, double centerX, double centerZ) {
+    default void onSetCenter(@NotNull WorldBorder border, double centerX, double centerZ) {
         this.lithium$onWorldBorderShapeChange(border);
     }
 
     @Override
-    default void onBorderSetWarningTime(WorldBorder border, int warningTime) {
+    default void onSetWarningTime(@NotNull WorldBorder border, int warningTime) {
 
     }
 
     @Override
-    default void onBorderSetWarningBlocks(WorldBorder border, int warningBlockDistance) {
+    default void onSetWarningBlocks(@NotNull WorldBorder border, int warningBlockDistance) {
 
     }
 
     @Override
-    default void onBorderSetDamagePerBlock(WorldBorder border, double damagePerBlock) {
+    default void onSetDamagePerBlock(@NotNull WorldBorder border, double damagePerBlock) {
 
     }
 
     @Override
-    default void onBorderSetDamageSafeZOne(WorldBorder border, double safeZoneRadius) {
+    default void onSetSafeZone(@NotNull WorldBorder border, double safeZoneRadius) {
 
     }
 }

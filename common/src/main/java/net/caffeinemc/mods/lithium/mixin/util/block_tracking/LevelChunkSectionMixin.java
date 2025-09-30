@@ -5,12 +5,12 @@ import net.caffeinemc.mods.lithium.common.block.*;
 import net.caffeinemc.mods.lithium.common.tracking.block.ChunkSectionChangeCallback;
 import net.caffeinemc.mods.lithium.common.tracking.block.SectionedBlockChangeTracker;
 import net.caffeinemc.mods.lithium.common.world.section.LithiumSectionData;
-import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
+import net.minecraft.world.level.chunk.PalettedContainerFactory;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -38,10 +38,10 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
 
 
     @Inject(
-            method = "<init>(Lnet/minecraft/core/Registry;)V",
+            method = "<init>(Lnet/minecraft/world/level/chunk/PalettedContainerFactory;)V",
             at = @At("RETURN")
     )
-    private void initAirSection(Registry<?> registry, CallbackInfo ci) {
+    private void initAirSection(PalettedContainerFactory palettedContainerFactory, CallbackInfo ci) {
         SectionData sectionData = this.lithium$getSectionData();
         //Instead of initializing all flag counters to 0, initialize them correctly in case they accept air. The entire section should always be air here.
 

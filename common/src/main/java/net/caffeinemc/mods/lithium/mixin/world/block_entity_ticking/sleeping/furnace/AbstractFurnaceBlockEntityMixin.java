@@ -66,14 +66,14 @@ public abstract class AbstractFurnaceBlockEntityMixin extends BlockEntity implem
 
     @Inject(method = "loadAdditional", at = @At("RETURN"))
     private void wakeUpAfterFromTag(CallbackInfo ci) {
-        if (this.isSleeping() && this.level != null && !this.level.isClientSide) {
+        if (this.isSleeping() && this.level != null && !this.level.isClientSide()) {
             this.wakeUpNow();
         }
     }
 
     @Override
     public void lithium$handleSetChanged() {
-        if (this.isSleeping() && this.level != null && !this.level.isClientSide) {
+        if (this.isSleeping() && this.level != null && !this.level.isClientSide()) {
             this.wakeUpNow();
         }
     }

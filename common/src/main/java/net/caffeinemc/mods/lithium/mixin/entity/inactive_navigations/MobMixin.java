@@ -43,8 +43,8 @@ public abstract class MobMixin extends LivingEntity implements NavigatingEntity 
         return this.registeredNavigation;
     }
 
-    @Inject(method = "startRiding(Lnet/minecraft/world/entity/Entity;Z)Z", at = @At("RETURN"))
-    private void onNavigationReplacement(Entity entity, boolean force, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "startRiding(Lnet/minecraft/world/entity/Entity;ZZ)Z", at = @At("RETURN"))
+    private void onNavigationReplacement(Entity entity, boolean force, boolean sendGameEvent, CallbackInfoReturnable<Boolean> cir) {
         this.lithium$updateNavigationRegistration();
     }
 
@@ -57,6 +57,7 @@ public abstract class MobMixin extends LivingEntity implements NavigatingEntity 
                 this.registeredNavigation = navigation;
 
                 if (navigation.getPath() != null) {
+                    //noinspection DataFlowIssue
                     ((ServerWorldExtended) this.level()).lithium$setNavigationActive((Mob) (Object) this);
                 }
             }

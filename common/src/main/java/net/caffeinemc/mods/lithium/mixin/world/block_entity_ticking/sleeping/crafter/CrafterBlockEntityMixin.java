@@ -74,14 +74,14 @@ public class CrafterBlockEntityMixin extends BlockEntity implements SleepingBloc
             at = @At("RETURN")
     )
     private void wakeUpAfterRemainingTicksChanged(CallbackInfo ci) {
-        if (this.isSleeping() && this.level != null && !this.level.isClientSide) {
+        if (this.isSleeping() && this.level != null && !this.level.isClientSide()) {
             this.wakeUpNow();
         }
     }
 
     @Override
     public void lithium$handleSetChanged() {
-        if (this.isSleeping() && this.level != null && !this.level.isClientSide) {
+        if (this.isSleeping() && this.level != null && !this.level.isClientSide()) {
             this.wakeUpNow();
         }
     }

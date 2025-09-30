@@ -76,7 +76,7 @@ public class BrewingStandBlockEntityMixin extends BlockEntity implements Sleepin
 
     @Override
     public void lithium$handleSetChanged() {
-        if (this.isSleeping() && this.level != null && !this.level.isClientSide) {
+        if (this.isSleeping() && this.level != null && !this.level.isClientSide()) {
             this.wakeUpNow();
         }
     }
