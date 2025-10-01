@@ -62,22 +62,32 @@ public abstract class ServerExplosionMixin {
     @Shadow
     @Final
     private Vec3 center;
+
+
     // The cached mutable block position used during block traversal.
+    @Unique
     private final BlockPos.MutableBlockPos cachedPos = new BlockPos.MutableBlockPos();
 
     // The chunk coordinate of the most recently stepped through block.
+    @Unique
     private int prevChunkX = Integer.MIN_VALUE;
+    @Unique
     private int prevChunkZ = Integer.MIN_VALUE;
 
     // The chunk belonging to prevChunkPos.
+    @Unique
     private ChunkAccess prevChunk;
 
     /**
      * Whether the explosion cares about air blocks. If false, air blocks do not have to be added to the set of destroyed blocks.
      * Skipping air blocks reduces the number of BlockPos allocations, shuffling and getBlockState calls in {@link Explosion#finalizeExplosion(boolean)}
      */
+    @Unique
     private boolean explodeAirBlocks;
+    @Unique
+    private int explodedPositions; //Vanilla uses the number of exploded blocks, which is reduced by the air block optimization
 
+    @Unique
     private int bottomY, topY;
 
     @Inject(
@@ -116,6 +126,13 @@ public abstract class ServerExplosionMixin {
     )
     public int skipLoop(int prevValue) {
         return 0;
+    }
+
+    @Redirect(
+            method = "explode", at = @At(value = "INVOKE", target = "Ljava/util/List;size()I")
+    )
+    private int getExplodedPositionCount(List<?> instance) {
+        return this.explodedPositions;
     }
 
     /**
@@ -292,9 +309,12 @@ public abstract class ServerExplosionMixin {
         // Check if this ray is still strong enough to break blocks, and if so, add this position to the set
         // of positions to destroy
         float reducedStrength = strength - totalResistance;
-        if (reducedStrength > 0.0F && (this.explodeAirBlocks || !blockState.isAir())) {
-            if (this.damageCalculator.shouldBlockExplode((Explosion) (Object) this, this.level, pos, blockState, reducedStrength)) {
-                touched.add(pos.asLong());
+        if (reducedStrength > 0.0F) {
+            this.explodedPositions++;
+            if (this.explodeAirBlocks || !blockState.isAir()) {
+                if (this.damageCalculator.shouldBlockExplode((Explosion) (Object) this, this.level, pos, blockState, reducedStrength)) {
+                    touched.add(pos.asLong());
+                }
             }
         }
 
