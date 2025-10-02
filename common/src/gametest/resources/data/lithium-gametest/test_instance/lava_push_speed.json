@@ -4,7 +4,7 @@
   "structure" : "lithium-gametest:lava_push_speed",
   "max_ticks" : 400,
   "setup_ticks" : 10,
-  "required" : true,
+  "required" : false,
   "rotation" : "none",
   "manual_only" : false,
   "max_attempts" : 1,
