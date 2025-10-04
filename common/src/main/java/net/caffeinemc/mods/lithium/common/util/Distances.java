@@ -31,7 +31,7 @@ public class Distances {
     }
 
     public static int getClosestAlongSectionAxis(int originAxis, int chunkAxis){
-        final int chunkMinAxis = SectionPos.blockToSectionCoord(chunkAxis);
+        final int chunkMinAxis = SectionPos.sectionToBlockCoord(chunkAxis);
         return Math.min(Math.max(originAxis, chunkMinAxis), chunkMinAxis+15);
     }
 
