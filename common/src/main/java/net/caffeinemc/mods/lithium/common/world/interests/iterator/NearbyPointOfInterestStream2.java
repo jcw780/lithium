@@ -55,7 +55,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     private double closestRingDistanceSq;
 
     private double nextSectionDistanceSq;
-    private double lowestWaitingDistance;
+    private double lowestWaitingDistanceSq;
     private final double distanceLimitL2Sq;
     private int pointIndex;
     private final Comparator<? super SortedPointOfInterest> pointComparator;
@@ -109,7 +109,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         this.closestRingDistanceSq = this.getPotentialRingDistanceSq();
 
         this.nextSectionDistanceSq = Double.MAX_VALUE;
-        this.lowestWaitingDistance = Double.MAX_VALUE;
+        this.lowestWaitingDistanceSq = Double.MAX_VALUE;
 
         // Note: This is much faster than PriorityHeapQueue because dequeues become very expensive
         // Also keep track of square distances because otherwise comparisons become very expensive
@@ -201,7 +201,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
             this.keepAddingRingsUntilSufficient();
 
             final int previousSize = this.points.size();
-            while (!this.isSectionListEmpty() && this.lowestWaitingDistance >= this.getMinimumNextPotentialDistance()) {
+            while (!this.isSectionListEmpty() && this.lowestWaitingDistanceSq >= this.getMinimumNextPotentialDistanceSq()) {
                 final long sectionPos = queuedPOISections.get(this.queuedSectionsSearched++).sectionPos;
                 this.nextSectionDistanceSq = this.getNextSectionDistanceSq();
                 final Optional<PoiSection> poiSection = this.storage.lithium$getElementAt(sectionPos);
@@ -236,8 +236,8 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
 
             // Only consume points if we are sure that there are no closer (or same distance) points to be scanned.
             // Otherwise, scan more chunks
-            if (next.distanceSq() >= this.getMinimumNextPotentialDistance()) {
-                this.lowestWaitingDistance = next.distanceSq();
+            if (next.distanceSq() >= this.getMinimumNextPotentialDistanceSq()) {
+                this.lowestWaitingDistanceSq = next.distanceSq();
                 return false;
             }
             this.pointIndex++;
@@ -264,7 +264,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
      */
     private void keepAddingRingsUntilSufficient() {
         if (!this.forciblyDeplete && this.ringIterator.hasNext() &&
-                (Math.min(this.lowestWaitingDistance, this.nextSectionDistanceSq) >= this.closestRingDistanceSq)) {
+                (Math.min(this.lowestWaitingDistanceSq, this.nextSectionDistanceSq) >= this.closestRingDistanceSq)) {
             this.queuedPOISections.removeElements(0, this.queuedSectionsSearched);
             this.queuedSectionsSearched = 0;
             int ringStart = this.ring;
@@ -308,7 +308,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
                     this.sortSectionList();
                     this.nextSectionDistanceSq = this.getNextSectionDistanceSq();
                     if(forciblyDeplete
-                            || Math.min(this.lowestWaitingDistance, this.nextSectionDistanceSq)
+                            || Math.min(this.lowestWaitingDistanceSq, this.nextSectionDistanceSq)
                             < this.closestRingDistanceSq) {
                         break;
                     }
@@ -329,7 +329,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
     }
 
     // Minimum of the next [closest] section in the queue or the closest potential unchecked chunks [next ring]
-    private double getMinimumNextPotentialDistance() {
+    private double getMinimumNextPotentialDistanceSq() {
         return Math.min(this.nextSectionDistanceSq, this.closestRingDistanceSq);
     }
 
