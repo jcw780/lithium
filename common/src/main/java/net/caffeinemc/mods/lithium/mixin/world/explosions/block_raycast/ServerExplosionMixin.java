@@ -1,5 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.world.explosions.block_raycast;
 
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.caffeinemc.mods.lithium.common.util.Pos;
@@ -21,6 +23,8 @@ import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,6 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Optimizations for Explosions: Reduce allocations and getChunk/getBlockState calls
@@ -130,6 +135,9 @@ public abstract class ServerExplosionMixin {
         // compared to a memory allocation and associated overhead of hashing real objects in a set.
         final LongOpenHashSet touched = new LongOpenHashSet(0);
 
+        final Long2IntOpenHashMap block2Checks = new Long2IntOpenHashMap();
+        final Long2IntOpenHashMap block2ChecksLithium = new Long2IntOpenHashMap();
+
         final RandomSource random = this.level.random;
 
         // Explosions work by casting many rays through the world from the origin of the explosion
@@ -148,11 +156,54 @@ public abstract class ServerExplosionMixin {
                     if (xPlane || yPlane || zPlane) {
                         double vecZ = (((float) rayZ / 15.0F) * 2.0F) - 1.0F;
 
-                        this.performRayCast(random, vecX, vecY, vecZ, touched);
+                        this.performRayCast(random, vecX, vecY, vecZ, touched, block2Checks, block2ChecksLithium);
                     }
                 }
             }
         }
+
+        Logger logger = LogManager.getLogger("Lithium");
+
+        LongArrayList vanillaBlocks = new LongArrayList(block2Checks.keySet());
+        LongArrayList lithiumBlocks = new LongArrayList(block2ChecksLithium.keySet());
+        logger.info("Vanilla");
+        /*block2Checks.forEach((blockPos, count) -> {
+
+
+            final int blockX = BlockPos.getX(blockPos);
+            final int blockY = BlockPos.getY(blockPos);
+            final int blockZ = BlockPos.getZ(blockPos);
+            logger.info("{} {} {} - {}", blockX, blockY, blockZ, count);
+        });*/
+        vanillaBlocks.sort((l0, l1) -> block2Checks.get(l0) - block2Checks.get(l1));
+
+        logger.info("Lithium");
+        /*block2ChecksLithium.forEach((blockPos, count) -> {
+            final int blockX = BlockPos.getX(blockPos);
+            final int blockY = BlockPos.getY(blockPos);
+            final int blockZ = BlockPos.getZ(blockPos);
+            logger.info("{} {} {} - {}", blockX, blockY, blockZ, count);
+        });*/
+        lithiumBlocks.sort((l0, l1) -> block2Checks.get(l0) - block2Checks.get(l1));
+
+        AtomicInteger vanillaCount = new AtomicInteger(0);
+
+        vanillaBlocks.forEach((blockPos) -> {
+            final int blockX = BlockPos.getX(blockPos);
+            final int blockY = BlockPos.getY(blockPos);
+            final int blockZ = BlockPos.getZ(blockPos);
+            final int count = block2Checks.get(blockPos);
+            logger.info("{} {} {} - {} {}", blockX, blockY, blockZ, count, vanillaCount.addAndGet(count));
+        });
+
+        AtomicInteger lithiumCount = new AtomicInteger(0);
+        lithiumBlocks.forEach((blockPos) -> {
+            final int blockX = BlockPos.getX(blockPos);
+            final int blockY = BlockPos.getY(blockPos);
+            final int blockZ = BlockPos.getZ(blockPos);
+            final int count = block2ChecksLithium.get(blockPos);
+            logger.info("{} {} {} - {} {}", blockX, blockY, blockZ, count, lithiumCount.addAndGet(count));
+        });
 
         // We can now iterate back over the set of positions we modified and re-build BlockPos objects from them
         // This will only allocate as many objects as there are in the set, where otherwise we would allocate them
@@ -166,7 +217,8 @@ public abstract class ServerExplosionMixin {
     }
 
     @Unique
-    private void performRayCast(RandomSource random, double vecX, double vecY, double vecZ, LongOpenHashSet touched) {
+    private void performRayCast(RandomSource random, double vecX, double vecY, double vecZ, LongOpenHashSet touched,
+                                Long2IntOpenHashMap block2Checks, Long2IntOpenHashMap block2ChecksLithium) {
         double dist = Math.sqrt((vecX * vecX) + (vecY * vecY) + (vecZ * vecZ));
 
         double normX = (vecX / dist) * 0.3D;
@@ -194,6 +246,8 @@ public abstract class ServerExplosionMixin {
             int blockY = Mth.floor(stepY);
             int blockZ = Mth.floor(stepZ);
 
+            block2Checks.addTo(BlockPos.asLong(blockX, blockY, blockZ), 1);
+
             float resistance;
 
             // Check whether we have actually moved into a new block this step. Due to how rays are stepped through,
@@ -206,6 +260,7 @@ public abstract class ServerExplosionMixin {
                 }
                 //The coordinates are within the world bounds, so we can safely traverse the block
                 resistance = this.traverseBlock(strength, blockX, blockY, blockZ, touched);
+                block2ChecksLithium.addTo(BlockPos.asLong(blockX, blockY, blockZ), 1);
 
                 prevX = blockX;
                 prevY = blockY;
