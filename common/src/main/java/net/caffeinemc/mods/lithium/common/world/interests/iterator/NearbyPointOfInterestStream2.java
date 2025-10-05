@@ -115,7 +115,7 @@ public class NearbyPointOfInterestStream2 extends Spliterators.AbstractSpliterat
         // Also keep track of square distances because otherwise comparisons become very expensive
         // Todo: If and when value records are thing convert over to it
         final int sectionsPerChunk = chunkYMax - chunkYMin + 1;
-        final int listSize = Math.max(16, sectionsPerChunk) * 4;
+        final int listSize = sectionsPerChunk * 9; // Sufficient to store 2 full rings [ring: 0-1]
         this.queuedPOISections = new ObjectArrayList<>(listSize);
         this.queuedSectionsSearched = 0; // Also the index for the next queued section
         this.forciblyDeplete = false;
