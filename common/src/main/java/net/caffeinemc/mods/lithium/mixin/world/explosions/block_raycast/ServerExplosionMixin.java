@@ -1,5 +1,6 @@
 package net.caffeinemc.mods.lithium.mixin.world.explosions.block_raycast;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.caffeinemc.mods.lithium.common.util.Pos;
@@ -146,22 +147,17 @@ public abstract class ServerExplosionMixin {
 
         // Explosions work by casting many rays through the world from the origin of the explosion
         for (int rayX = 0; rayX < 16; ++rayX) {
-            boolean xPlane = rayX == 0 || rayX == 15;
+            final boolean xPlane = rayX == 0 || rayX == 15;
             double vecX = (((float) rayX / 15.0F) * 2.0F) - 1.0F;
 
             for (int rayY = 0; rayY < 16; ++rayY) {
-                boolean yPlane = rayY == 0 || rayY == 15;
+                final boolean yPlane = rayY == 0 || rayY == 15;
                 double vecY = (((float) rayY / 15.0F) * 2.0F) - 1.0F;
 
-                for (int rayZ = 0; rayZ < 16; ++rayZ) {
-                    boolean zPlane = rayZ == 0 || rayZ == 15;
-
-                    // We only fire rays from the surface of our origin volume
-                    if (xPlane || yPlane || zPlane) {
-                        double vecZ = (((float) rayZ / 15.0F) * 2.0F) - 1.0F;
-
-                        this.performRayCast(random, vecX, vecY, vecZ, touched);
-                    }
+                final int zIncrement = xPlane || yPlane ? 1: 15;
+                for (int rayZ = 0; rayZ < 16; rayZ += zIncrement) {
+                    double vecZ = (((float) rayZ / 15.0F) * 2.0F) - 1.0F;
+                    this.performRayCast(random, vecX, vecY, vecZ, touched);
                 }
             }
         }
