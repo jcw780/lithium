@@ -3,6 +3,8 @@ package net.caffeinemc.mods.lithium.mixin.world.explosions.block_raycast;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.caffeinemc.mods.lithium.common.util.Pos;
+import net.caffeinemc.mods.lithium.common.world.explosions.ExplosionBlockEntry;
+import net.caffeinemc.mods.lithium.common.world.explosions.FixedContiguousExplosionBlockCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -21,6 +23,7 @@ import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
+import org.apache.logging.log4j.LogManager;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,6 +35,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 /**
  * Optimizations for Explosions: Reduce allocations and getChunk/getBlockState calls
@@ -72,6 +76,9 @@ public abstract class ServerExplosionMixin {
     // The chunk belonging to prevChunkPos.
     private ChunkAccess prevChunk;
 
+    private FixedContiguousExplosionBlockCache blockCache;
+    private ExplosionBlockEntry mutableEntry = new ExplosionBlockEntry();
+    private final org.apache.logging.log4j.Logger logger = LogManager.getLogger("Lithium");
     /**
      * Whether the explosion cares about air blocks. If false, air blocks do not have to be added to the set of destroyed blocks.
      * Skipping air blocks reduces the number of BlockPos allocations, shuffling and getBlockState calls in {@link Explosion#finalizeExplosion(boolean)}
@@ -129,6 +136,11 @@ public abstract class ServerExplosionMixin {
         // allocations of this function. The overhead of packing block positions into integer format is negligible
         // compared to a memory allocation and associated overhead of hashing real objects in a set.
         final LongOpenHashSet touched = new LongOpenHashSet(0);
+
+        // Cache a 7x7x7 centered on block containing explosion source
+        // This will eliminate ~80% of getBlockState calls even with the previous within-ray caching
+        this.blockCache = new FixedContiguousExplosionBlockCache(
+                Mth.floor(this.center.x), Mth.floor(this.center.y), Mth.floor(this.center.z), 3);
 
         final RandomSource random = this.level.random;
 
@@ -236,8 +248,39 @@ public abstract class ServerExplosionMixin {
      * @return The resistance of the current block space to the ray
      */
     @Unique
-    private float traverseBlock(float strength, int blockX, int blockY, int blockZ, LongOpenHashSet touched) {
+    private float traverseBlock(final float strength, final int blockX, final int blockY, final int blockZ,
+                                LongOpenHashSet touched) {
         BlockPos pos = this.cachedPos.set(blockX, blockY, blockZ);
+
+        if (!this.blockCache.isInRange(blockX, blockY, blockZ)) {
+            this.getNewBlockMutate(blockX, blockY, blockZ);
+        } else {
+            if (this.blockCache.isPositionPopulated(blockX, blockY, blockZ)) {
+                this.blockCache.getMutate(blockX, blockY, blockZ, this.mutableEntry);
+            } else {
+                this.getNewBlockMutate(blockX, blockY, blockZ);
+                this.blockCache.set(blockX, blockY, blockZ, this.mutableEntry);
+            }
+        }
+
+        float totalResistance = this.mutableEntry.blastResistance;
+        BlockState blockState = this.mutableEntry.blockState;
+
+        // Check if this ray is still strong enough to break blocks, and if so, add this position to the set
+        // of positions to destroy
+        float reducedStrength = strength - totalResistance;
+        if (reducedStrength > 0.0F && (this.explodeAirBlocks || !blockState.isAir())) {
+            if (this.damageCalculator.shouldBlockExplode((Explosion) (Object) this, this.level, pos, blockState, reducedStrength)) {
+                touched.add(pos.asLong());
+            }
+        }
+
+        return totalResistance;
+    }
+
+    @Unique
+    private void getNewBlockMutate(final int blockX, final int blockY, final int blockZ) {
+        BlockPos pos = this.cachedPos;
 
         int chunkX = Pos.ChunkCoord.fromBlockCoord(blockX);
         int chunkZ = Pos.ChunkCoord.fromBlockCoord(blockZ);
@@ -289,16 +332,8 @@ public abstract class ServerExplosionMixin {
             totalResistance = (blastResistance.get() + 0.3F) * 0.3F;
         }
 
-        // Check if this ray is still strong enough to break blocks, and if so, add this position to the set
-        // of positions to destroy
-        float reducedStrength = strength - totalResistance;
-        if (reducedStrength > 0.0F && (this.explodeAirBlocks || !blockState.isAir())) {
-            if (this.damageCalculator.shouldBlockExplode((Explosion) (Object) this, this.level, pos, blockState, reducedStrength)) {
-                touched.add(pos.asLong());
-            }
-        }
-
-        return totalResistance;
+        this.mutableEntry.blastResistance = totalResistance;
+        this.mutableEntry.blockState = blockState;
     }
 
 }
