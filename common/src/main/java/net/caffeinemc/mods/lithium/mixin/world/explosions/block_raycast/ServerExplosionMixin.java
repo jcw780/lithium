@@ -154,6 +154,7 @@ public abstract class ServerExplosionMixin {
                 final boolean yPlane = rayY == 0 || rayY == 15;
                 double vecY = (((float) rayY / 15.0F) * 2.0F) - 1.0F;
 
+                // This saves 2744 [14 cubed] iterations vs vanilla without changing the order of rays
                 final int zIncrement = xPlane || yPlane ? 1: 15;
                 for (int rayZ = 0; rayZ < 16; rayZ += zIncrement) {
                     double vecZ = (((float) rayZ / 15.0F) * 2.0F) - 1.0F;
