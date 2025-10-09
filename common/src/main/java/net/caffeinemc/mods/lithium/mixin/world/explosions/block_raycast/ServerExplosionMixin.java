@@ -192,7 +192,7 @@ public abstract class ServerExplosionMixin {
         int prevY = Integer.MIN_VALUE;
         int prevZ = Integer.MIN_VALUE;
 
-        float prevResistance = 0.0F;
+        float resistance = 0.0F;
 
         int boundMinY = this.bottomY;
         int boundMaxY = this.topY;
@@ -202,8 +202,6 @@ public abstract class ServerExplosionMixin {
             int blockX = Mth.floor(stepX);
             int blockY = Mth.floor(stepY);
             int blockZ = Mth.floor(stepZ);
-
-            float resistance;
 
             // Check whether we have actually moved into a new block this step. Due to how rays are stepped through,
             // over-sampling of the same block positions will occur. Changing this behaviour would introduce differences in
@@ -219,10 +217,6 @@ public abstract class ServerExplosionMixin {
                 prevX = blockX;
                 prevY = blockY;
                 prevZ = blockZ;
-
-                prevResistance = resistance;
-            } else {
-                resistance = prevResistance;
             }
 
             strength -= resistance;
