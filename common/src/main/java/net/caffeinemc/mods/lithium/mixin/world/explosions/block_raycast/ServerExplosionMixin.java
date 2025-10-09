@@ -187,11 +187,7 @@ public abstract class ServerExplosionMixin {
         double stepX = this.center.x();
         double stepY = this.center.y();
         double stepZ = this.center.z();
-
-        /*int prevX = Integer.MIN_VALUE;
-        int prevY = Integer.MIN_VALUE;
-        int prevZ = Integer.MIN_VALUE;*/
-
+        
         long prevBlock = Long.MIN_VALUE; // This is outside the world border
 
         float resistance = 0.0F;
@@ -211,17 +207,12 @@ public abstract class ServerExplosionMixin {
             // over-sampling of the same block positions will occur. Changing this behaviour would introduce differences in
             // aliasing and sampling, which is unacceptable for our purposes. As a band-aid, we can simply re-use the
             // previous result and get a decent boost.
-            //if (prevX != blockX || prevY != blockY || prevZ != blockZ) {
             if (prevBlock != currentBlock) {
                 if (blockY < boundMinY || blockY > boundMaxY || blockX < -30000000 || blockZ < -30000000 || blockX >= 30000000 || blockZ >= 30000000) {
                     return;
                 }
                 //The coordinates are within the world bounds, so we can safely traverse the block
                 resistance = this.traverseBlock(strength, blockX, blockY, blockZ, touched);
-
-                /*prevX = blockX;
-                prevY = blockY;
-                prevZ = blockZ;*/
 
                 prevBlock = currentBlock;
             }
