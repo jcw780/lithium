@@ -2,14 +2,15 @@ package net.caffeinemc.mods.lithium.common.world.explosions;
 
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.BitSet;
 import java.util.Collections;
 
 public class FixedContiguousExplosionBlockCache {
     private final FloatArrayList blastResistances;
     private final ObjectArrayList<BlockState> blockStates;
+    private final BitSet exploded;
 
     public final int xMin;
     public final int xMax;
@@ -35,6 +36,7 @@ public class FixedContiguousExplosionBlockCache {
         final int length = xLength * yLength * zLength;
         this.blastResistances = new FloatArrayList(Collections.nCopies(length, Float.NEGATIVE_INFINITY));
         this.blockStates = new ObjectArrayList<>(Collections.nCopies(length, null));
+        this.exploded = new BitSet(length);
     }
 
     public boolean isInRange(final int blockX, final int blockY, final int blockZ) {
@@ -53,14 +55,24 @@ public class FixedContiguousExplosionBlockCache {
         this.blockStates.set(index, mutableEntry.blockState);
     }
 
+    public void setExploded(final int index) {
+        this.exploded.set(index, true);
+    }
+
+    public boolean getExploded(final int index) {
+        return this.exploded.get(index);
+    }
+
     public boolean isPositionPopulated(final int blockX, final int blockY, final int blockZ) {
         return this.blastResistances.getFloat(this.getIndex(blockX, blockY, blockZ)) != Float.NEGATIVE_INFINITY;
     }
 
-    public void getMutate(final int blockX, final int blockY, final int blockZ, ExplosionBlockEntry mutableEntry) {
-        final int index = this.getIndex(blockX, blockY, blockZ);
-        mutableEntry.blastResistance = this.blastResistances.getFloat(index);
-        mutableEntry.blockState = this.blockStates.get(index);
+    public float getBlastResistance(final int index) {
+        return this.blastResistances.getFloat(index);
+    }
+
+    public BlockState getBlockState(final int index){
+        return this.blockStates.get(index);
     }
 
 }

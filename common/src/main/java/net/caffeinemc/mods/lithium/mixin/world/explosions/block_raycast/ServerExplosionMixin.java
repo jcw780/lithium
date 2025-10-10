@@ -252,27 +252,41 @@ public abstract class ServerExplosionMixin {
     private float traverseBlock(final float strength, final int blockX, final int blockY, final int blockZ,
                                 LongOpenHashSet touched) {
         BlockPos pos = this.cachedPos.set(blockX, blockY, blockZ);
+        float totalResistance;
+        BlockState blockState;
+        int index = 0;
 
-        if (!this.blockCache.isInRange(blockX, blockY, blockZ)) {
+        final boolean isInRange = this.blockCache.isInRange(blockX, blockY, blockZ);
+        if (!isInRange) {
             this.getNewBlockMutate(blockX, blockY, blockZ);
+            totalResistance = this.mutableEntry.blastResistance;
         } else {
+            index = this.blockCache.getIndex(blockX, blockY, blockZ);
             if (this.blockCache.isPositionPopulated(blockX, blockY, blockZ)) {
-                this.blockCache.getMutate(blockX, blockY, blockZ, this.mutableEntry);
+                totalResistance = this.blockCache.getBlastResistance(index);
             } else {
                 this.getNewBlockMutate(blockX, blockY, blockZ);
+                totalResistance = this.mutableEntry.blastResistance;
                 this.blockCache.set(blockX, blockY, blockZ, this.mutableEntry);
             }
         }
 
-        float totalResistance = this.mutableEntry.blastResistance;
-        BlockState blockState = this.mutableEntry.blockState;
+
 
         // Check if this ray is still strong enough to break blocks, and if so, add this position to the set
         // of positions to destroy
         float reducedStrength = strength - totalResistance;
-        if (reducedStrength > 0.0F && (this.explodeAirBlocks || !blockState.isAir())) {
-            if (this.damageCalculator.shouldBlockExplode((Explosion) (Object) this, this.level, pos, blockState, reducedStrength)) {
-                touched.add(pos.asLong());
+        if (reducedStrength > 0.0F && !(isInRange && this.blockCache.getExploded(index))) {
+            if (isInRange) {
+                this.blockCache.setExploded(index);
+                blockState = this.blockCache.getBlockState(index);
+            } else {
+                blockState = this.mutableEntry.blockState;
+            }
+            if (this.explodeAirBlocks || !blockState.isAir()) {
+                if (this.damageCalculator.shouldBlockExplode((Explosion) (Object) this, this.level, pos, blockState, reducedStrength)) {
+                    touched.add(pos.asLong());
+                }
             }
         }
 
