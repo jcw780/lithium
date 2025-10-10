@@ -132,6 +132,10 @@ public abstract class ServerExplosionMixin {
     @Inject(method = "calculateExplodedPositions",
             at = @At(value = "RETURN"))
     public void collectBlocks(CallbackInfoReturnable<List<BlockPos>> cir) {
+        if (this.radius <= 0.0F) {
+            return;
+        }
+
         // Using integer encoding for the block positions provides a massive speedup and prevents us from needing to
         // allocate a block position for every step we make along each ray, eliminating essentially all the memory
         // allocations of this function. The overhead of packing block positions into integer format is negligible
@@ -187,43 +191,51 @@ public abstract class ServerExplosionMixin {
         double stepX = this.center.x();
         double stepY = this.center.y();
         double stepZ = this.center.z();
-        
-        long prevBlock = Long.MIN_VALUE; // This is outside the world border
 
-        float resistance = 0.0F;
+        long prevBlock;
+
+        float resistance;
 
         int boundMinY = this.bottomY;
         int boundMaxY = this.topY;
 
+        int blockX = Mth.floor(stepX);
+        int blockY = Mth.floor(stepY);
+        int blockZ = Mth.floor(stepZ);
+        long currentBlock = BlockPos.asLong(blockX, blockY, blockZ);
+
         // Step through the ray until it is finally stopped
-        while (strength > 0.0F) {
-            int blockX = Mth.floor(stepX);
-            int blockY = Mth.floor(stepY);
-            int blockZ = Mth.floor(stepZ);
+        // The coordinates are within the world bounds, so we can safely traverse the block
+        while (blockY >= boundMinY && blockY <= boundMaxY
+                && blockX >= -30000000 && blockZ >= -30000000
+                && blockX < 30000000 && blockZ < 30000000) {
+            resistance = this.traverseBlock(strength, blockX, blockY, blockZ, touched);
+            prevBlock = currentBlock;
 
-            final long currentBlock = BlockPos.asLong(blockX, blockY, blockZ);
-
-            // Check whether we have actually moved into a new block this step. Due to how rays are stepped through,
+            // Keep looping until we move into a different block. Due to how rays are stepped through,
             // over-sampling of the same block positions will occur. Changing this behaviour would introduce differences in
             // aliasing and sampling, which is unacceptable for our purposes. As a band-aid, we can simply re-use the
             // previous result and get a decent boost.
-            if (prevBlock != currentBlock) {
-                if (blockY < boundMinY || blockY > boundMaxY || blockX < -30000000 || blockZ < -30000000 || blockX >= 30000000 || blockZ >= 30000000) {
+            // Todo: Someone with enough fp math skill can probably math away this loop
+            do {
+                strength -= resistance;
+                // Apply a constant fall-off
+                strength -= 0.22500001F;
+
+                if (strength <= 0.0F) {
                     return;
                 }
-                //The coordinates are within the world bounds, so we can safely traverse the block
-                resistance = this.traverseBlock(strength, blockX, blockY, blockZ, touched);
 
-                prevBlock = currentBlock;
-            }
+                stepX += normX;
+                stepY += normY;
+                stepZ += normZ;
 
-            strength -= resistance;
-            // Apply a constant fall-off
-            strength -= 0.22500001F;
+                blockX = Mth.floor(stepX);
+                blockY = Mth.floor(stepY);
+                blockZ = Mth.floor(stepZ);
 
-            stepX += normX;
-            stepY += normY;
-            stepZ += normZ;
+                currentBlock = BlockPos.asLong(blockX, blockY, blockZ);
+            } while (prevBlock == currentBlock);
         }
     }
 
