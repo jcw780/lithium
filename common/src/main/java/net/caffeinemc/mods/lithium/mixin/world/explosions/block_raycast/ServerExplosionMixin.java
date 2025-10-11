@@ -39,6 +39,8 @@ import java.util.Optional;
  * @author Jellyquid
  * Slight performance and mod compatibility improvements by
  * @author 2No2Name
+ * Remove extra iterations in ray generation logic - minor performance improvement
+ * @author jcw780
  */
 @Mixin(ServerExplosion.class)
 public abstract class ServerExplosionMixin {
@@ -141,15 +143,13 @@ public abstract class ServerExplosionMixin {
                 boolean yPlane = rayY == 0 || rayY == 15;
                 double vecY = (((float) rayY / 15.0F) * 2.0F) - 1.0F;
 
-                for (int rayZ = 0; rayZ < 16; ++rayZ) {
-                    boolean zPlane = rayZ == 0 || rayZ == 15;
-
-                    // We only fire rays from the surface of our origin volume
-                    if (xPlane || yPlane || zPlane) {
-                        double vecZ = (((float) rayZ / 15.0F) * 2.0F) - 1.0F;
-
-                        this.performRayCast(random, vecX, vecY, vecZ, touched);
-                    }
+                // We only fire rays from the surface of our origin volume
+                // This adjustment saves 2744 [14^3] iterations without changing order
+                // While not very expensive, this is noticeable upon close inspection of profiles
+                final int zIncrement = xPlane || yPlane ? 1: 15;
+                for (int rayZ = 0; rayZ < 16; rayZ += zIncrement) {
+                    double vecZ = (((float) rayZ / 15.0F) * 2.0F) - 1.0F;
+                    this.performRayCast(random, vecX, vecY, vecZ, touched);
                 }
             }
         }
