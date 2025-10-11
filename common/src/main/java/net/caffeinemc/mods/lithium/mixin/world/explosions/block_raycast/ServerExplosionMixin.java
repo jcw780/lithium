@@ -1,6 +1,5 @@
 package net.caffeinemc.mods.lithium.mixin.world.explosions.block_raycast;
 
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.caffeinemc.mods.lithium.common.util.Pos;
@@ -24,7 +23,6 @@ import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
-import org.apache.logging.log4j.LogManager;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -36,7 +34,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 /**
  * Optimizations for Explosions: Reduce allocations and getChunk/getBlockState calls
@@ -77,9 +74,7 @@ public abstract class ServerExplosionMixin {
     // The chunk belonging to prevChunkPos.
     private ChunkAccess prevChunk;
 
-    private FixedContiguousExplosionBlockCache blockCache;
-    private ExplosionBlockEntry mutableEntry = new ExplosionBlockEntry();
-    private final org.apache.logging.log4j.Logger logger = LogManager.getLogger("Lithium");
+    //private final org.apache.logging.log4j.Logger logger = LogManager.getLogger("Lithium");
     /**
      * Whether the explosion cares about air blocks. If false, air blocks do not have to be added to the set of destroyed blocks.
      * Skipping air blocks reduces the number of BlockPos allocations, shuffling and getBlockState calls in {@link Explosion#finalizeExplosion(boolean)}
@@ -136,6 +131,8 @@ public abstract class ServerExplosionMixin {
             return;
         }
 
+        final float maxStrength = this.radius * (0.7F + 0.6F);
+
         // Using integer encoding for the block positions provides a massive speedup and prevents us from needing to
         // allocate a block position for every step we make along each ray, eliminating essentially all the memory
         // allocations of this function. The overhead of packing block positions into integer format is negligible
@@ -144,7 +141,8 @@ public abstract class ServerExplosionMixin {
 
         // Cache a 7x7x7 centered on block containing explosion source
         // This will eliminate ~80% of getBlockState calls even with the previous within-ray caching
-        this.blockCache = new FixedContiguousExplosionBlockCache(
+        ExplosionBlockEntry mutableEntry = new ExplosionBlockEntry();
+        FixedContiguousExplosionBlockCache blockCache = new FixedContiguousExplosionBlockCache(
                 Mth.floor(this.center.x), Mth.floor(this.center.y), Mth.floor(this.center.z), 3);
 
         final RandomSource random = this.level.random;
@@ -162,7 +160,7 @@ public abstract class ServerExplosionMixin {
                 final int zIncrement = xPlane || yPlane ? 1: 15;
                 for (int rayZ = 0; rayZ < 16; rayZ += zIncrement) {
                     double vecZ = (((float) rayZ / 15.0F) * 2.0F) - 1.0F;
-                    this.performRayCast(random, vecX, vecY, vecZ, touched);
+                    this.performRayCast(random, vecX, vecY, vecZ, touched, blockCache, mutableEntry, maxStrength);
                 }
             }
         }
@@ -179,7 +177,9 @@ public abstract class ServerExplosionMixin {
     }
 
     @Unique
-    private void performRayCast(RandomSource random, double vecX, double vecY, double vecZ, LongOpenHashSet touched) {
+    private void performRayCast(RandomSource random, double vecX, double vecY, double vecZ, LongOpenHashSet touched,
+                                FixedContiguousExplosionBlockCache blockCache, ExplosionBlockEntry mutableEntry,
+                                final float maxStrength) {
         double dist = Math.sqrt((vecX * vecX) + (vecY * vecY) + (vecZ * vecZ));
 
         double normX = (vecX / dist) * 0.3D;
@@ -209,7 +209,7 @@ public abstract class ServerExplosionMixin {
         while (blockY >= boundMinY && blockY <= boundMaxY
                 && blockX >= -30000000 && blockZ >= -30000000
                 && blockX < 30000000 && blockZ < 30000000) {
-            resistance = this.traverseBlock(strength, blockX, blockY, blockZ, touched);
+            resistance = this.traverseBlock(strength, blockX, blockY, blockZ, touched, blockCache, mutableEntry, maxStrength);
             prevBlock = currentBlock;
 
             // Keep looping until we move into a different block. Due to how rays are stepped through,
@@ -250,43 +250,58 @@ public abstract class ServerExplosionMixin {
      */
     @Unique
     private float traverseBlock(final float strength, final int blockX, final int blockY, final int blockZ,
-                                LongOpenHashSet touched) {
+                                LongOpenHashSet touched, FixedContiguousExplosionBlockCache blockCache,
+                                ExplosionBlockEntry mutableEntry, final float maxStrength) {
         BlockPos pos = this.cachedPos.set(blockX, blockY, blockZ);
         float totalResistance;
         BlockState blockState;
         int index = 0;
 
-        final boolean isInRange = this.blockCache.isInRange(blockX, blockY, blockZ);
-        if (!isInRange) {
-            this.getNewBlockMutate(blockX, blockY, blockZ);
-            totalResistance = this.mutableEntry.blastResistance;
-        } else {
-            index = this.blockCache.getIndex(blockX, blockY, blockZ);
-            if (this.blockCache.isPositionPopulated(blockX, blockY, blockZ)) {
-                totalResistance = this.blockCache.getBlastResistance(index);
+        final boolean isInRange = blockCache.isInRange(blockX, blockY, blockZ);
+        boolean isIndexEmpty = false;
+        if (isInRange) {
+            index = blockCache.getIndex(blockX, blockY, blockZ);
+            isIndexEmpty = blockCache.isIndexEmpty(index);
+            if (isIndexEmpty) {
+                this.getNewBlockMutate(blockX, blockY, blockZ, mutableEntry);
+                totalResistance = mutableEntry.blastResistance;
+                blockCache.setBlastResistance(index, totalResistance);
             } else {
-                this.getNewBlockMutate(blockX, blockY, blockZ);
-                totalResistance = this.mutableEntry.blastResistance;
-                this.blockCache.set(blockX, blockY, blockZ, this.mutableEntry);
+                totalResistance = blockCache.getBlastResistance(index);
             }
+        } else {
+            this.getNewBlockMutate(blockX, blockY, blockZ, mutableEntry);
+            totalResistance = mutableEntry.blastResistance;
         }
-
-
 
         // Check if this ray is still strong enough to break blocks, and if so, add this position to the set
         // of positions to destroy
         float reducedStrength = strength - totalResistance;
-        if (reducedStrength > 0.0F && !(isInRange && this.blockCache.getExploded(index))) {
-            if (isInRange) {
-                this.blockCache.setExploded(index);
-                blockState = this.blockCache.getBlockState(index);
+        boolean explosionChecked = false;
+        if (reducedStrength > 0.0F && !(isInRange && blockCache.getExploded(index))) {
+            if (isInRange && !isIndexEmpty) {
+                blockState = blockCache.getBlockState(index);
             } else {
-                blockState = this.mutableEntry.blockState;
+                blockState = mutableEntry.blockState;
             }
+
             if (this.explodeAirBlocks || !blockState.isAir()) {
                 if (this.damageCalculator.shouldBlockExplode((Explosion) (Object) this, this.level, pos, blockState, reducedStrength)) {
                     touched.add(pos.asLong());
+                    explosionChecked = true;
                 }
+            } else { // Unexploded air block - also ignore
+                explosionChecked = true;
+            }
+        } else if (totalResistance > maxStrength) { // Cannot ever be exploded
+            explosionChecked = true;
+        }
+
+        if (isInRange) {
+            if (explosionChecked) { // Skip for all future explosion checks - also means we don't have to save the blockState
+                blockCache.setExploded(index);
+            } else if (isIndexEmpty) {
+                blockCache.setBlockState(index, mutableEntry.blockState);
             }
         }
 
@@ -294,7 +309,7 @@ public abstract class ServerExplosionMixin {
     }
 
     @Unique
-    private void getNewBlockMutate(final int blockX, final int blockY, final int blockZ) {
+    private void getNewBlockMutate(final int blockX, final int blockY, final int blockZ, ExplosionBlockEntry mutableEntry) {
         BlockPos pos = this.cachedPos;
 
         int chunkX = Pos.ChunkCoord.fromBlockCoord(blockX);
@@ -347,8 +362,8 @@ public abstract class ServerExplosionMixin {
             totalResistance = (blastResistance.get() + 0.3F) * 0.3F;
         }
 
-        this.mutableEntry.blastResistance = totalResistance;
-        this.mutableEntry.blockState = blockState;
+        mutableEntry.blastResistance = totalResistance;
+        mutableEntry.blockState = blockState;
     }
 
 }

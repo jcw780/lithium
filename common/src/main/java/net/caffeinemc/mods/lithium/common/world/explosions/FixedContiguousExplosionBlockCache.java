@@ -49,10 +49,12 @@ public class FixedContiguousExplosionBlockCache {
         return ((blockY - this.yMin) * this.zLength + (blockZ - this.zMin)) * this.xLength + (blockX - this.xMin);
     }
 
-    public void set(final int blockX, final int blockY, final int blockZ, ExplosionBlockEntry mutableEntry) {
-        final int index = this.getIndex(blockX, blockY, blockZ);
-        this.blastResistances.set(index, mutableEntry.blastResistance);
-        this.blockStates.set(index, mutableEntry.blockState);
+    public void setBlastResistance(int index, float blastResistance) {
+        this.blastResistances.set(index, blastResistance);
+    }
+
+    public void setBlockState(int index, BlockState blockState) {
+        this.blockStates.set(index, blockState);
     }
 
     public void setExploded(final int index) {
@@ -63,8 +65,8 @@ public class FixedContiguousExplosionBlockCache {
         return this.exploded.get(index);
     }
 
-    public boolean isPositionPopulated(final int blockX, final int blockY, final int blockZ) {
-        return this.blastResistances.getFloat(this.getIndex(blockX, blockY, blockZ)) != Float.NEGATIVE_INFINITY;
+    public boolean isIndexEmpty(final int index) {
+        return this.blastResistances.getFloat(index) == Float.NEGATIVE_INFINITY;
     }
 
     public float getBlastResistance(final int index) {
