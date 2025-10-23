@@ -6,7 +6,7 @@ import net.caffeinemc.mods.lithium.common.world.interests.PointOfInterestSetExte
 import net.caffeinemc.mods.lithium.common.world.interests.PointOfInterestStorageExtended;
 import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
 import net.caffeinemc.mods.lithium.common.world.interests.iterator.NearbyPointOfInterestStream;
-import net.caffeinemc.mods.lithium.common.world.interests.iterator.NearbyPointOfInterestStream2;
+import net.caffeinemc.mods.lithium.common.world.interests.iterator.NearbyPointOfInterestStreamOriginalTest;
 import net.caffeinemc.mods.lithium.common.world.interests.iterator.SinglePointOfInterestTypeFilter;
 import net.caffeinemc.mods.lithium.common.world.interests.iterator.SphereChunkOrderedPoiSetSpliterator;
 import net.minecraft.core.BlockPos;
@@ -222,12 +222,12 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
         // noinspection unchecked
         RegionBasedStorageSectionExtended<PoiSection> storage = (RegionBasedStorageSectionExtended<PoiSection>) this;
 
-        /*// Todo: Debug only - remove when done
-        List<PoiRecord> original = StreamSupport.stream(new NearbyPointOfInterestStream(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false).collect(Collectors.toList());
-        List<PoiRecord> subchunk = StreamSupport.stream(new NearbyPointOfInterestStream2(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false).collect(Collectors.toList());
+        // Todo: Debug only - remove when done
+        List<PoiRecord> original = StreamSupport.stream(new NearbyPointOfInterestStreamOriginalTest(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false).collect(Collectors.toList());
+        List<PoiRecord> subchunk = StreamSupport.stream(new NearbyPointOfInterestStream(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false).collect(Collectors.toList());
 
-        final boolean res = original.equals(subchunk);*/
+        final boolean res = original.equals(subchunk);
 
-        return StreamSupport.stream(new NearbyPointOfInterestStream2(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false);
+        return StreamSupport.stream(new NearbyPointOfInterestStream(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false);
     }
 }
