@@ -222,11 +222,11 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
         // noinspection unchecked
         RegionBasedStorageSectionExtended<PoiSection> storage = (RegionBasedStorageSectionExtended<PoiSection>) this;
 
-        // Todo: Debug only - remove when done
+        /*// Todo: Debug only - remove when done
         List<PoiRecord> original = StreamSupport.stream(new NearbyPointOfInterestStreamOriginalTest(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false).collect(Collectors.toList());
         List<PoiRecord> subchunk = StreamSupport.stream(new NearbyPointOfInterestStream(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false).collect(Collectors.toList());
 
-        final boolean res = original.equals(subchunk);
+        final boolean res = original.equals(subchunk);*/
 
         return StreamSupport.stream(new NearbyPointOfInterestStream(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false);
     }
