@@ -34,6 +34,8 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
     private final PoiManager.Occupancy occupationStatus;
 
     private final ArrayList<SortedPointOfInterest> points;
+    private int pointIndex;
+
     private final Predicate<PoiRecord> afterSortingPredicate;
     private final Consumer<PoiRecord> collector;
     private final BlockPos origin;
@@ -44,9 +46,13 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
     private final double minChunkYDistSq;
 
     private final ObjectArrayList<QueuedSection> queuedPOISections;
+    //For faster removal of the first elements of the above array list
     private int queuedSectionsSearched;
+
+    //Forcibly deplete to mitigate an edgecase if there are way too many non-empty subchunks
     private boolean forciblyDeplete;
     private final int forciblyDepleteTrigger;
+
     private int ring;
     private final int ringMax;
     private final LongIterator ringIterator;
@@ -57,7 +63,6 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
     private double nextSectionDistanceSq;
     private double lowestWaitingDistanceSq;
     private final double distanceLimitL2Sq;
-    private int pointIndex;
     private final Comparator<? super SortedPointOfInterest> pointComparator;
 
     public NearbyPointOfInterestStream(Predicate<Holder<PoiType>> typeSelector,
@@ -138,47 +143,52 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
 
         this.distanceLimitL2Sq = useSquareDistanceLimit ? radius * radius * 2 : radius * radius;
         this.afterSortingPredicate = afterSortingPredicate;
-        this.pointComparator = preferNegativeY ? (o1, o2) -> {
-            // Use the cached values from earlier
-            int cmp = Double.compare(o1.distanceSq(), o2.distanceSq());
 
-            if (cmp != 0) {
-                return cmp;
-            }
+        if (preferNegativeY) {
+            this.pointComparator = (o1, o2) -> {
+                // Use the cached values from earlier
+                int cmp = Double.compare(o1.distanceSq(), o2.distanceSq());
 
-            // Sort by the y-coord (bottom-most first) if any points share an identical distance from one another
-            int negativeY = Integer.compare(o1.getY(), o2.getY());
-            if (negativeY != 0) {
-                return negativeY;
-            }
+                if (cmp != 0) {
+                    return cmp;
+                }
 
-            // Sort by the chunk coord
-            int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
-            if (cmp3 != 0) {
-                return cmp3;
-            }
-            return Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
+                // Sort by the y-coord (bottom-most first) if any points share an identical distance from one another
+                int negativeY = Integer.compare(o1.getY(), o2.getY());
+                if (negativeY != 0) {
+                    return negativeY;
+                }
 
-        } : (o1, o2) -> {
-            // Use the cached values from earlier
-            int cmp = Double.compare(o1.distanceSq(), o2.distanceSq());
+                // Sort by the chunk coord
+                int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
+                if (cmp3 != 0) {
+                    return cmp3;
+                }
+                return Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
 
-            if (cmp != 0) {
-                return cmp;
-            }
+            };
+        } else {
+            this.pointComparator = (o1, o2) -> {
+                // Use the cached values from earlier
+                int cmp = Double.compare(o1.distanceSq(), o2.distanceSq());
 
-            // Sort by the chunk coord
-            int cmp2 = Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
-            if (cmp2 != 0) {
-                return cmp2;
-            }
-            int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
-            if (cmp3 != 0) {
-                return cmp3;
-            }
-            return Integer.compare(SectionPos.blockToSectionCoord(o1.getY()), SectionPos.blockToSectionCoord(o2.getY()));
+                if (cmp != 0) {
+                    return cmp;
+                }
 
-        };
+                // Sort by the chunk coord
+                int cmp2 = Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
+                if (cmp2 != 0) {
+                    return cmp2;
+                }
+                int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
+                if (cmp3 != 0) {
+                    return cmp3;
+                }
+                return Integer.compare(SectionPos.blockToSectionCoord(o1.getY()), SectionPos.blockToSectionCoord(o2.getY()));
+
+            };
+        }
     }
 
     @Override
@@ -210,7 +220,10 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                             .lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector);
                 }
 
-                this.forciblyDeplete = (!this.forciblyDeplete || !this.isSectionListEmpty()) && this.forciblyDeplete;
+                if (this.forciblyDeplete) {
+                    this.forciblyDeplete = !this.isSectionListEmpty();
+                }
+
                 if (this.points.size() > previousSize) {
                     this.points.subList(this.pointIndex, this.points.size()).sort(this.pointComparator);
                     break;
@@ -341,7 +354,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
     private int getYDistanceFromBitIndex(final int bitIndex) {
         return bitIndex == -1 ?
                 Integer.MAX_VALUE :
-                Math.abs(Distances.getClosestAlongSectionAxis(
+                Math.abs(Distances.getClosestBlockCoordInSection(
                         this.origin.getY(), bitIndex + this.chunkYMin) - this.origin.getY());
     }
 

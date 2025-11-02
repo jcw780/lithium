@@ -11,10 +11,8 @@ public class NonPOISearchDistances {
         }
 
         public static int getMinimumSortOrderOfChunk(BlockPos center, final int chunkX, final int chunkZ) {
-            final long closest = Distances.getClosestPositionWithinChunk(center, chunkX, chunkZ);
-
-            final int dX = BlockPos.getX(closest) - center.getX();
-            final int dZ = BlockPos.getZ(closest) - center.getZ();
+            final int dX = Distances.getClosestBlockCoordInSection(center.getX(), chunkX) - center.getX();
+            final int dZ = Distances.getClosestBlockCoordInSection(center.getZ(), chunkZ) - center.getZ();
 
             //This will always get the closest one due to the nature of the search
             return getVanillaSortOrderInt(getRing(dX, dZ), dX, dZ);
