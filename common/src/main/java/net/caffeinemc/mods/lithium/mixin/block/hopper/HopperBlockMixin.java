@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.redstone.Orientation;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -46,6 +47,7 @@ public abstract class HopperBlockMixin extends BaseEntityBlock implements ShapeU
         }
     }
 
+    @Unique
     private void updateHopper(LevelReader world, BlockState myBlockState, BlockPos myPos, BlockPos posFrom) {
         Direction facing = myBlockState.getValue(HopperBlock.FACING);
         boolean above = posFrom.getY() == myPos.getY() + 1;

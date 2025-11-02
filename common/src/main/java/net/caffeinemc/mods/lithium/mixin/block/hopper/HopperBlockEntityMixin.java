@@ -60,36 +60,54 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
     @Shadow
     private long tickedGameTime;
 
+    @Unique
     private long myModCountAtLastInsert, myModCountAtLastExtract, myModCountAtLastItemCollect;
 
+    @Unique
     private HopperCachingState.BlockInventory insertionMode = HopperCachingState.BlockInventory.UNKNOWN;
+    @Unique
     private HopperCachingState.BlockInventory extractionMode = HopperCachingState.BlockInventory.UNKNOWN;
 
     //The currently used block inventories
+    @Unique
     @Nullable
     private Container insertBlockInventory, extractBlockInventory;
 
     //The currently used inventories (optimized type, if not present, skip optimizations)
+    @Unique
     @Nullable
     private LithiumInventory insertInventory, extractInventory;
+    @Unique
     @Nullable //Null iff corresp. LithiumInventory field is null
     private LithiumStackList insertStackList, extractStackList;
     //Mod count used to avoid transfer attempts that are known to fail (no change since last attempt)
+    @Unique
     private long insertStackListModCount, extractStackListModCount;
 
+    @Unique
     private SectionedItemEntityMovementTracker<ItemEntity> collectItemEntityTracker;
+    @Unique
     private boolean collectItemEntityTrackerWasEmpty;
+    @Unique
     private AABB collectItemEntityBox;
+    @Unique
     private long collectItemEntityAttemptTime;
 
+    @Unique
     private SectionedInventoryEntityMovementTracker<Container> extractInventoryEntityTracker;
+    @Unique
     private AABB extractInventoryEntityBox;
+    @Unique
     private long extractInventoryEntityFailedSearchTime;
 
+    @Unique
     private SectionedInventoryEntityMovementTracker<Container> insertInventoryEntityTracker;
+    @Unique
     private AABB insertInventoryEntityBox;
+    @Unique
     private long insertInventoryEntityFailedSearchTime;
 
+    @Unique
     private boolean shouldCheckSleep;
 
     @Redirect(
@@ -402,6 +420,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
      *
      * @param insertInventory Block inventory / Blockentity inventory to be remembered
      */
+    @Unique
     private void cacheInsertBlockInventory(Container insertInventory) {
         assert !(insertInventory instanceof Entity);
         if (insertInventory instanceof LithiumInventory optimizedInventory) {
@@ -431,6 +450,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         }
     }
 
+    @Unique
     private void cacheInsertLithiumInventory(LithiumInventory optimizedInventory) {
         LithiumStackList insertInventoryStackList = InventoryHelper.getLithiumStackList(optimizedInventory);
         this.insertInventory = optimizedInventory;
@@ -438,6 +458,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         this.insertStackListModCount = insertInventoryStackList.getModCount() - 1;
     }
 
+    @Unique
     private void cacheExtractLithiumInventory(LithiumInventory optimizedInventory) {
         LithiumStackList extractInventoryStackList = InventoryHelper.getLithiumStackList(optimizedInventory);
         this.extractInventory = optimizedInventory;
@@ -450,6 +471,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
      *
      * @param extractInventory Block inventory / Blockentity inventory to be remembered
      */
+    @Unique
     private void cacheExtractBlockInventory(Container extractInventory) {
         assert !(extractInventory instanceof Entity);
         if (extractInventory instanceof LithiumInventory optimizedInventory) {
@@ -479,6 +501,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         }
     }
 
+    @SuppressWarnings("MissingUnique")
     public Container lithium$getExtractBlockInventory(Level world, BlockPos extractBlockPos, BlockState extractBlockState) {
         Container blockInventory = this.extractBlockInventory;
         if (this.extractionMode == HopperCachingState.BlockInventory.NO_BLOCK_INVENTORY) {
@@ -514,6 +537,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         return blockInventory;
     }
 
+    @SuppressWarnings("MissingUnique")
     public Container lithium$getInsertBlockInventory(Level world) {
         Container blockInventory = this.insertBlockInventory;
         if (this.insertionMode == HopperCachingState.BlockInventory.NO_BLOCK_INVENTORY) {
@@ -556,6 +580,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
     }
 
 
+    @Unique
     public Container getInsertInventory(Level world) {
         Container blockInventory = this.lithium$getInsertBlockInventory(world);
         if (blockInventory != null) {
@@ -589,6 +614,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         return inventory;
     }
 
+    @Unique
     private void initCollectItemEntityTracker() {
         assert this.level instanceof ServerLevel;
         AABB inputBox = this.getSuckAabb().move(this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ());
@@ -602,6 +628,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         this.collectItemEntityAttemptTime = Long.MIN_VALUE;
     }
 
+    @Unique
     private void initExtractInventoryTracker(Level world) {
         assert world instanceof ServerLevel;
         BlockPos pos = this.worldPosition.relative(Direction.UP);
@@ -615,6 +642,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         this.extractInventoryEntityFailedSearchTime = Long.MIN_VALUE;
     }
 
+    @Unique
     private void initInsertInventoryTracker(Level world) {
         assert world instanceof ServerLevel;
         Direction direction = this.facing;
@@ -636,12 +664,14 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         }
     }
 
+    @Unique
     private void invalidateCachedData() {
         this.shouldCheckSleep = false;
         this.invalidateInsertionData();
         this.invalidateExtractionData();
     }
 
+    @Unique
     private void invalidateInsertionData() {
         if (this.level instanceof ServerLevel serverWorld) {
             if (this.insertInventoryEntityTracker != null) {
@@ -659,6 +689,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         this.invalidateBlockInsertionData();
     }
 
+    @Unique
     private void invalidateBlockInsertionData() {
         this.insertionMode = HopperCachingState.BlockInventory.UNKNOWN;
         this.insertBlockInventory = null;
@@ -671,6 +702,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         }
     }
 
+    @Unique
     private void invalidateExtractionData() {
         if (this.level instanceof ServerLevel serverWorld) {
             if (this.extractInventoryEntityTracker != null) {
@@ -693,6 +725,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         this.invalidateBlockExtractionData();
     }
 
+    @Unique
     private void invalidateBlockExtractionData() {
         this.extractionMode = HopperCachingState.BlockInventory.UNKNOWN;
         this.extractBlockInventory = null;
@@ -717,6 +750,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         ((HopperBlockEntityMixin) (Object) blockEntity).checkSleepingConditions();
     }
 
+    @Unique
     private void checkSleepingConditions() {
         if (this.isOnCooldown() || this.getLevel() == null) {
             return;

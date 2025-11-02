@@ -1,16 +1,17 @@
 # Lithium Hopper Optimizations
-This document is outdated and needs to be updated.
 ## Assumptions made about other inventories
 
-(likely incomplete)
-Inventories that implement restrictions for hopper item insertion do not depend on the size of the inserted stack.
-Hoppers always transfer a single item, inventories do not reject a stack if they are able to receive a single item from
-the stack (the receiving inventory slot is not filled to its limit and the item type is correct). This allows lithium to
-avoid creating a copy of the transferred item stack when the transfer is going to fail.
+- Some inventories (like ChiseledBookshelfBlockEntity) require stack size 1 for insertion tests.
+  These inventories implement `LithiumTransferConditionInventory.lithium$itemInsertionTestRequiresStackSize1()` to signal
+  this requirement, and Lithium creates a size-1 copy for testing in these cases.
+- Hoppers always transfer a single item. For most inventories, the insertion test does not depend on the stack size
+  (the receiving inventory slot is not filled to its limit and the item type is correct). This allows Lithium to
+  avoid creating a copy of the transferred item stack when testing if the transfer would succeed, except for special
+  inventories that explicitly require size-1 testing (see above).
 
 ## Inventory Stack List
 
-LithiumStackList replaces the inventory stack lists. It keeps an inventory content modification counter and caches the
+LithiumStackList replaces the inventory stack lists (NonNullList). It keeps an inventory content modification counter, empty and full slot counts, and caches the
 signal strength until the inventory content is modified.
 
 ## Lithium Inventory
@@ -25,11 +26,22 @@ additional data for some optimizations.
 Hoppers try to cache the inventory they are interacting with. If there is a cached inventory it can be used directly
 without querying the world again. This is possible for BlockEntities, Composters and no block inventory presence. The
 cache can be validated by checking whether the BlockEntity has not been removed from the world. Composters and no block
-inventory presence will be invalidated when the hopper receives a block update from the corresponding direction. A
+inventory presence will be invalidated when the hopper receives a shape update from the corresponding direction or a
+block update from any direction (vanilla no longer provides the direction the update comes from). A
 workaround for the update suppressing behavior when placing a hopper in a powered position
 (cf. https://www.youtube.com/watch?v=QVOONJ1OY44 ) is included (cf. HopperBlockMixin). Entity inventories (storage
 minecarts) are not cached, as they are randomly chosen every tick, may move or be destroyed at any time without notice
 to the hopper.
+
+### Compatibility Features
+
+- Movable Block Entities: The cache validation includes position comparison checks to support mods that allow moving
+block entities (e.g. Carpet). If a cached block entity's position no longer matches the expected interaction
+position, the cache is invalidated and the inventory is queried again.
+
+- Stack List Replacement Detection: Some operations (such as commands making a furnace read its inventory from NBT)
+can silently replace an inventory's stack list. The hopper detects when the cached LithiumStackList reference no longer
+matches the inventory's current stack list and invalidates the cache accordingly.
 
 ## Modification Counter Shortcuts and Comparator Updates
 
@@ -44,8 +56,22 @@ side effect cache is invalidated when the inventory is modified. The ComparatorU
 calculated like vanilla if mods do not add item types with a non-power-of-two maximum stack size.
 
 The inventory modification counters are updated in LithiumStackList and ItemStackMixin. ItemStacks keep a reference to
-the LithiumStackList they are in, and they notify the LithiumStackList when their stack size is manipulated. ItemStacks
-can only be in one inventory at a time.
+the LithiumStackList they are in, and they notify the LithiumStackList when their stack size is manipulated. Generally,
+ItemStacks are in only one inventory at a time. Some technical players use a technique called "item shadowing", that allows
+placing the same ItemStack object in multiple inventories by causing an exception to be thrown during the player packet
+handling, e.g. a StackOverFlowError due to recursive block updates in older minecraft versions. Lithium handles this too,
+by keeping track of all relevant inventories at the same time in the ItemStack using a Multi ChangeSubscriber instance.
+
+### Comparator Updates on Failed Transfers
+
+Vanilla transfer attempts always include taking out an item from the source inventory and attempting to insert it into
+the target inventory. When failing to place the item into the target inventory, the item is returned to the source
+inventory. This can cause comparator updates depending on the inventory type, possibly even with a reduced signal strength.
+
+The `ComparatorUpdatePattern` captures the detectable pattern of comparator updates that would occur during failed extraction
+attempts from different inventory types. Since many patterns with multiple consecutive updates are not distinguishable
+with contraptions, only very few different patterns exist.
+All patterns: NO_UPDATE, UPDATE, DECREMENT_UPDATE_INCREMENT_UPDATE, UPDATE_DECREMENT_UPDATE_INCREMENT_UPDATE
 
 ## Entity Interaction Shortcuts
 
@@ -69,12 +95,18 @@ If any bugs show up, they will need to be fixed.
 ## How Lithium hoppers work different from vanilla
 
 - Lithium Optimized Inventories:
-    - Any vanilla inventory vanilla hoppers can interact with (Composters excluded!)
+    - Any vanilla block entity / storage entity inventory that vanilla hoppers can interact with (Block inventories like composters excluded!)
     - Custom Stack list (LithiumStackList):
-      Replaces the vanilla stack list when a hopper accesses the inventory. It stores additional data:
+      Replaces the vanilla stack list when a hopper accesses the inventory. Double chest stack lists are handled in a
+      special case, as they must not store data themselves as they can be reinstantiated on any access. Lithium tries
+      to reuse existing double inventory instances.
+    
+    - LithiumStackLists store additional data:
         - Cached signal strength (int)
             - Stored when signal strength is calculated
-            - Deleted when inventory content is changed
+            - Invalidated when inventory content is changed
+            - For double chests: Uses a modification counter to detect changes instead of immediate invalidation.
+              The cached value is revalidated by comparing the current modification count to the stored count.
         - Cached Comparator Update Pattern (Enum)
             - Possible values: NO_UPDATE, UPDATE, DECR_UPDATE_INCR_UPDATE, UPDATE_DECR_UPDATE_INCR_UPDATE
             - Stored when accessed and not stored
@@ -83,7 +115,7 @@ If any bugs show up, they will need to be fixed.
         - Signal Strength Override (boolean)
             - Sets the inventory signal strength to 0 when set
                 - Only used to execute certain Comparator Update Patterns
-        - Inventory Modificiation Count (long)
+        - Inventory Modification Count (long)
             - Increased when inventory content is changed
         - Number of occupied slots (int)
             - Updated when inventory content is changed (only checking the changed slot)
@@ -98,7 +130,7 @@ If any bugs show up, they will need to be fixed.
     - Entity Sections store the timestamp of the last change for each tracked class
     - Entities of tracked classes notify their entity section every time their position change or when they are added or
       removed from the world
-        - Updates their classes timestamp of the entity section to the current time
+        - Updates their classes' timestamp of the entity section to the current time
     - Entity Sections store a set of movement trackers
         - When the section becomes accessible or inaccessible the movement trackers are notified
     - Movement trackers are a data structure used by hoppers.
@@ -108,20 +140,17 @@ If any bugs show up, they will need to be fixed.
             - The tracked class (Inventory or ItemEntity)
             - List of observed entity sections
             - Mask whether the sections are accessible
-            - Number of users of this tracker
+            - Number of users (= hoppers) of this tracker
             - List of the accessible observed entity sections' timestamp (for more direct access)
             - Largest known change timestamp
-        - Functonality:
+        - Functionality:
             - Check whether it is guaranteed that no change (entity movement, creation, removal) happened after a given
               timestamp (includes usage and update of largest known timestamp)
             - Collect all entities of the tracked class inside a given box from the accessible observed entity sections.
-                - For item entities multiple hitbox checks are done to return the item entities in the same order as
-                  vanilla. First an encompassing box is checked as most nearby item entities won't be in any part of the
-                  hopper interaction area.
         - Deduplication:
             - When a new movement tracker is created, and an equal one already exists, the already existing one is used
               instead. The number of users of the tracker is increased.
-            - When the user no longer uses the tracker, it has to un-register and the number of users will be decreased.
+            - When the user no longer uses the tracker, it un-registers and the number of users will be decreased.
               When it reaches 0, it is removed from the sets of trackers and can be garbage collected.
 
 - Lithium Hopper behavior:
@@ -208,8 +237,15 @@ If any bugs show up, they will need to be fixed.
           entity trackers. It also subscribes to itself for inventory changes.
         - When the hopper receives any event from the subscribed trackers, it will wake up and invalidate cached
           information if needed (e.g. inventory removal event -> invalidate cached data for this inventory)
-        - When the hopper is set on cooldown it wakes up. However, to handle the 7gt/8gt cooldown case when being set to
-          cooldown when receiving an item from another hopper, the hopper will receive a 7gt cooldown but only wake up
-          in the next gametick.
-        - More hopper sleeping capabilities in the general block entity sleeping code (Locked & Not on cooldown
+        - When the hopper is set on cooldown it wakes up. However, to handle the 7gt/8gt cooldown case:
+          When a hopper receives an item from another hopper, the receiving hopper is set to an 8-tick cooldown by
+          default. If the receiving hopper's tickedGameTime is >= the sending hopper's tickedGameTime (both ticked in
+          the same game tick), the cooldown is reduced to 7 ticks instead. As Lithium implements block entity sleeping,
+          the tickedGameTick may be inconsistent with the usual hopper ticking order.
+          Thus, the case of a sleeping hopper being woken up by receiving an item and going into cooldown has to be handled
+          carefully: 
+          When a sleeping hopper receives a cooldown, a 7gt cooldown is used AND the hopper will only wake up in the next
+          game tick to process the cooldown. Additionally, other updates cannot wake the hopper during this short
+          sleep.
+        - More hopper sleeping capabilities live in the general block entity sleeping code (Locked & Not on cooldown
           sleeping)

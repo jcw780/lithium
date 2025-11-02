@@ -46,6 +46,11 @@ public interface SleepingBlockEntity {
         return true;
     }
 
+    /**
+     * To achieve correct timings after waking up the block entity with another block entity, force skipping the block entity ticking for the current tick.
+     * This is currently used to make sure hoppers that receive an item and thus go into cooldown handle the cooldown
+     * correctly with all possible ticking orders of hoppers.
+     */
     default void sleepOnlyCurrentTick() {
         TickingBlockEntity sleepingTicker = this.lithium$getSleepingTicker();
         WrappedBlockEntityTickInvokerAccessor tickWrapper = this.lithium$getTickWrapper();
@@ -54,7 +59,7 @@ public interface SleepingBlockEntity {
         }
         Level world = ((BlockEntity) this).getLevel();
         tickWrapper.callSetWrapped(new SleepUntilTimeBlockEntityTickInvoker((BlockEntity) this, world.getGameTime() + 1, sleepingTicker));
-        this.lithium$setSleepingTicker(null);
+        this.lithium$setSleepingTicker(null); //Important: Prevents anything else from waking up this block entity
     }
 
     default void wakeUpNow() {

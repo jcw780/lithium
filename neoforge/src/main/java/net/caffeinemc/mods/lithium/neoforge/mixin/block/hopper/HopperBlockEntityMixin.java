@@ -79,13 +79,13 @@ public abstract class HopperBlockEntityMixin {
     }
 
     //Implemented in common HopperBlockEntityMixin
-    @Unique
+    @SuppressWarnings("MissingUnique")
     public Container lithium$getInsertBlockInventory(Level world) {
         throw new AssertionError();
     }
 
     //Implemented in common HopperBlockEntityMixin
-    @Unique
+    @SuppressWarnings("MissingUnique")
     public Container lithium$getExtractBlockInventory(Level world, BlockPos extractBlockPos, BlockState extractBlockState) {
         throw new AssertionError();
     }

@@ -123,8 +123,8 @@ public class LithiumStackList extends NonNullList<ItemStack> implements LithiumD
         // Handle: If the previous == element, and the stack is not subscribed, we handle it as if an empty stack was replaced.
         if (previous == element && !element.isEmpty()) {
             //noinspection unchecked
-            boolean notSubscribed = ((ChangePublisher<ItemStack>) (Object) previous).lithium$isSubscribedWithData(this, index);
-            if (!notSubscribed)  {
+            boolean isSubscribed = ((ChangePublisher<ItemStack>) (Object) previous).lithium$isSubscribedWithData(this, index);
+            if (!isSubscribed) {
                 previous = ItemStack.EMPTY;
             }
         }
