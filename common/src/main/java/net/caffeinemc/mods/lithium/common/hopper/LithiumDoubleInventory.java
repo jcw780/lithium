@@ -65,8 +65,12 @@ public class LithiumDoubleInventory extends CompoundContainer implements Lithium
     @Override
     public void lithium$emitStackListReplaced() {
         ReferenceOpenHashSet<InventoryChangeListener> listeners = this.inventoryHandlingTypeListeners;
+        this.inventoryHandlingTypeListeners = null; //Prevent concurrent modification
         if (listeners != null && !listeners.isEmpty()) {
             listeners.forEach(inventoryChangeListener -> inventoryChangeListener.handleStackListReplaced(this));
+        }
+        if (this.inventoryHandlingTypeListeners == null) {
+            this.inventoryHandlingTypeListeners = listeners;
         }
 
         this.invalidateChangeListening();
@@ -75,8 +79,12 @@ public class LithiumDoubleInventory extends CompoundContainer implements Lithium
     @Override
     public void lithium$emitRemoved() {
         ReferenceOpenHashSet<InventoryChangeListener> listeners = this.inventoryHandlingTypeListeners;
+        this.inventoryHandlingTypeListeners = null; //Prevent concurrent modification
         if (listeners != null && !listeners.isEmpty()) {
             listeners.forEach(listener -> listener.lithium$handleInventoryRemoved(this));
+        }
+        if (this.inventoryHandlingTypeListeners == null) {
+            this.inventoryHandlingTypeListeners = listeners;
         }
 
         this.invalidateChangeListening();
@@ -87,7 +95,7 @@ public class LithiumDoubleInventory extends CompoundContainer implements Lithium
             this.inventoryChangeListeners.clear();
         }
 
-        LithiumStackList lithiumStackList = InventoryHelper.getLithiumStackListOrNull(this);
+        LithiumStackList lithiumStackList = this.doubleStackList;
         if (lithiumStackList != null) {
             lithiumStackList.removeInventoryModificationCallback(this);
         }
