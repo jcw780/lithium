@@ -214,6 +214,10 @@ Skip bounds validation when accessing blocks
 (default: `true`)  
 Replaces the vanilla hash palette with an optimized variant
   
+### `mixin.chunk_load_tricks`
+(default: `true`)  
+Compatibility for NeoForge's chunk loading tricks. Should stay enabled.
+  
 ### `mixin.collections`
 (default: `true`)  
 Various collection optimizations

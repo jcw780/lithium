@@ -1,5 +1,6 @@
 package net.caffeinemc.mods.lithium.mixin.world.chunk_access;
 
+import net.caffeinemc.mods.lithium.common.world.ChunkLoadTricks;
 import net.caffeinemc.mods.lithium.common.world.chunk.ChunkHolderExtended;
 import net.minecraft.Util;
 import net.minecraft.server.level.*;
@@ -107,6 +108,7 @@ public abstract class ServerChunkCacheMixin {
         return chunk;
     }
 
+    @Unique
     private ChunkAccess getChunkOffThread(int x, int z, ChunkStatus status, boolean create) {
         return CompletableFuture.supplyAsync(() -> this.getChunk(x, z, status, create), this.mainThreadProcessor).join();
     }
@@ -127,6 +129,12 @@ public abstract class ServerChunkCacheMixin {
         final int level = ChunkLevel.byStatus(leastStatus);
 
         ChunkHolder holder = this.getVisibleChunkIfPresent(key);
+
+        // Recreate NeoForge chunk loading tricks
+        ChunkAccess chunkAccess = ChunkLoadTricks.tryRetrieveCurrentlyLoading(holder);
+        if (chunkAccess != null) {
+            return chunkAccess;
+        }
 
         // Vanilla: Check if the holder is present and is at least of the level we need
         if (this.chunkAbsent(holder, level)) {
