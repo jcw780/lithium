@@ -436,8 +436,8 @@ Requirements:
 Various world generation optimizations
   
 ### `mixin.gen.cached_generator_settings`
-(default: `false`)  
-World generator settings cache the sea level. Disabled by default due to startup crash.
+(default: `true`)  
+World generator settings cache the sea level.
   
 ### `mixin.math`
 (default: `true`)  
