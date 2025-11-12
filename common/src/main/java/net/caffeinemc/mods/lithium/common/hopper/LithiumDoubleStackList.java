@@ -1,5 +1,6 @@
 package net.caffeinemc.mods.lithium.common.hopper;
 
+import net.caffeinemc.mods.lithium.api.inventory.LithiumInventory;
 import net.caffeinemc.mods.lithium.common.block.entity.inventory_change_tracking.InventoryChangeTracker;
 import net.caffeinemc.mods.lithium.mixin.block.hopper.CompoundContainerAccessor;
 import net.minecraft.world.CompoundContainer;
@@ -26,13 +27,16 @@ public class LithiumDoubleStackList extends LithiumStackList {
         this.doubleInventory = doubleInventory;
     }
 
-    public static LithiumDoubleStackList getOrCreate(LithiumDoubleInventory doubleInventory, LithiumStackList first, LithiumStackList second, int maxCountPerStack) {
+    public static LithiumDoubleStackList getOrCreate(LithiumInventory firstInv, LithiumInventory secondInv, LithiumStackList first, LithiumStackList second) {
         LithiumDoubleStackList parentStackList = first.parent;
         if (parentStackList == null || parentStackList != second.parent || parentStackList.first != first || parentStackList.second != second) {
             if (parentStackList != null) {
                 parentStackList.doubleInventory.lithium$emitRemoved();
             }
-            parentStackList = new LithiumDoubleStackList(doubleInventory, first, second, maxCountPerStack);
+            LithiumDoubleInventory newDoubleInventory = new LithiumDoubleInventory(firstInv, secondInv);
+            parentStackList = new LithiumDoubleStackList(newDoubleInventory, first, second, newDoubleInventory.getMaxStackSize());
+            newDoubleInventory.setDoubleStackList(parentStackList);
+
             first.parent = parentStackList;
             second.parent = parentStackList;
         }

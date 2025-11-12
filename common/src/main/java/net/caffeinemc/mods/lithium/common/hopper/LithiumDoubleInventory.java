@@ -35,20 +35,17 @@ public class LithiumDoubleInventory extends CompoundContainer implements Lithium
         Container vanillaFirst = ((CompoundContainerAccessor) doubleInventory).getFirst();
         Container vanillaSecond = ((CompoundContainerAccessor) doubleInventory).getSecond();
         if (vanillaFirst != vanillaSecond && vanillaFirst instanceof LithiumInventory first && vanillaSecond instanceof LithiumInventory second) {
-            LithiumDoubleInventory newDoubleInventory = new LithiumDoubleInventory(first, second);
             LithiumDoubleStackList doubleStackList = LithiumDoubleStackList.getOrCreate(
-                    newDoubleInventory,
+                    first, second,
                     InventoryHelper.getLithiumStackList(first),
-                    InventoryHelper.getLithiumStackList(second),
-                    newDoubleInventory.getMaxStackSize()
+                    InventoryHelper.getLithiumStackList(second)
             );
-            newDoubleInventory.doubleStackList = doubleStackList;
             return doubleStackList.doubleInventory;
         }
         return null;
     }
 
-    private LithiumDoubleInventory(LithiumInventory first, LithiumInventory second) {
+    LithiumDoubleInventory(LithiumInventory first, LithiumInventory second) {
         super(first, second);
         this.first = first;
         this.second = second;
@@ -171,5 +168,12 @@ public class LithiumDoubleInventory extends CompoundContainer implements Lithium
     @Override
     public boolean lithium$hasAnyComparatorNearby() {
         return ((ComparatorTracker) this.first).lithium$hasAnyComparatorNearby() || ((ComparatorTracker) this.second).lithium$hasAnyComparatorNearby();
+    }
+
+    public void setDoubleStackList(LithiumStackList doubleStackList) {
+        if (this.doubleStackList != null) {
+            throw new IllegalStateException("DoubleStackList already set!");
+        }
+        this.doubleStackList = doubleStackList;
     }
 }
