@@ -1,12 +1,11 @@
 package net.caffeinemc.mods.lithium.mixin.entity.equipment_tracking;
 
-import java.util.EnumMap;
-
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.caffeinemc.mods.lithium.common.entity.EquipmentInfo;
 import net.caffeinemc.mods.lithium.common.util.change_tracking.ChangePublisher;
 import net.caffeinemc.mods.lithium.common.util.change_tracking.ChangeSubscriber;
+import net.caffeinemc.mods.lithium.common.world.in_world_tracking.MaybeInLevelObject;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.EntityEquipment;
@@ -15,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,8 +24,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.EnumMap;
+
 @Mixin(EntityEquipment.class)
-public class EntityEquipmentMixin implements EquipmentInfo, ChangeSubscriber.CountChangeSubscriber<ItemStack> {
+public class EntityEquipmentMixin implements EquipmentInfo, ChangeSubscriber.CountChangeSubscriber<ItemStack>, MaybeInLevelObject {
     @Shadow
     @Final
     private EnumMap<EquipmentSlot, ItemStack> items;
@@ -36,19 +38,55 @@ public class EntityEquipmentMixin implements EquipmentInfo, ChangeSubscriber.Cou
     @Unique
     boolean hasUnsentEquipmentChanges = true;
 
+    @Unique
+    boolean inLevel = false;
+
+    @Override
+    public boolean lithium$isInLevel() {
+        return this.inLevel;
+    }
+
+    @Override
+    public void lithium$handleAddedToLevel(Level level) {
+        this.inLevel = true;
+        this.initializeData();
+
+        MaybeInLevelObject.super.lithium$handleAddedToLevel(level);
+    }
+
+    @Override
+    public void lithium$handleRemovedFromLevel(Level level) {
+        this.inLevel = false;
+        this.invalidateData();
+
+        MaybeInLevelObject.super.lithium$handleRemovedFromLevel(level);
+    }
+
     @Override
     public boolean lithium$shouldTickEnchantments() {
+        if (!this.inLevel) {
+            return true;
+        }
+
         this.processScheduledEnchantmentCheck(null);
         return this.shouldTickEnchantments;
     }
 
     @Override
     public boolean lithium$hasUnsentEquipmentChanges() {
+        if (!this.inLevel) {
+            return true;
+        }
+
         return this.hasUnsentEquipmentChanges;
     }
 
     @Override
     public void lithium$onEquipmentChangesSent() {
+        if (!this.inLevel) {
+            return;
+        }
+
         this.hasUnsentEquipmentChanges = false;
     }
 
@@ -57,7 +95,9 @@ public class EntityEquipmentMixin implements EquipmentInfo, ChangeSubscriber.Cou
     )
     private ItemStack updateOnSet(EquipmentSlot equipmentSlot, ItemStack newStack, Operation<ItemStack> original) {
         ItemStack oldStack = original.call(equipmentSlot, newStack);
-        this.onEquipmentReplaced(oldStack, newStack);
+        if (this.inLevel) {
+            this.onEquipmentReplaced(oldStack, newStack);
+        }
         return oldStack;
     }
 
@@ -65,18 +105,32 @@ public class EntityEquipmentMixin implements EquipmentInfo, ChangeSubscriber.Cou
             method = "setAll(Lnet/minecraft/world/entity/EntityEquipment;)V", at = @At("HEAD")
     )
     private void updateBeforeSetAll(EntityEquipment entityEquipment, CallbackInfo ci) {
-        this.onClear();
+        if (this.inLevel) {
+            this.invalidateData();
+        }
+    }
+
+
+    @Inject(
+            method = "setAll(Lnet/minecraft/world/entity/EntityEquipment;)V", at = @At("RETURN")
+    )
+    private void updateAfterSetAll(EntityEquipment entityEquipment, CallbackInfo ci) {
+        if (this.inLevel) {
+            this.initializeData();
+        }
     }
 
     @Inject(
             method = "clear", at = @At("RETURN")
     )
     private void updateOnClear(CallbackInfo ci) {
-        this.onClear();
+        if (this.inLevel) {
+            this.invalidateData();
+        }
     }
 
     @Unique
-    private void onClear() {
+    private void invalidateData() {
         this.shouldTickEnchantments = false;
         this.recheckEnchantmentForStack = null;
         this.hasUnsentEquipmentChanges = true;
@@ -89,10 +143,12 @@ public class EntityEquipmentMixin implements EquipmentInfo, ChangeSubscriber.Cou
         }
     }
 
-    @Inject(
-            method = "setAll(Lnet/minecraft/world/entity/EntityEquipment;)V", at = @At("RETURN")
-    )
-    private void updateAfterSetAll(EntityEquipment entityEquipment, CallbackInfo ci) {
+    @Unique
+    private void initializeData() {
+        this.shouldTickEnchantments = false;
+        this.recheckEnchantmentForStack = null;
+        this.hasUnsentEquipmentChanges = true;
+
         for (ItemStack newStack : this.items.values()) {
             if (!newStack.isEmpty()) {
                 if (!this.shouldTickEnchantments) {
@@ -105,7 +161,6 @@ public class EntityEquipmentMixin implements EquipmentInfo, ChangeSubscriber.Cou
                 }
             }
         }
-
     }
 
 

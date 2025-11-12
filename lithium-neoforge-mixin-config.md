@@ -296,7 +296,8 @@ Requirements:
 (default: `true`)  
 Skips repeated checks whether the equipment of an entity changed. Equipment updates are detected instead.  
 Requirements:
-- `mixin.util.item_component_and_count_tracking=true`  
+- `mixin.util.item_component_and_count_tracking=true`
+- `mixin.util.in_world_tracking.entity=true`  
   
 ### `mixin.entity.equipment_tracking.enchantment_ticking`
 (default: `true`)  
@@ -559,6 +560,14 @@ Requirements:
 ### `mixin.util.entity_section_position`
 (default: `true`)  
 Entity sections store their position
+  
+### `mixin.util.in_world_tracking`
+(default: `true`)  
+Tracking whether objects are currently part of a level
+  
+### `mixin.util.in_world_tracking.entity`
+(default: `true`)  
+Tracking whether entities are currently part of a level
   
 ### `mixin.util.initialization`
 (default: `true`)  
