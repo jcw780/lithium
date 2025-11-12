@@ -118,7 +118,8 @@ public class LithiumDoubleInventory extends CompoundContainer implements Lithium
     public void lithium$forwardMajorInventoryChanges(InventoryChangeListener inventoryChangeListener) {
         if (this.inventoryHandlingTypeListeners == null) {
             this.inventoryHandlingTypeListeners = new ReferenceOpenHashSet<>(1);
-
+        }
+        if (this.inventoryHandlingTypeListeners.isEmpty()) {
             ((InventoryChangeTracker) this.first).listenForMajorInventoryChanges(this);
             ((InventoryChangeTracker) this.second).listenForMajorInventoryChanges(this);
         }
