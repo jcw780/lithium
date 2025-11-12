@@ -2,8 +2,10 @@ package net.caffeinemc.mods.lithium.mixin.world.raycast;
 
 import net.caffeinemc.mods.lithium.common.util.Pos;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -47,11 +49,16 @@ public interface BlockGetterMixin {
      */
     @Overwrite
     default BlockHitResult clip(ClipContext context) {
-        return traverseBlocks(context.getFrom(), context.getTo(), context, this instanceof LevelReader ? this.blockHitFactory(context) : this::method_17743, BlockGetterMixin::method_17746);
+        return traverseBlocks(context.getFrom(),
+                context.getTo(),
+                context,
+                // This intentionally excludes custom level implementations of create / ponder due to compatibility issues
+                (this instanceof ServerLevel || this instanceof Level l && l.isClientSide()) ? this.lithium$blockHitFactory(context) : this::method_17743,
+                BlockGetterMixin::method_17746);
     }
 
     @Unique
-    private BiFunction<ClipContext, BlockPos, BlockHitResult> blockHitFactory(ClipContext context) {
+    private BiFunction<ClipContext, BlockPos, BlockHitResult> lithium$blockHitFactory(ClipContext context) {
         return new BiFunction<>() {
             int chunkX = Integer.MIN_VALUE, chunkZ = Integer.MIN_VALUE;
             ChunkAccess chunk = null;
