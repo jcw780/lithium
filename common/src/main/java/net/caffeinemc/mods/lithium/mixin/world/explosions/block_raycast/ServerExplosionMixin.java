@@ -87,7 +87,7 @@ public abstract class ServerExplosionMixin {
     @Unique
     private boolean explodeAirBlocks;
     @Unique
-    private int explodedPositions; //Vanilla uses the number of exploded blocks, which is reduced by the air block optimization
+    private LongOpenHashSet explodedPositions; //Vanilla uses the number of exploded blocks, which is reduced by the air block optimization. Deduplication using a hashset is necessary as different explosion rays traverse the same blocks.
 
     @Unique
     private int bottomY, topY;
@@ -111,6 +111,8 @@ public abstract class ServerExplosionMixin {
             }
         }
         this.explodeAirBlocks = explodeAir;
+
+        this.explodedPositions = new LongOpenHashSet();
     }
 
     @SuppressWarnings("unchecked")
@@ -134,7 +136,7 @@ public abstract class ServerExplosionMixin {
             method = "explode", at = @At(value = "INVOKE", target = "Ljava/util/List;size()I")
     )
     private int getExplodedPositionCount(List<?> instance) {
-        return this.explodedPositions;
+        return this.explodedPositions.size();
     }
 
     /**
@@ -310,10 +312,11 @@ public abstract class ServerExplosionMixin {
         // of positions to destroy
         float reducedStrength = strength - totalResistance;
         if (reducedStrength > 0.0F) {
-            this.explodedPositions++;
+            long posLong = pos.asLong();
+            this.explodedPositions.add(posLong);
             if (this.explodeAirBlocks || !blockState.isAir()) {
                 if (this.damageCalculator.shouldBlockExplode((Explosion) (Object) this, this.level, pos, blockState, reducedStrength)) {
-                    touched.add(pos.asLong());
+                    touched.add(posLong);
                 }
             }
         }
