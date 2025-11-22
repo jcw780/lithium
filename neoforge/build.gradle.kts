@@ -98,7 +98,7 @@ neoForge {
         create("server") {
             server()
         }
-        create("gametestClient") {
+        create("clientGameTest") {
             client()
             gameDirectory.set(file("run/gametestClient"))
 
@@ -106,7 +106,7 @@ neoForge {
             systemProperty("neoforge.enabledGameTestNamespaces", "lithium-gametest")
             environment("LITHIUM_GAMETEST_RESOURCES", project.parent!!.findProject(":common")!!.projectDir.absolutePath + "/src/gametest/resources/data/lithium-gametest/structure")
         }
-        create("gametestServer") {
+        create("gameTest") {
             type = "gameTestServer"
             gameDirectory.set(file("run/gametestServer"))
 

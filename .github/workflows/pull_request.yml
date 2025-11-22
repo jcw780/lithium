@@ -28,6 +28,6 @@ jobs:
             - name: Run Test Servers
               timeout-minutes: 5
               run: |
-                ./gradlew fabric:runGametestServer &
-                ./gradlew neoforge:runGametestServer &
+                ./gradlew fabric:runGameTest &
+                ./gradlew neoforge:runGameTest &
                 wait
