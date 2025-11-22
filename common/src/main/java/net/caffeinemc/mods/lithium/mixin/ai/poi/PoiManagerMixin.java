@@ -126,8 +126,8 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
     /**
      * Get all POI in sphere around origin with given radius. Order is vanilla order
      * Vanilla order (might be undefined, but pratically):
-     * Chunk section order: Negative X first, if equal, negative Z first, if equal, negative Y first.
-     * Within the chunk section: Whatever the internal order is (we are not modifying that)
+     * Chunk section order: Negative Z first, if equal, negative X first, if equal, negative Y first.
+     * Within the chunk section: Hash set iteration order. We must not replace the HashSet with a fastutil set.
      *
      * @author JellySquid
      * @reason Avoid stream-heavy code, use faster filtering and fetches

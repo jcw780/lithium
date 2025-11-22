@@ -4,6 +4,7 @@ import net.caffeinemc.mods.lithium.common.util.Distances;
 import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.village.poi.PoiSection;
+
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
@@ -11,11 +12,11 @@ import java.util.stream.Stream;
 
 public class SphereChunkOrderedPoiSetSpliterator extends Spliterators.AbstractSpliterator<Stream<PoiSection>> {
     private final int limit;
-    private final int minChunkZ;
+    private final int minChunkX;
     private final BlockPos origin;
     private final double radiusSq;
     private final RegionBasedStorageSectionExtended<PoiSection> storage;
-    private final int maxChunkZ;
+    private final int maxChunkX;
     int chunkX;
     int chunkZ;
     int iterated;
@@ -26,14 +27,14 @@ public class SphereChunkOrderedPoiSetSpliterator extends Spliterators.AbstractSp
         this.radiusSq = radius * radius;
         this.storage = storage;
 
-        int minChunkX = origin.getX() - radius - 1 >> 4;
-        int maxChunkX = origin.getX() + radius + 1 >> 4;
-        this.minChunkZ = origin.getZ() - radius - 1 >> 4;
-        this.maxChunkZ = origin.getZ() + radius + 1 >> 4;
-        this.limit = (maxChunkX - minChunkX + 1) * ((this.maxChunkZ) - (this.minChunkZ) + 1);
+        this.minChunkX = origin.getX() - radius - 1 >> 4;
+        this.maxChunkX = origin.getX() + radius + 1 >> 4;
+        int minChunkZ = origin.getZ() - radius - 1 >> 4;
+        int maxChunkZ = origin.getZ() + radius + 1 >> 4;
+        this.limit = (this.maxChunkX - this.minChunkX + 1) * ((maxChunkZ) - (minChunkZ) + 1);
 
-        this.chunkX = minChunkX;
-        this.chunkZ = this.minChunkZ;
+        this.chunkX = this.minChunkX;
+        this.chunkZ = minChunkZ;
         this.iterated = 0;
     }
 
@@ -51,10 +52,10 @@ public class SphereChunkOrderedPoiSetSpliterator extends Spliterators.AbstractSp
                     progress = true;
                 }
 
-                this.chunkZ++;
-                if (this.chunkZ > maxChunkZ) {
-                    this.chunkX++;
-                    this.chunkZ = minChunkZ;
+                this.chunkX++;
+                if (this.chunkX > maxChunkX) {
+                    this.chunkZ++;
+                    this.chunkX = minChunkX;
                 }
 
                 if (progress) {
