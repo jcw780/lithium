@@ -17,6 +17,17 @@ base {
     archivesName.set("lithium-fabric")
 }
 
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "lithium-gametest"
+        enableGameTests = true
+        enableClientGameTests = true
+        eula = true // By setting this to true, you agree to the Minecraft EULA.
+        clearRunDirectory = false
+    }
+}
+
 dependencies {
     minecraft("com.mojang:minecraft:${MINECRAFT_VERSION}")
     mappings(loom.layered {
@@ -45,6 +56,7 @@ dependencies {
 
     addCompileOnlyFabricModule("fabric-transfer-api-v1")
     addFabricModule("fabric-gametest-api-v1")
+    addFabricModule("fabric-registry-sync-v0")
 
 
 
@@ -77,7 +89,7 @@ sourceSets {
     val main by getting
     val parent = project(":common").sourceSets.getByName("gametest")
 
-    create("gametest") {
+    val gametest by getting {
         java.srcDir("src/gametest/java")
         resources.srcDir("src/gametest/resources")
 
@@ -118,20 +130,20 @@ loom {
     }
 
     runs {
-        create("fabricClient") {
+        register("fabricClient") {
             client()
             configName = "Fabric Client"
             ideConfigGenerated(true)
             runDir("run")
         }
-        create("fabricServer") {
+        register("fabricServer") {
             server()
             configName = "Fabric Server"
             ideConfigGenerated(true)
             runDir("run")
         }
 
-        create("gametestServer") {
+        val gameTest by getting {
             server()
             name = "Game Test Server"
             vmArg("-Dfabric-api.gametest")
@@ -139,19 +151,13 @@ loom {
             source(sourceSets["gametest"])
             environmentVariable("LITHIUM_GAMETEST_RESOURCES", project(":common").file("src/gametest/resources/data").path)
         }
-        create("gametestClient") {
+        val clientGameTest by getting {
             client()
             name = "Game Test Client"
             vmArg("-Dfabric-api.gametest")
             runDir = "run/gametestClient"
             source(sourceSets["gametest"])
             environmentVariable("LITHIUM_GAMETEST_RESOURCES", project(":common").file("src/gametest/resources/data").path)
-        }
-    }
-
-    mods {
-        create("lithium-gametest") {
-            sourceSet(sourceSets.getByName("gametest"))
         }
     }
 }
@@ -176,7 +182,7 @@ tasks {
 }
 
 sourceSets {
-    val main by getting {
+    main {
         resources {
             srcDir(layout.buildDirectory.dir("fabric-mixin-config-output"))
         }
