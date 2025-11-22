@@ -26,6 +26,7 @@ import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -39,6 +40,9 @@ import java.util.stream.StreamSupport;
 @Mixin(PoiManager.class)
 public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSection.Packed> implements PointOfInterestStorageExtended {
 
+
+    @Shadow
+    public abstract Optional<BlockPos> find(Predicate<Holder<PoiType>> predicate, Predicate<BlockPos> predicate2, BlockPos blockPos, int i, PoiManager.Occupancy occupancy);
 
     public PoiManagerMixin(SimpleRegionStorage simpleRegionStorage, Codec<PoiSection.Packed> codec, Function<PoiSection, PoiSection.Packed> function, BiFunction<PoiSection.Packed, Runnable, PoiSection> biFunction, Function<Runnable, PoiSection> function2, RegistryAccess registryAccess, ChunkIOErrorReporter chunkIOErrorReporter, LevelHeightAccessor levelHeightAccessor) {
         super(simpleRegionStorage, codec, function, biFunction, function2, registryAccess, chunkIOErrorReporter, levelHeightAccessor);
@@ -214,6 +218,12 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
                                              @Nullable Predicate<PoiRecord> afterSortingPredicate) {
         // noinspection unchecked
         RegionBasedStorageSectionExtended<PoiSection> storage = (RegionBasedStorageSectionExtended<PoiSection>) this;
+
+        /*// Todo: Debug only - remove when done
+        List<PoiRecord> original = StreamSupport.stream(new NearbyPointOfInterestStreamOriginalTest(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false).collect(Collectors.toList());
+        List<PoiRecord> subchunk = StreamSupport.stream(new NearbyPointOfInterestStream(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false).collect(Collectors.toList());
+
+        final boolean res = original.equals(subchunk);*/
 
         return StreamSupport.stream(new NearbyPointOfInterestStream(typePredicate, status, useSquareDistanceLimit, preferNegativeY, afterSortingPredicate, origin, radius, storage), false);
     }

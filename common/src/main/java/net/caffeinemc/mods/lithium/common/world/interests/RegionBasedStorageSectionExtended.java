@@ -1,5 +1,7 @@
 package net.caffeinemc.mods.lithium.common.world.interests;
 
+import java.util.BitSet;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface RegionBasedStorageSectionExtended<R> {
@@ -20,4 +22,12 @@ public interface RegionBasedStorageSectionExtended<R> {
      * @param chunkZ The z-coordinate of the chunk column
      */
     Iterable<R> lithium$getInChunkColumn(int chunkX, int chunkZ);
+
+    BitSet lithium$getNonEmptyPOISections(int chunkX, int chunkZ);
+
+    int lithium$getChunkYMin();
+
+    int lithium$getChunkYMaxInclusive();
+
+    Optional<R> lithium$getElementAt(long sectionPos);
 }
