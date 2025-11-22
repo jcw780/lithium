@@ -144,9 +144,10 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
                                                                  Predicate<PoiRecord> afterSortPredicate, WorldBorder worldBorder) {
         // Order of the POI:
         // return closest accepted POI (L2 distance). If several exist:
-        // return the one with most negative Y. If several exist:
-        // return the one with most negative X. If several exist:
-        // return the one with most negative Z. If several exist: Be confused about two POIs being in the same location.
+        // return the one with most negative Y block coordinate. If several exist:
+        // return the one with most negative X section coordinate. If several exist:
+        // return the one with most negative Z section coordinate. If several exist:
+        // return the first one in HashSet Spliterator order of the first poi type in HashMap iteration order (POI section data structures).
 
         boolean worldBorderIsFarAway = worldBorder == null || worldBorder.getDistanceToBorder(origin.getX(), origin.getZ()) > radius + 3;
         Predicate<PoiRecord> poiPredicateAfterSorting;

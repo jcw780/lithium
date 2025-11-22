@@ -193,13 +193,6 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
 
     @Override
     public boolean tryAdvance(Consumer<? super PoiRecord> action) {
-        // Accepted POI:
-
-        // Order of the POI:
-        // return closest accepted POI (L2 distance). If several exist:
-        // return the one with most negative Y. If several exist:
-        // return the one with most negative X. If several exist:
-        // return the one with most negative Z. If several exist: Be confused about two POIs being in the same location.
 
         if (this.pointIndex < this.points.size()) {
             if (this.tryAdvancePoint(action)) {
