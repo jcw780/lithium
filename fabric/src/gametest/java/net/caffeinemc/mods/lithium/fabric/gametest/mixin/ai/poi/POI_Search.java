@@ -16,8 +16,11 @@ import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.border.WorldBorder;
 
 import java.lang.reflect.Method;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -27,8 +30,9 @@ public class POI_Search implements CustomTestMethodInvoker {
 
     @GameTest(manualOnly = true)
     public void test(GameTestHelper context, BlockPos center, RandomSource randomSource) {
-        PoiManager poiManager = context.getLevel().getPoiManager();
-        Predicate<Holder<PoiType>> predicate = holder -> holder.is(PoiTypes.SHEPHERD);
+        ServerLevel serverLevel = context.getLevel();
+        PoiManager poiManager = serverLevel.getPoiManager();
+        Predicate<Holder<PoiType>> predicate = holder -> holder.is(PoiTypes.NETHER_PORTAL);
 
         long countInRange = poiManager.getCountInRange(predicate, center, 128, PoiManager.Occupancy.ANY);
 
@@ -49,6 +53,28 @@ public class POI_Search implements CustomTestMethodInvoker {
 
         List<BlockPos> allClosestFirstWithTypePositions = poiManager.findAllClosestFirstWithType(predicate, blockPos1 -> true, center, 128, PoiManager.Occupancy.ANY).map(Pair::getSecond).collect(Collectors.toList());
         PoiOrdering.L2ThenInSquare.INSTANCE.checkOrderOrThrow(center, poiManager, allClosestFirstWithTypePositions);
+
+        boolean fromOverworld = randomSource.nextBoolean();
+        WorldBorder worldBorder = serverLevel.getWorldBorder();
+        Optional<BlockPos> closestPortalPosition = serverLevel.getPortalForcer().findClosestPortalPosition(center, fromOverworld, worldBorder);
+        int radius = fromOverworld ? 16 : 128;
+        List<BlockPos> closestPortalPositions =
+                poiManager.getInSquare(holder -> holder.is(PoiTypes.NETHER_PORTAL), center, radius, PoiManager.Occupancy.ANY)
+                        .map(PoiRecord::getPos)
+                        .filter(worldBorder::isWithinBounds)
+                        .filter(blockPosx -> serverLevel.getBlockState(blockPosx).hasProperty(BlockStateProperties.HORIZONTAL_AXIS))
+                        .sorted(Comparator.comparingDouble((BlockPos blockPos2) -> blockPos2.distSqr(center)).thenComparingInt(BlockPos::getY))
+                        .toList();
+        PoiOrdering.L2ThenMinYThenInSquare.INSTANCE.checkOrderOrThrow(center, poiManager, closestPortalPositions);
+        if (closestPortalPositions.isEmpty() != closestPortalPosition.isEmpty()) {
+            throw new IllegalStateException("findClosestPortalPosition() emptiness does not match sorted and filtered getInSquare() emptiness");
+        } else if (closestPortalPosition.isPresent()) {
+            BlockPos closestPos = closestPortalPosition.get();
+            if (!closestPortalPositions.getFirst().equals(closestPos)) {
+                throw new IllegalStateException("findClosestPortalPosition() result is not the first of sorted and filtered getInSquare()");
+            }
+        }
+
 
         Optional<BlockPos> firstOfAll = poiManager.find(predicate, blockPos -> true, center, 128, PoiManager.Occupancy.ANY);
         if (firstOfAll.isEmpty() != inRangePositions.isEmpty()) {
@@ -175,7 +201,7 @@ public class POI_Search implements CustomTestMethodInvoker {
             for (BlockPos blockPos : BlockPos.betweenClosed(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius)) {
                 if (random.nextFloat() < randomPct && level.isInWorldBounds(blockPos)) {
                     poiCount++;
-                    level.setBlock(blockPos, Blocks.LOOM.defaultBlockState(), 0);
+                    level.setBlock(blockPos, Blocks.NETHER_PORTAL.defaultBlockState(), 0);
                 }
             }
 

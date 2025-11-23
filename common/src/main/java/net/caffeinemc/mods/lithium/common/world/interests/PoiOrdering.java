@@ -7,6 +7,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiSection;
 import net.minecraft.world.level.ChunkPos;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +46,10 @@ public interface PoiOrdering {
                 curr = next;
             }
         }
+    }
+
+    default Comparator<BlockPos> getAsComparator(BlockPos center, PoiManager poiManager) {
+        return (posA, posB) -> compare(center, poiManager, posA, posB);
     }
 
     int compare(BlockPos center, PoiManager poiManager, BlockPos posA, BlockPos posB);
@@ -139,6 +144,29 @@ public interface PoiOrdering {
             int orderDist = Double.compare(distBSq, distASq);
             if (orderDist != 0) {
                 return orderDist;
+            }
+
+            return InSquare.INSTANCE.compare(center, poiManager, posA, posB);
+        }
+    }
+
+    record L2ThenMinYThenInSquare() implements PoiOrdering {
+
+        public static final L2ThenMinYThenInSquare INSTANCE = new L2ThenMinYThenInSquare();
+
+        @Override
+        public int compare(BlockPos center, PoiManager poiManager, BlockPos posA, BlockPos posB) {
+            double distASq = center.distSqr(posA);
+            double distBSq = center.distSqr(posB);
+
+            int orderDist = Double.compare(distBSq, distASq);
+            if (orderDist != 0) {
+                return orderDist;
+            }
+
+            int orderY = Integer.compare(posA.getY(), posB.getY());
+            if (orderY != 0) {
+                return orderY;
             }
 
             return InSquare.INSTANCE.compare(center, poiManager, posA, posB);
