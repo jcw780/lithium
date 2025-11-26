@@ -59,7 +59,7 @@ public interface PoiOrdering {
      * Order:
      * - lower chunk Y first
      * - POI type hashmap iteration order
-     * - Typed POI record hashmap iteration order
+     * - Typed POI record hashset iteration order
      */
     record InChunk() implements PoiOrdering {
 
@@ -67,6 +67,10 @@ public interface PoiOrdering {
 
         @Override
         public int compare(BlockPos center, PoiManager poiManager, BlockPos posA, BlockPos posB) {
+            if (posA.equals(posB)) {
+                return 0;
+            }
+
             int aChunkZ = posA.getZ() >> 4;
             int bChunkZ = posB.getZ() >> 4;
 
