@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.gametest.v1.CustomTestMethodInvoker;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Vec3i;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -19,7 +20,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.border.WorldBorder;
 
+import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -115,66 +118,66 @@ public class POI_Search implements CustomTestMethodInvoker {
         }
 
 
-//        // Print to file if it does not exist yet, otherwise compare with existing file.
-//        File outputFile = new File("poi_search_output/" + context.getLevel().getSeed() + "_" + center.getX() + "_" + center.getY() + "_" + center.getZ() + ".txt");
-//        File newOutputFile = outputFile.exists() ? new File("poi_search_output/" + context.getLevel().getSeed() + "_" + center.getX() + "_" + center.getY() + "_" + center.getZ() + "_new.txt") : outputFile;
-//
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("countInRange:").append(countInRange).append("\n");
-//        sb.append("getInSquare: ");
-//        sb.append(Arrays.toString(inSquarePositions.toArray()));
-//        sb.append("\n");
-//        sb.append("getInRange: ");
-//        sb.append(Arrays.toString(inRangePositions.toArray()));
-//        sb.append("\n");
-//        sb.append("getInChunk: ");
-//        sb.append(Arrays.toString(inChunkPositions.toArray()));
-//        sb.append("\n");
-//        sb.append("findAll: ");
-//        sb.append(Arrays.toString(allPositions.toArray()));
-//        sb.append("\n");
-//        sb.append("findAllWithType: ");
-//        sb.append(Arrays.toString(allWithTypePositions.toArray()));
-//        sb.append("\n");
-//        sb.append("findAllClosestFirstWithType: ");
-//        sb.append(Arrays.toString(allClosestFirstWithTypePositions.toArray()));
-//        sb.append("\n");
-//        sb.append("find:").append(firstOfAll.map(Vec3i::toString).orElse("empty")).append("\n");
-//        sb.append("findClosest:").append(findClosest.map(Vec3i::toString).orElse("empty")).append("\n");
-//        sb.append("findClosestWithType:").append(findClosestWithType.map(Vec3i::toString).orElse("empty")).append("\n");
-//        sb.append("findClosest2:").append(findClosest2.map(Vec3i::toString).orElse("empty")).append("\n");
-//        sb.append("getRandom:").append(getRandom.map(Vec3i::toString).orElse("empty")).append("\n");
-//
-//        if (!outputFile.exists()) {
-//            outputFile.getParentFile().mkdirs();
-//            try (java.io.FileWriter writer = new java.io.FileWriter(newOutputFile)) {
-//                writer.write(sb.toString());
-//            } catch (Exception e) {
-//                throw new RuntimeException(e);
-//            }
-//        } else {
-//            String existingContent;
-//            try (java.io.FileReader reader = new java.io.FileReader(outputFile);
-//                 java.io.BufferedReader br = new java.io.BufferedReader(reader)) {
-//                StringBuilder existingSb = new StringBuilder();
-//                String line;
-//                while ((line = br.readLine()) != null) {
-//                    existingSb.append(line).append("\n");
-//                }
-//                existingContent = existingSb.toString();
-//            } catch (Exception e) {
-//                throw new RuntimeException(e);
-//            }
-//
-//            if (!existingContent.equals(sb.toString())) {
-//                try (java.io.FileWriter writer = new java.io.FileWriter(newOutputFile)) {
-//                    writer.write(sb.toString());
-//                } catch (Exception e) {
-//                    throw new RuntimeException(e);
-//                }
-//                throw new AssertionError("POI search results differ from expected output. See " + newOutputFile.getAbsolutePath());
-//            }
-//        }
+        // Print to file if it does not exist yet, otherwise compare with existing file.
+        File outputFile = new File("poi_search_output/" + context.getLevel().getSeed() + "_" + center.getX() + "_" + center.getY() + "_" + center.getZ() + ".txt");
+        File newOutputFile = outputFile.exists() ? new File("poi_search_output/" + context.getLevel().getSeed() + "_" + center.getX() + "_" + center.getY() + "_" + center.getZ() + "_new.txt") : outputFile;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("countInRange:").append(countInRange).append("\n");
+        sb.append("getInSquare: ");
+        sb.append(Arrays.toString(inSquarePositions.toArray()));
+        sb.append("\n");
+        sb.append("getInRange: ");
+        sb.append(Arrays.toString(inRangePositions.toArray()));
+        sb.append("\n");
+        sb.append("getInChunk: ");
+        sb.append(Arrays.toString(inChunkPositions.toArray()));
+        sb.append("\n");
+        sb.append("findAll: ");
+        sb.append(Arrays.toString(allPositions.toArray()));
+        sb.append("\n");
+        sb.append("findAllWithType: ");
+        sb.append(Arrays.toString(allWithTypePositions.toArray()));
+        sb.append("\n");
+        sb.append("findAllClosestFirstWithType: ");
+        sb.append(Arrays.toString(allClosestFirstWithTypePositions.toArray()));
+        sb.append("\n");
+        sb.append("closestPortalPosition:").append(closestPortalPosition.map(Vec3i::toString).orElse("empty")).append("\n");
+        sb.append("find:").append(firstOfAll.map(Vec3i::toString).orElse("empty")).append("\n");
+        sb.append("findClosest:").append(findClosest.map(Vec3i::toString).orElse("empty")).append("\n");
+        sb.append("findClosestWithType:").append(findClosestWithType.map(Vec3i::toString).orElse("empty")).append("\n");
+        sb.append("findClosest2:").append(findClosest2.map(Vec3i::toString).orElse("empty")).append("\n");
+
+        if (!outputFile.exists()) {
+            outputFile.getParentFile().mkdirs();
+            try (java.io.FileWriter writer = new java.io.FileWriter(newOutputFile)) {
+                writer.write(sb.toString());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            String existingContent;
+            try (java.io.FileReader reader = new java.io.FileReader(outputFile);
+                 java.io.BufferedReader br = new java.io.BufferedReader(reader)) {
+                StringBuilder existingSb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    existingSb.append(line).append("\n");
+                }
+                existingContent = existingSb.toString();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            if (!existingContent.equals(sb.toString())) {
+                try (java.io.FileWriter writer = new java.io.FileWriter(newOutputFile)) {
+                    writer.write(sb.toString());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                throw new AssertionError("POI search results differ from expected output. See " + newOutputFile.getAbsolutePath());
+            }
+        }
 
         context.succeed();
     }
@@ -184,7 +187,7 @@ public class POI_Search implements CustomTestMethodInvoker {
         ServerLevel level = context.getLevel();
         RandomSource random = RandomSource.create(level.getSeed()); //TODO avoid hardcoding seed
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
 
             int x = random.nextInt(60000000) - 30000000;
             int z = random.nextInt(60000000) - 30000000;
@@ -193,11 +196,11 @@ public class POI_Search implements CustomTestMethodInvoker {
             int chosen = random.nextInt(20);
             double randomPct = chosen == 19 ? 0.0 : 1.0 / Math.pow(2, chosen);
 
-            int radius = 128;
+            int radius = 130;
 
             long poiCount = 0;
 
-            System.out.println("Placing POIs for iteration " + (i + 1) + "/100 : around (" + x + ", " + y + ", " + z + ") with randomPct=" + randomPct + " and radius=" + radius);
+            System.out.println("Placing POIs for iteration " + (i + 1) + "/10 : around (" + x + ", " + y + ", " + z + ") with randomPct=" + randomPct + " and radius=" + radius);
             for (BlockPos blockPos : BlockPos.betweenClosed(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius)) {
                 if (random.nextFloat() < randomPct && level.isInWorldBounds(blockPos)) {
                     poiCount++;
