@@ -1,12 +1,13 @@
 package net.caffeinemc.mods.lithium.common.util.tuples;
 
+import net.caffeinemc.mods.lithium.common.util.Distances;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 
-public record SortedPointOfInterest(PoiRecord poi, double distanceSq) {
+public record SortedPointOfInterest(PoiRecord poi, int distanceSq) {
 
     public SortedPointOfInterest(PoiRecord poi, BlockPos origin) {
-        this(poi, poi.getPos().distSqr(origin));
+        this(poi, Distances.distanceSqInt(poi.getPos(), origin));
     }
 
     public BlockPos getPos() {

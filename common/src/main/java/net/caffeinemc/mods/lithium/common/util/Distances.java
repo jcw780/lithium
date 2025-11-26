@@ -5,7 +5,7 @@ import net.minecraft.core.SectionPos;
 
 public class Distances {
 
-    public static double getMinChunkToBlockDistanceL2Sq(BlockPos origin, int chunkX, int chunkZ) {
+    public static long getMinChunkToBlockDistanceL2Sq(BlockPos origin, int chunkX, int chunkZ) {
         int chunkMinX = SectionPos.sectionToBlockCoord(chunkX);
         int chunkMinZ = SectionPos.sectionToBlockCoord(chunkZ);
 
@@ -18,7 +18,7 @@ public class Distances {
             zDistance = Math.max(0, zDistance - 15);
         }
 
-        return xDistance * xDistance + zDistance * zDistance;
+        return (long) xDistance * (long) xDistance + (long) zDistance * (long) zDistance;
     }
 
     public static boolean isWithinSquareRadius(BlockPos origin, int radius, BlockPos pos) {
@@ -35,12 +35,27 @@ public class Distances {
         return Math.min(Math.max(blockCoord, minBlockInSection), minBlockInSection + 15);
     }
 
-    public static double getMinSectionDistanceSq(BlockPos origin, int chunkX, int chunkY, int chunkZ) {
-        final int originX = origin.getX(), originY = origin.getY(), originZ = origin.getZ();
-        final int distX = getClosestBlockCoordInSection(originX, chunkX) - originX;
-        final int distY = getClosestBlockCoordInSection(originY, chunkY) - originY;
-        final int distZ = getClosestBlockCoordInSection(originZ, chunkZ) - originZ;
+    public static long getMinSectionDistanceSq(BlockPos origin, int chunkX, int chunkY, int chunkZ) {
+        int originX = origin.getX(), originY = origin.getY(), originZ = origin.getZ();
+        long distX = getClosestBlockCoordInSection(originX, chunkX) - originX;
+        long distY = getClosestBlockCoordInSection(originY, chunkY) - originY;
+        long distZ = getClosestBlockCoordInSection(originZ, chunkZ) - originZ;
 
         return distX * distX + distY * distY + distZ * distZ;
+    }
+
+    public static long distanceSq(BlockPos a, BlockPos b) {
+        long dx = a.getX() - b.getX();
+        long dy = a.getY() - b.getY();
+        long dz = a.getZ() - b.getZ();
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    public static int distanceSqInt(BlockPos a, BlockPos b) {
+        int dx = a.getX() - b.getX();
+        int dy = a.getY() - b.getY();
+        int dz = a.getZ() - b.getZ();
+        // Check overflows to avoid silent incorrect results
+        return Math.addExact(Math.addExact(Math.multiplyExact(dx, dx), Math.multiplyExact(dy, dy)), Math.multiplyExact(dz, dz));
     }
 }
