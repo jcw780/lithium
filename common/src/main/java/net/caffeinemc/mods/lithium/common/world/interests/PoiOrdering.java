@@ -34,13 +34,15 @@ public interface PoiOrdering {
             for (int i = 1; i < positions.size(); i++) {
                 BlockPos next = positions.get(i);
                 int order = compare(center, poiManager, curr, next);
-                if (order != 1) {
+                if (order != -1) {
                     if (order == 0) {
                         order = compare(center, poiManager, curr, next); //Line for debugging
                         throw new IllegalStateException("Positions are equal at index " + i + ": " + curr + " == " + next);
                     } else {
                         order = compare(center, poiManager, curr, next); //Line for debugging
-                        throw new IllegalStateException("Positions are ordered incorrectly at index " + i + ": " + curr + " < " + next);
+                        throw new IllegalStateException("Positions are ordered incorrectly at index " + i + ": " + curr + " < " + next + "! Offsets: " +
+                                "curr=(" + (curr.getX() - center.getX()) + ", " + (curr.getY() - center.getY()) + ", " + (curr.getZ() - center.getZ()) + "), " +
+                                "next=(" + (next.getX() - center.getX()) + ", " + (next.getY() - center.getY()) + ", " + (next.getZ() - center.getZ()) + ")");
                     }
                 }
                 curr = next;
@@ -74,7 +76,7 @@ public interface PoiOrdering {
             int aChunkZ = posA.getZ() >> 4;
             int bChunkZ = posB.getZ() >> 4;
 
-            int orderZ = Integer.compare(bChunkZ, aChunkZ);
+            int orderZ = Integer.compare(aChunkZ, bChunkZ);
             if (orderZ != 0) {
                 throw new IllegalStateException("Positions are not in the same chunk: " + posA + " in " + new ChunkPos(posA) + " vs " + posB + " in " + new ChunkPos(posB));
             }
@@ -82,7 +84,7 @@ public interface PoiOrdering {
             int aChunkX = posA.getX() >> 4;
             int bChunkX = posB.getX() >> 4;
 
-            int orderX = Integer.compare(bChunkX, aChunkX);
+            int orderX = Integer.compare(aChunkX, bChunkX);
             if (orderX != 0) {
                 throw new IllegalStateException("Positions are not in the same chunk: " + posA + " in " + new ChunkPos(posA) + " vs " + posB + " in " + new ChunkPos(posB));
             }
@@ -90,7 +92,7 @@ public interface PoiOrdering {
             int aChunkY = posA.getY() >> 4;
             int bChunkY = posB.getY() >> 4;
 
-            int orderY = Integer.compare(bChunkY, aChunkY);
+            int orderY = Integer.compare(aChunkY, bChunkY);
             if (orderY != 0) {
                 return orderY;
             }
@@ -106,10 +108,10 @@ public interface PoiOrdering {
             }
 
             if (retrievedRecords.getFirst().getPos().equals(posA)) {
-                return 1;
+                return -1;
             }
             if (retrievedRecords.getFirst().getPos().equals(posB)) {
-                return -1;
+                return 1;
             }
 
             throw new IllegalStateException("Expected two differing poi positions matching " + posA + ", " + posB + ", found " + retrievedRecords);
@@ -132,7 +134,7 @@ public interface PoiOrdering {
             int aChunkZ = posA.getZ() >> 4;
             int bChunkZ = posB.getZ() >> 4;
 
-            int orderZ = Integer.compare(bChunkZ, aChunkZ);
+            int orderZ = Integer.compare(aChunkZ, bChunkZ);
             if (orderZ != 0) {
                 return orderZ;
             }
@@ -140,7 +142,7 @@ public interface PoiOrdering {
             int aChunkX = posA.getX() >> 4;
             int bChunkX = posB.getX() >> 4;
 
-            int orderX = Integer.compare(bChunkX, aChunkX);
+            int orderX = Integer.compare(aChunkX, bChunkX);
             if (orderX != 0) {
                 return orderX;
             }
@@ -164,7 +166,7 @@ public interface PoiOrdering {
             double distASq = center.distSqr(posA);
             double distBSq = center.distSqr(posB);
 
-            int orderDist = Double.compare(distBSq, distASq);
+            int orderDist = Double.compare(distASq, distBSq);
             if (orderDist != 0) {
                 return orderDist;
             }
@@ -188,7 +190,7 @@ public interface PoiOrdering {
             double distASq = center.distSqr(posA);
             double distBSq = center.distSqr(posB);
 
-            int orderDist = Double.compare(distBSq, distASq);
+            int orderDist = Double.compare(distASq, distBSq);
             if (orderDist != 0) {
                 return orderDist;
             }

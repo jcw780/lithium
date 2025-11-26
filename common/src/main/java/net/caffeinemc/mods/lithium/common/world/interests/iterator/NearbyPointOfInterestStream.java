@@ -180,11 +180,11 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                 }
 
                 // Sort by the chunk coord
-                int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
+                int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
                 if (cmp3 != 0) {
                     return cmp3;
                 }
-                return Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
+                return Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
 
             };
         } else {
@@ -207,11 +207,11 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                 }
 
                 // Sort by the chunk coord
-                int cmp2 = Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
+                int cmp2 = Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
                 if (cmp2 != 0) {
                     return cmp2;
                 }
-                int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
+                int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
                 if (cmp3 != 0) {
                     return cmp3;
                 }
@@ -309,7 +309,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                 next = this.points.get(this.nextPointIndex);
                 // Only consume points if we are sure that there are no closer (or same distance) points to be scanned.
                 // Otherwise, scan more chunks
-                if (next.distanceSq() >= this.getMinimumNextPotentialDistanceSq()) {
+                if (next != null && next.distanceSq() >= this.getMinimumNextPotentialDistanceSq()) {
                     this.minCollectedElementDistanceSq = next.distanceSq();
                     this.minCollectedElementIndex = this.nextPointIndex;
                     return false;
@@ -319,7 +319,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
             }
 
 
-            if (this.afterSortingPredicate == null || this.afterSortingPredicate.test(next.poi())) {
+            if (next != null && (this.afterSortingPredicate == null || this.afterSortingPredicate.test(next.poi()))) {
                 action.accept(next.poi());
                 return true; //Progress was made
             }
