@@ -55,6 +55,12 @@ public interface PoiOrdering {
     int compare(BlockPos center, PoiManager poiManager, BlockPos posA, BlockPos posB);
 
 
+    /**
+     * Order:
+     * - lower chunk Y first
+     * - POI type hashmap iteration order
+     * - Typed POI record hashmap iteration order
+     */
     record InChunk() implements PoiOrdering {
 
         public static final InChunk INSTANCE = new InChunk();
@@ -106,6 +112,13 @@ public interface PoiOrdering {
         }
     }
 
+
+    /**
+     * Order:
+     * - lower chunk Z first
+     * - lower chunk X first
+     * - InChunk order
+     */
     record InSquare() implements PoiOrdering {
 
         public static final InSquare INSTANCE = new InSquare();
@@ -132,6 +145,12 @@ public interface PoiOrdering {
         }
     }
 
+
+    /**
+     * Order:
+     * - lower distance squared first
+     * - InSquare order
+     */
     record L2ThenInSquare() implements PoiOrdering {
 
         public static final L2ThenInSquare INSTANCE = new L2ThenInSquare();
@@ -150,6 +169,12 @@ public interface PoiOrdering {
         }
     }
 
+    /**
+     * Order:
+     * - lower distance squared first
+     * - lower Y first
+     * - InSquare order
+     */
     record L2ThenMinYThenInSquare() implements PoiOrdering {
 
         public static final L2ThenMinYThenInSquare INSTANCE = new L2ThenMinYThenInSquare();
