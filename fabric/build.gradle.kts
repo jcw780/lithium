@@ -77,11 +77,13 @@ tasks.test {
     outputs.upToDateWhen { false }
 }
 
-//Mixin hotswap
+//Mixin hotswap, debug flags
 afterEvaluate {
     loom.runs.configureEach {
         // https://fabricmc.net/wiki/tutorial:mixin_hotswaps
         vmArg("-javaagent:${ configurations.compileClasspath.get().find { it.name.contains("sponge-mixin") } }")
+        vmArg("-Dmixin.debug.export=true")
+        vmArg("-Dmixin.debug=true")
     }
 }
 
