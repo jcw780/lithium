@@ -28,6 +28,15 @@ fabricApi {
     }
 }
 
+// Remove the gametest from test (unit tests only)
+afterEvaluate {
+    tasks.named("test") {
+        setDependsOn(dependsOn.filterNot {
+            it.toString().contains("runGameTest")
+        })
+    }
+}
+
 dependencies {
     minecraft("com.mojang:minecraft:${MINECRAFT_VERSION}")
     mappings(loom.layered {
