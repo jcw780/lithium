@@ -21,6 +21,12 @@ public class Distances {
         return (long) xDistance * (long) xDistance + (long) zDistance * (long) zDistance;
     }
 
+    public static BlockPos getClosestPosInChunk(BlockPos origin, int chunkX, int chunkZ) {
+        int closestX = getClosestBlockCoordInSection(origin.getX(), chunkX);
+        int closestZ = getClosestBlockCoordInSection(origin.getZ(), chunkZ);
+        return new BlockPos(closestX, origin.getY(), closestZ);
+    }
+
     public static boolean isWithinSquareRadius(BlockPos origin, int radius, BlockPos pos) {
         return Math.abs(pos.getX() - origin.getX()) <= radius &&
                 Math.abs(pos.getZ() - origin.getZ()) <= radius;

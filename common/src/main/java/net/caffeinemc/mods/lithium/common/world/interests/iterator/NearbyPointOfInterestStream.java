@@ -18,6 +18,7 @@ import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -27,23 +28,85 @@ import java.util.function.Predicate;
  * location in the world. For example, nether portals ordinarily search a huge volume around the "expected" location
  * of a portal, but it is almost always right at or nearby to the search origin.
  */
-public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterator<PoiRecord> {
+public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterator<PoiRecord> implements Consumer<PoiRecord> {
+    public static final Comparator<SortedPointOfInterest> NEGATIVE_Y_POINT_COMPARATOR = (o1, o2) -> {
+        // Null elements to the front as we set already consumed elements to null in one case
+        if (o1 == null) {
+            if (o2 == null) {
+                return 0;
+            }
+            return -1;
+        } else if (o2 == null) {
+            return 1;
+        }
+
+        // Use the cached values from earlier
+        int cmp = Integer.compare(o1.distanceSq(), o2.distanceSq());
+
+        if (cmp != 0) {
+            return cmp;
+        }
+
+        // Sort by the y-coord (bottom-most first) if any points share an identical distance from one another
+        int negativeY = Integer.compare(o1.getY(), o2.getY());
+        if (negativeY != 0) {
+            return negativeY;
+        }
+
+        // Sort by the chunk coord
+        int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
+        if (cmp3 != 0) {
+            return cmp3;
+        }
+        return Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
+
+    };
+    public static final Comparator<SortedPointOfInterest> POINT_COMPARATOR = (o1, o2) -> {
+        // Null elements to the front as we set already consumed elements to null in one case
+        if (o1 == null) {
+            if (o2 == null) {
+                return 0;
+            }
+            return -1;
+        } else if (o2 == null) {
+            return 1;
+        }
+
+        // Use the cached values from earlier
+        int cmp = Integer.compare(o1.distanceSq(), o2.distanceSq());
+
+        if (cmp != 0) {
+            return cmp;
+        }
+
+        // Sort by the chunk coord
+        int cmp2 = Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
+        if (cmp2 != 0) {
+            return cmp2;
+        }
+        int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
+        if (cmp3 != 0) {
+            return cmp3;
+        }
+        return Integer.compare(SectionPos.blockToSectionCoord(o1.getY()), SectionPos.blockToSectionCoord(o2.getY()));
+
+    };
+
     private final RegionBasedStorageSectionExtended<PoiSection> storage;
     private final Predicate<Holder<PoiType>> typeSelector;
     private final PoiManager.Occupancy occupationStatus;
 
     private final BlockPos origin;
     private final Predicate<PoiRecord> afterSortingPredicate;
-    private final Consumer<PoiRecord> collector;
 
     //Comparator that encodes the ordering, including tie-break for same distance from center. But does not include the
     //in section order, so the entire sorting algorithm MUST be using STABLE sorting.
-    private final Comparator<? super SortedPointOfInterest> pointComparatorWithoutInSectionOrder;
+    private final Comparator<SortedPointOfInterest> pointComparatorWithoutInSectionOrder;
 
     private final int chunkYMin;
     private final int clampedOriginChunkY;
 
-    private final int horizontalDistanceLimitL2Sq;
+    private final BiPredicate<BlockPos, BlockPos> distanceLimit; // Must be a norm, a + b >= c
 
     // If the origin is outside of build limit (e.g. 1.18+ overworld to nether portal teleport) in the target dimension,
     // the min Y distance is not zero for a chunk, this is used for an earlier cutoff.
@@ -72,16 +135,40 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
 
     private final ArrayList<SortedPointOfInterest> points;
     private int nextPointIndex;
-    private int sortedToIndex = 0;
+    private int sortedToIndex;
 
+    public NearbyPointOfInterestStream(
+            Predicate<Holder<PoiType>> typeSelector,
+            PoiManager.Occupancy status,
+            boolean useSquareDistanceLimit,
+            boolean preferNegativeY,
+            @Nullable Predicate<PoiRecord> afterSortingPredicate,
+            BlockPos origin, int radius,
+            RegionBasedStorageSectionExtended<PoiSection> storage
+    ) {
+        this(
+                typeSelector,
+                status,
+                afterSortingPredicate,
+                origin,
+                radius,
+                storage,
+                useSquareDistanceLimit ?
+                        ((pos, pos2) -> Distances.isWithinSquareRadius(pos, radius, pos2)) :
+                        ((pos, pos2) -> Distances.isWithinCircleRadius(pos, radius * radius, pos2)),
+                preferNegativeY ? NEGATIVE_Y_POINT_COMPARATOR : POINT_COMPARATOR
+        );
+    }
 
-    public NearbyPointOfInterestStream(Predicate<Holder<PoiType>> typeSelector,
-                                       PoiManager.Occupancy status,
-                                       boolean useSquareDistanceLimit,
-                                       boolean preferNegativeY,
-                                       @Nullable Predicate<PoiRecord> afterSortingPredicate,
-                                       BlockPos origin, int radius,
-                                       RegionBasedStorageSectionExtended<PoiSection> storage) {
+    public NearbyPointOfInterestStream(
+            Predicate<Holder<PoiType>> typeSelector,
+            PoiManager.Occupancy status,
+            @Nullable Predicate<PoiRecord> afterSortingPredicate,
+            BlockPos origin, int radius,
+            RegionBasedStorageSectionExtended<PoiSection> storage,
+            BiPredicate<BlockPos, BlockPos> distanceLimit,
+            Comparator<SortedPointOfInterest> sortOrder
+    ) {
         super(Long.MAX_VALUE, Spliterator.ORDERED);
 
         this.storage = storage;
@@ -136,88 +223,15 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
         this.forciblyDeplete = false;
         this.forciblyDepleteTrigger = listSize - sectionsPerChunk; // Leave 1 chunk's worth left to avoid resizing
 
-        if (useSquareDistanceLimit) {
-            this.collector = (point) -> {
-                if (Distances.isWithinSquareRadius(this.origin, radius, point.getPos())) {
-                    collectPoint(point);
-                }
-            };
-        } else {
-            double radiusSq = radius * radius;
-            this.collector = (point) -> {
-                if (Distances.isWithinCircleRadius(this.origin, radiusSq, point.getPos())) {
-                    collectPoint(point);
-                }
-            };
-        }
-
-        this.horizontalDistanceLimitL2Sq = useSquareDistanceLimit ? radius * radius * 2 : radius * radius;
+        this.distanceLimit = distanceLimit;
         this.afterSortingPredicate = afterSortingPredicate;
+        this.pointComparatorWithoutInSectionOrder = sortOrder;
+    }
 
-        if (preferNegativeY) {
-            this.pointComparatorWithoutInSectionOrder = (o1, o2) -> {
-                // Null elements to the front as we set already consumed elements to null in one case
-                if (o1 == null) {
-                    if (o2 == null) {
-                        return 0;
-                    }
-                    return -1;
-                } else if (o2 == null) {
-                    return 1;
-                }
-
-                // Use the cached values from earlier
-                int cmp = Integer.compare(o1.distanceSq(), o2.distanceSq());
-
-                if (cmp != 0) {
-                    return cmp;
-                }
-
-                // Sort by the y-coord (bottom-most first) if any points share an identical distance from one another
-                int negativeY = Integer.compare(o1.getY(), o2.getY());
-                if (negativeY != 0) {
-                    return negativeY;
-                }
-
-                // Sort by the chunk coord
-                int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
-                if (cmp3 != 0) {
-                    return cmp3;
-                }
-                return Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
-
-            };
-        } else {
-            this.pointComparatorWithoutInSectionOrder = (o1, o2) -> {
-                // Null elements to the front as we set already consumed elements to null in one case
-                if (o1 == null) {
-                    if (o2 == null) {
-                        return 0;
-                    }
-                    return -1;
-                } else if (o2 == null) {
-                    return 1;
-                }
-
-                // Use the cached values from earlier
-                int cmp = Integer.compare(o1.distanceSq(), o2.distanceSq());
-
-                if (cmp != 0) {
-                    return cmp;
-                }
-
-                // Sort by the chunk coord
-                int cmp2 = Integer.compare(SectionPos.blockToSectionCoord(o1.getZ()), SectionPos.blockToSectionCoord(o2.getZ()));
-                if (cmp2 != 0) {
-                    return cmp2;
-                }
-                int cmp3 = Integer.compare(SectionPos.blockToSectionCoord(o1.getX()), SectionPos.blockToSectionCoord(o2.getX()));
-                if (cmp3 != 0) {
-                    return cmp3;
-                }
-                return Integer.compare(SectionPos.blockToSectionCoord(o1.getY()), SectionPos.blockToSectionCoord(o2.getY()));
-
-            };
+    @Override
+    public void accept(PoiRecord poiRecord) {
+        if (this.distanceLimit.test(this.origin, poiRecord.getPos())) {
+            this.collectPoint(poiRecord);
         }
     }
 
@@ -261,7 +275,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                 final Optional<PoiSection> poiSection = this.storage.lithium$getElementAt(sectionPos);
                 //noinspection OptionalIsPresent
                 if (poiSection.isPresent()) {
-                    ((PointOfInterestSetExtended) poiSection.get()).lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this.collector);
+                    ((PointOfInterestSetExtended) poiSection.get()).lithium$collectMatchingPoints(this.typeSelector, this.occupationStatus, this);
                 }
 
                 if (this.forciblyDeplete) {
@@ -350,7 +364,8 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                 final int currentChunkX = ChunkPos.getX(chunkPos);
                 final int currentChunkZ = ChunkPos.getZ(chunkPos);
 
-                if (this.horizontalDistanceLimitL2Sq >= Distances.getMinChunkToBlockDistanceL2Sq(this.origin, currentChunkX, currentChunkZ)) {
+                BlockPos closestPosInChunk = Distances.getClosestPosInChunk(this.origin, currentChunkX, currentChunkZ);
+                if (this.distanceLimit.test(this.origin, closestPosInChunk)) {
                     final BitSet poiSections = this.storage.lithium$getNonEmptyPOISections(currentChunkX, currentChunkZ);
                     int nextUpwardSectionIndex = poiSections.nextSetBit(this.clampedOriginChunkY - this.chunkYMin);
                     int nextUpwardSectionDistance = this.getYDistanceFromBitIndex(nextUpwardSectionIndex);
@@ -362,10 +377,20 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                             currentSectionY = nextDownwardSectionIndex + this.chunkYMin;
                             nextDownwardSectionIndex = poiSections.previousSetBit(nextDownwardSectionIndex - 1);
                             nextDownwardSectionDistance = this.getYDistanceFromBitIndex(nextDownwardSectionIndex);
+
+                            if (!this.distanceLimit.test(this.origin, closestPosInChunk.atY(Distances.getClosestBlockCoordInSection(this.origin.getY(), currentSectionY)))) {
+                                nextDownwardSectionIndex = -1;
+                                continue;
+                            }
                         } else {
                             currentSectionY = nextUpwardSectionIndex + this.chunkYMin;
                             nextUpwardSectionIndex = poiSections.nextSetBit(nextUpwardSectionIndex + 1);
                             nextUpwardSectionDistance = this.getYDistanceFromBitIndex(nextUpwardSectionIndex);
+
+                            if (!this.distanceLimit.test(this.origin, closestPosInChunk.atY(Distances.getClosestBlockCoordInSection(this.origin.getY(), currentSectionY)))) {
+                                nextUpwardSectionIndex = -1;
+                                continue;
+                            }
                         }
                         this.queuedPOISections.add(
                                 new QueuedSection(
@@ -396,7 +421,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
     private void sortSectionList() {
         // Note: Do not use unstable sort - the fastutils quicksort is quite a bit slower
         this.queuedPOISections.subList(this.queuedSectionsSearched, this.queuedPOISections.size())
-                .sort(Comparator.comparingDouble(qS -> qS.minDistance));
+                .sort(Comparator.comparingInt(qS -> qS.minDistance));
     }
 
     private boolean isSectionListEmpty() {
