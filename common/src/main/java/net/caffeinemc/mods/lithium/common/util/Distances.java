@@ -27,13 +27,13 @@ public class Distances {
         return new BlockPos(closestX, origin.getY(), closestZ);
     }
 
-    public static boolean isWithinSquareRadius(BlockPos origin, int radius, BlockPos pos) {
+    public static boolean isWithinCubeRadius(BlockPos origin, int radius, BlockPos pos) {
         return Math.abs(pos.getX() - origin.getX()) <= radius &&
                 Math.abs(pos.getZ() - origin.getZ()) <= radius;
     }
 
-    public static boolean isWithinCircleRadius(BlockPos origin, double radiusSq, BlockPos pos) {
-        return origin.distSqr(pos) <= radiusSq;
+    public static boolean isWithinSphereRadius(BlockPos origin, long radiusSq, BlockPos pos) {
+        return distanceSq(origin, pos) <= radiusSq;
     }
 
     public static int getClosestBlockCoordInSection(int blockCoord, int sectionCoord) {

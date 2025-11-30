@@ -1,18 +1,20 @@
 package net.caffeinemc.mods.lithium.common.world.interests;
 
+import net.caffeinemc.mods.lithium.common.util.functions.FunLongAnd5;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+
 import java.util.BitSet;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 public interface RegionBasedStorageSectionExtended<R> {
-    /**
-     * Fast-path for retrieving all items in a chunk column. This avoids needing to retrieve items for each sub-chunk
-     * individually.
-     *
-     * @param chunkX The x-coordinate of the chunk column
-     * @param chunkZ The z-coordinate of the chunk column
-     */
-    Stream<R> lithium$getWithinChunkColumn(int chunkX, int chunkZ);
+
+    <S, T, U> U lithium$getFirstInRangeInChunkColumn(int chunkX, int chunkZ,
+                                                     long deltaYSqMargin,
+                                                     BlockPos center, long radiusSq,
+                                                     FunLongAnd5<R, BlockPos, Predicate<Holder<S>>, Predicate<BlockPos>, T, U> sectionMapper,
+                                                     Predicate<Holder<S>> predicate, Predicate<BlockPos> filter, T status);
 
     /**
      * Fast-path for collecting all items in a chunk column. This avoids needing to retrieve items for each sub-chunk

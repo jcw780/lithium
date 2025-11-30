@@ -1,6 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.ai.poi.fast_portals;
 
 import net.caffeinemc.mods.lithium.common.util.POIRegistryEntries;
+import net.caffeinemc.mods.lithium.common.world.interests.PoiOrdering;
 import net.caffeinemc.mods.lithium.common.world.interests.PointOfInterestStorageExtended;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -26,6 +27,7 @@ public class PortalForcerMixin {
      * @author JellySquid, 2No2Name
      * @reason Use optimized search for nearby points, avoid slow filtering, check for valid locations first
      * [VanillaCopy] everything but the Optional<PointOfInterest> lookup
+     * Returned element should be minimal wrt. to order defined at {@link PoiOrdering.L2ThenMinYThenInSquare#INSTANCE}
      */
     @Overwrite
     public Optional<BlockPos> findClosestPortalPosition(BlockPos centerPos, boolean dstIsNether, WorldBorder worldBorder) {

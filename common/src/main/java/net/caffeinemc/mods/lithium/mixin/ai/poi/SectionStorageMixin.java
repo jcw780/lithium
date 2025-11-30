@@ -4,9 +4,13 @@ import com.google.common.collect.AbstractIterator;
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import net.caffeinemc.mods.lithium.common.util.Distances;
 import net.caffeinemc.mods.lithium.common.util.Pos;
 import net.caffeinemc.mods.lithium.common.util.collections.ListeningLong2ObjectOpenHashMap;
+import net.caffeinemc.mods.lithium.common.util.functions.FunLongAnd5;
 import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
@@ -22,10 +26,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType") // We don't get a choice, this is Minecraft's doing!
 @Mixin(SectionStorage.class)
@@ -99,31 +106,34 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
     }
 
     @Override
-    public Stream<R> lithium$getWithinChunkColumn(int chunkX, int chunkZ) {
-        BitSet sectionsWithPOI = this.getNonEmptyPOISections(chunkX, chunkZ);
+    public <S, T, U> U lithium$getFirstInRangeInChunkColumn(int chunkX, int chunkZ,
+                                                            long deltaYSqMargin,
+                                                            BlockPos center, long radiusSq,
+                                                            FunLongAnd5<R, BlockPos, Predicate<Holder<S>>, Predicate<BlockPos>, T, U> sectionMapper,
+                                                            Predicate<Holder<S>> predicate, Predicate<BlockPos> filter, T status) {
+        BitSet sectionsWithPOI = this.lithium$getNonEmptyPOISections(chunkX, chunkZ);
 
-        // No items are present in this column
         if (sectionsWithPOI.isEmpty()) {
-            return Stream.empty();
+            return null;
         }
-
-        List<R> list = new ArrayList<>();
         int minYSection = Pos.SectionYCoord.getMinYSection(this.levelHeightAccessor);
         for (int chunkYIndex = sectionsWithPOI.nextSetBit(0); chunkYIndex != -1; chunkYIndex = sectionsWithPOI.nextSetBit(chunkYIndex + 1)) {
             int chunkY = chunkYIndex + minYSection;
-            //noinspection SimplifyOptionalCallChains
-            R r = this.storage.get(SectionPos.asLong(chunkX, chunkY, chunkZ)).orElse(null);
-            if (r != null) {
-                list.add(r);
+            long minYDistance = Distances.getClosestBlockCoordInSection(center.getY(), chunkY) - center.getY();
+            if (minYDistance * minYDistance <= deltaYSqMargin) {
+                R r = this.storage.get(SectionPos.asLong(chunkX, chunkY, chunkZ)).orElse(null);
+                U result = sectionMapper.apply(r, center, predicate, filter, status, radiusSq);
+                if (result != null) {
+                    return result;
+                }
             }
         }
-
-        return list.stream();
+        return null;
     }
 
     @Override
     public Iterable<R> lithium$getInChunkColumn(int chunkX, int chunkZ) {
-        BitSet sectionsWithPOI = this.getNonEmptyPOISections(chunkX, chunkZ);
+        BitSet sectionsWithPOI = this.lithium$getNonEmptyPOISections(chunkX, chunkZ);
 
         // No items are present in this column
         if (sectionsWithPOI.isEmpty()) {
@@ -156,10 +166,11 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
         };
     }
 
-    private BitSet getNonEmptyPOISections(int chunkX, int chunkZ) {
+    @Override
+    public BitSet lithium$getNonEmptyPOISections(int chunkX, int chunkZ) {
         long pos = ChunkPos.asLong(chunkX, chunkZ);
 
-        BitSet flags = this.getNonEmptySections(pos, false);
+        BitSet flags = this.columns.get(pos);
 
         if (flags != null) {
             return flags;
@@ -167,17 +178,7 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
 
         this.unpackChunk(new ChunkPos(pos));
 
-        return this.getNonEmptySections(pos, true);
-    }
-
-    private BitSet getNonEmptySections(long pos, boolean required) {
-        BitSet set = this.columns.get(pos);
-
-        if (set == null && required) {
-            throw new NullPointerException("No data is present for column: " + new ChunkPos(pos));
-        }
-
-        return set;
+        return Objects.requireNonNull(this.columns.get(pos), "Failed to load POI section data!");
     }
 
     @Override
@@ -193,10 +194,5 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
     @Override
     public int lithium$getChunkYMaxInclusive() {
         return Pos.SectionYCoord.getMaxYSectionInclusive(this.levelHeightAccessor);
-    }
-
-    @Override
-    public BitSet lithium$getNonEmptyPOISections(int chunkX, int chunkZ) {
-        return this.getNonEmptyPOISections(chunkX, chunkZ);
     }
 }

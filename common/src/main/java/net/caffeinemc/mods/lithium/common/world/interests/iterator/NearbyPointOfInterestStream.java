@@ -140,29 +140,6 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
     public NearbyPointOfInterestStream(
             Predicate<Holder<PoiType>> typeSelector,
             PoiManager.Occupancy status,
-            boolean useSquareDistanceLimit,
-            boolean preferNegativeY,
-            @Nullable Predicate<PoiRecord> afterSortingPredicate,
-            BlockPos origin, int radius,
-            RegionBasedStorageSectionExtended<PoiSection> storage
-    ) {
-        this(
-                typeSelector,
-                status,
-                afterSortingPredicate,
-                origin,
-                radius,
-                storage,
-                useSquareDistanceLimit ?
-                        ((pos, pos2) -> Distances.isWithinSquareRadius(pos, radius, pos2)) :
-                        ((pos, pos2) -> Distances.isWithinCircleRadius(pos, radius * radius, pos2)),
-                preferNegativeY ? NEGATIVE_Y_POINT_COMPARATOR : POINT_COMPARATOR
-        );
-    }
-
-    public NearbyPointOfInterestStream(
-            Predicate<Holder<PoiType>> typeSelector,
-            PoiManager.Occupancy status,
             @Nullable Predicate<PoiRecord> afterSortingPredicate,
             BlockPos origin, int radius,
             RegionBasedStorageSectionExtended<PoiSection> storage,
@@ -245,15 +222,15 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
 
     private void updateMinPoint(SortedPointOfInterest poi, int index) {
         int poiDist = poi.distanceSq();
-        if (this.minCollectedElementIndex != -1 && poiDist == this.minCollectedElementDistanceSq) {
+        if (this.minCollectedElementIndex >= 0 && poiDist == this.minCollectedElementDistanceSq) {
             //Tie-breaker: Keep the point which comes first in the ordering
             if (this.pointComparatorWithoutInSectionOrder.compare(this.points.get(this.minCollectedElementIndex), poi) > 0) {
                 this.minCollectedElementIndex = index;
             }
-        } else {
+        } else if (this.minCollectedElementIndex != -2) {
             this.minCollectedElementIndex = index;
+            this.minCollectedElementDistanceSq = poiDist;
         }
-        this.minCollectedElementDistanceSq = poiDist;
     }
 
     @Override
@@ -303,7 +280,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
     private boolean tryAdvancePoint(Consumer<? super PoiRecord> action) {
         while (this.nextPointIndex < this.points.size()) {
             SortedPointOfInterest next;
-            if (this.minCollectedElementIndex != -1) {
+            if (this.minCollectedElementIndex >= 0) {
                 next = this.points.get(this.minCollectedElementIndex);
                 // Only consume points if we are sure that there are no closer (or same distance) points to be scanned.
                 // Otherwise, scan more chunks
@@ -312,8 +289,8 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                 } else {
                     //Avoid consuming the point twice
                     this.points.set(this.minCollectedElementIndex, null);
-                    this.minCollectedElementIndex = -1;
-                    this.minCollectedElementDistanceSq = -1;
+                    this.minCollectedElementIndex = -2;
+                    this.minCollectedElementDistanceSq = Integer.MAX_VALUE;
                 }
             } else {
                 if (this.sortedToIndex <= this.nextPointIndex) {
@@ -484,6 +461,13 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                 return ring <= ringMax;
             }
         };
+    }
+
+    public PoiRecord getFirst() {
+        //TODO refactor to make this less ugly
+        PoiRecord[] poiRecords = new PoiRecord[1];
+        this.tryAdvance(poiRecord -> poiRecords[0] = poiRecord);
+        return poiRecords[0];
     }
 
     private record QueuedSection(long sectionPos, int minDistance) {
