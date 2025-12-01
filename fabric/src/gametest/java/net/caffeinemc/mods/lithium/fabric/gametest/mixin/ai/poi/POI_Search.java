@@ -2,6 +2,7 @@ package net.caffeinemc.mods.lithium.fabric.gametest.mixin.ai.poi;
 
 
 import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.caffeinemc.mods.lithium.common.world.interests.PoiOrdering;
 import net.fabricmc.fabric.api.gametest.v1.CustomTestMethodInvoker;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -70,51 +71,51 @@ public class POI_Search implements CustomTestMethodInvoker {
                         .toList();
         PoiOrdering.L2ThenMinYThenInSquare.INSTANCE.checkOrderOrThrow(center, poiManager, closestPortalPositions);
         if (closestPortalPositions.isEmpty() != closestPortalPosition.isEmpty()) {
-            throw new IllegalStateException("findClosestPortalPosition() emptiness does not match sorted and filtered getInSquare() emptiness");
+            error("findClosestPortalPosition() emptiness does not match sorted and filtered getInSquare() emptiness");
         } else if (closestPortalPosition.isPresent()) {
             BlockPos closestPos = closestPortalPosition.get();
             if (!closestPortalPositions.getFirst().equals(closestPos)) {
-                throw new IllegalStateException("findClosestPortalPosition() result is not the first of sorted and filtered getInSquare()");
+                error("findClosestPortalPosition() result is not the first of sorted and filtered getInSquare()");
             }
         }
 
 
         Optional<BlockPos> firstOfAll = poiManager.find(predicate, blockPos -> true, center, 128, PoiManager.Occupancy.ANY);
         if (firstOfAll.isEmpty() != inRangePositions.isEmpty()) {
-            throw new IllegalStateException("find() result presence does not match getInRange() emptiness");
+            error("find() result presence does not match getInRange() emptiness");
         } else if (firstOfAll.isPresent()) {
             BlockPos closestPos = firstOfAll.get();
             if (!inRangePositions.getFirst().equals(closestPos)) {
-                throw new IllegalStateException("find() result is not the first of getInRange()");
+                error("find() result is not the first of getInRange(): " + closestPos);
             }
         }
 
         Optional<BlockPos> findClosest = poiManager.findClosest(predicate, blockPos -> true, center, 128, PoiManager.Occupancy.ANY);
         if (findClosest.isEmpty() != allClosestFirstWithTypePositions.isEmpty()) {
-            throw new IllegalStateException("findClosest() result presence does not match findAllClosestFirstWithType() emptiness");
+            error("findClosest() result presence does not match findAllClosestFirstWithType() emptiness");
         } else if (findClosest.isPresent()) {
             BlockPos closestPos = findClosest.get();
             if (!allClosestFirstWithTypePositions.getFirst().equals(closestPos)) {
-                throw new IllegalStateException("findClosest() result is not the first of findAllClosestFirstWithType()");
+                error("findClosest() result is not the first of findAllClosestFirstWithType()");
             }
         }
 
         Optional<BlockPos> findClosestWithType = poiManager.findClosestWithType(predicate, center, 128, PoiManager.Occupancy.ANY).map(Pair::getSecond);
         if (!findClosestWithType.equals(findClosest)) {
-            throw new IllegalStateException("findClosest() result does not equal findClosestWithType()");
+            error("findClosest() result does not equal findClosestWithType()");
         }
 
         Optional<BlockPos> findClosest2 = poiManager.findClosest(predicate, center, 128, PoiManager.Occupancy.ANY);
         if (!findClosest2.equals(findClosest)) {
-            throw new IllegalStateException("findClosest() result does not equal findClosest()");
+            error("findClosest() result does not equal findClosest()");
         }
 
         Optional<BlockPos> getRandom = poiManager.getRandom(predicate, blockPos -> true, PoiManager.Occupancy.ANY, center, 128, randomSource);
         if (getRandom.isEmpty() != inRangePositions.isEmpty()) {
-            throw new IllegalStateException("getRandom() emptiness does not match getInRange() emptiness");
+            error("getRandom() emptiness does not match getInRange() emptiness");
         }
         if (!inRangePositions.isEmpty() && !inRangePositions.contains(getRandom.get())) {
-            throw new IllegalStateException("getRandom() result is not contained in getInRange() results");
+            error("getRandom() result is not contained in getInRange() results");
         }
 
 
@@ -124,6 +125,19 @@ public class POI_Search implements CustomTestMethodInvoker {
 
         StringBuilder sb = new StringBuilder();
         sb.append("countInRange:").append(countInRange).append("\n");
+
+        sb.append("getInSquare size:").append(inSquarePositions.size()).append("\n");
+        sb.append("getInRange size:").append(inRangePositions.size()).append("\n");
+        sb.append("getInChunk size:").append(inChunkPositions.size()).append("\n");
+        sb.append("findAll size:").append(allPositions.size()).append("\n");
+        sb.append("findAllWithType size:").append(allWithTypePositions.size()).append("\n");
+        sb.append("findAllClosestFirstWithType size:").append(allClosestFirstWithTypePositions.size()).append("\n");
+        sb.append("closestPortalPosition:").append(closestPortalPosition.map(Vec3i::toString).orElse("empty")).append("\n");
+        sb.append("find:").append(firstOfAll.map(Vec3i::toString).orElse("empty")).append("\n");
+        sb.append("findClosest:").append(findClosest.map(Vec3i::toString).orElse("empty")).append("\n");
+        sb.append("findClosestWithType:").append(findClosestWithType.map(Vec3i::toString).orElse("empty")).append("\n");
+        sb.append("findClosest2:").append(findClosest2.map(Vec3i::toString).orElse("empty")).append("\n");
+
         sb.append("getInSquare: ");
         sb.append(Arrays.toString(inSquarePositions.toArray()));
         sb.append("\n");
@@ -142,11 +156,6 @@ public class POI_Search implements CustomTestMethodInvoker {
         sb.append("findAllClosestFirstWithType: ");
         sb.append(Arrays.toString(allClosestFirstWithTypePositions.toArray()));
         sb.append("\n");
-        sb.append("closestPortalPosition:").append(closestPortalPosition.map(Vec3i::toString).orElse("empty")).append("\n");
-        sb.append("find:").append(firstOfAll.map(Vec3i::toString).orElse("empty")).append("\n");
-        sb.append("findClosest:").append(findClosest.map(Vec3i::toString).orElse("empty")).append("\n");
-        sb.append("findClosestWithType:").append(findClosestWithType.map(Vec3i::toString).orElse("empty")).append("\n");
-        sb.append("findClosest2:").append(findClosest2.map(Vec3i::toString).orElse("empty")).append("\n");
 
         if (!outputFile.exists()) {
             outputFile.getParentFile().mkdirs();
@@ -175,38 +184,57 @@ public class POI_Search implements CustomTestMethodInvoker {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                throw new AssertionError("POI search results differ from expected output. See " + newOutputFile.getAbsolutePath());
+                error("POI search results differ from expected output. See " + newOutputFile.getAbsolutePath());
             }
         }
 
         context.succeed();
     }
 
+    private static void error(String message) {
+        throw new AssertionError(message);
+//        System.err.println("ERROR: " + message);
+    }
+
+
     @Override
     public void invokeTestMethod(GameTestHelper context, Method method) throws ReflectiveOperationException {
         ServerLevel level = context.getLevel();
-        RandomSource random = RandomSource.create(level.getSeed()); //TODO avoid hardcoding seed
+        RandomSource random = RandomSource.create(level.getSeed()); //Hardcode seed here to be able to check equality with vanilla.
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 19; i++) {
 
             int x = random.nextInt(60000000) - 30000000;
             int z = random.nextInt(60000000) - 30000000;
             int y = random.nextInt(level.getHeight()) - level.getMinY();
 
-            int chosen = random.nextInt(20);
-            double randomPct = chosen == 19 ? 0.0 : 1.0 / Math.pow(2, chosen);
+            int chosen = 20 - i;
+            double randomPct = 1.0 / Math.pow(2, chosen);
 
             int radius = 130;
 
-            long poiCount = 0;
-
-            System.out.println("Placing POIs for iteration " + (i + 1) + "/10 : around (" + x + ", " + y + ", " + z + ") with randomPct=" + randomPct + " and radius=" + radius);
+            ObjectOpenHashSet<BlockPos> positions1 = new ObjectOpenHashSet<>();
+            ObjectOpenHashSet<BlockPos> positions2 = new ObjectOpenHashSet<>();
+            System.out.println("Placing POIs for iteration " + (i + 1) + "/15 : around (" + x + ", " + y + ", " + z + ") with randomPct=" + randomPct + " and radius=" + radius);
             for (BlockPos blockPos : BlockPos.betweenClosed(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius)) {
                 if (random.nextFloat() < randomPct && level.isInWorldBounds(blockPos)) {
-                    poiCount++;
                     level.setBlock(blockPos, Blocks.NETHER_PORTAL.defaultBlockState(), 0);
+                    positions1.add(blockPos.immutable());
                 }
             }
+
+            for (BlockPos blockPos : BlockPos.betweenClosed(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius)) {
+                if (level.getBlockState(blockPos).is(Blocks.NETHER_PORTAL) && level.isInWorldBounds(blockPos)) {
+                    positions2.add(blockPos.immutable());
+                }
+            }
+
+            if (!positions1.equals(positions2)) {
+                throw new IllegalStateException(
+                        "Mismatch between placed and actually placed POIs!"
+                );
+            }
+            long poiCount = positions1.size();
 
             System.out.println("Placed " + poiCount + " POIs, running test method...");
 
