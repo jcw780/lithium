@@ -7,6 +7,7 @@ import net.caffeinemc.mods.lithium.common.util.tuples.WorldSectionBox;
 import net.caffeinemc.mods.lithium.common.world.LithiumData;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -15,7 +16,7 @@ import net.minecraft.world.phys.AABB;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class SectionedBlockChangeTracker {
+public class SectionedBlockChangeTracker implements BlockChangeTracker {
     public final WorldSectionBox trackedWorldSections;
 
     private long maxChangeTime;
@@ -149,13 +150,15 @@ public class SectionedBlockChangeTracker {
         }
     }
 
-    public void setChanged(BlockListeningSection section) {
+    @Override
+    public boolean setChanged(BlockListeningSection section, int localX, int localY, int localZ, BlockState oldState, BlockState newState) {
         if (this.sectionsUnsubscribed == null) {
             this.sectionsUnsubscribed = new ArrayList<>();
         }
         this.sectionsUnsubscribed.add(section);
         this.setChanged(this.getWorldTime());
         this.isListeningToAll = false;
+        return false;
     }
 
     public void setChanged(long atTime) {
@@ -196,6 +199,7 @@ public class SectionedBlockChangeTracker {
         return this.getClass().hashCode() ^ this.trackedWorldSections.hashCode();
     }
 
+    @Override
     public void onChunkSectionInvalidated(SectionPos sectionPos) {
         if (this.sectionsNotListeningTo == null) {
             this.sectionsNotListeningTo = new ArrayList<>();

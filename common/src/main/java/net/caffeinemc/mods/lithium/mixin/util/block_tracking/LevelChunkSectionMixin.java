@@ -97,7 +97,7 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
         this.lithium$trackBlockStateChange(newState, oldState);
         ChunkSectionChangeCallback changeListener = this.lithium$getSectionData().getChangeListener();
         if (changeListener != null) {
-            changeListener.onBlockChange(this);
+            changeListener.onBlockChange(this, x, y, z, oldState, newState);
         }
     }
 
