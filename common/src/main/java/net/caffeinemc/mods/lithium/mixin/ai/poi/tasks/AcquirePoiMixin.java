@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 public class AcquirePoiMixin {
 
     @Redirect(
-            method = "method_46880", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/village/poi/PoiManager;take(Ljava/util/function/Predicate;Ljava/util/function/BiPredicate;Lnet/minecraft/core/BlockPos;I)Ljava/util/Optional;")
+            method = { "method_46880", "lambda$create$6" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/village/poi/PoiManager;take(Ljava/util/function/Predicate;Ljava/util/function/BiPredicate;Lnet/minecraft/core/BlockPos;I)Ljava/util/Optional;")
     )
     private static Optional<BlockPos> takeOptimized(PoiManager instance, Predicate<Holder<PoiType>> predicate, BiPredicate<Holder<PoiType>, BlockPos> biPredicate, BlockPos blockPos, int radius) {
         return ((PointOfInterestStorageExtended) instance).lithium$takeAt(predicate, biPredicate, blockPos);
@@ -35,7 +35,7 @@ public class AcquirePoiMixin {
 
 
     @Redirect(
-            method = "method_46885",
+            method = { "method_46885", "lambda$create$8" },
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/village/poi/PoiManager;findAllClosestFirstWithType(Ljava/util/function/Predicate;Ljava/util/function/Predicate;Lnet/minecraft/core/BlockPos;ILnet/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy;)Ljava/util/stream/Stream;")
     )
     private static Stream<Pair<Holder<PoiType>, BlockPos>> getNull(
@@ -54,7 +54,7 @@ public class AcquirePoiMixin {
     }
 
     @Redirect(
-            method = "method_46885",
+            method = { "method_46885", "lambda$create$8" },
             at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;limit(J)Ljava/util/stream/Stream;")
     )
     private static Stream<Pair<Holder<PoiType>, BlockPos>> getNClosestFirstWithType(
