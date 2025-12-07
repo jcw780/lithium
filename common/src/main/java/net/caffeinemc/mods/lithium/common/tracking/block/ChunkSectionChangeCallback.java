@@ -56,7 +56,7 @@ public final class ChunkSectionChangeCallback {
                 if (!tracker.setChanged(section, localX, localY, localZ, oldState, newState)) {
                     //Remove by swapping the (already iterated) last element, as array list removal is faster for elements at the end
                     BlockChangeTracker swap = blockChangeTrackers.removeLast();
-                    if (i != blockChangeTrackers.size() - 1) {
+                    if (i != blockChangeTrackers.size()) {
                         blockChangeTrackers.set(i, swap);
                     }
                 }
