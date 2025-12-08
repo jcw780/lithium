@@ -54,13 +54,13 @@ public class CompactSineLUT {
     }
 
     // [VanillaCopy] MathHelper#sin(float)
-    public static float sin(float f) {
-        return lookup((int) (f * 10430.378f) & 0xFFFF);
+    public static float sin(double d) {
+        return lookup((int) (d * 10430.378350470453) & 0xFFFF);
     }
 
     // [VanillaCopy] MathHelper#cos(float)
-    public static float cos(float f) {
-        return lookup((int) (f * 10430.378f + 16384.0f) & 0xFFFF);
+    public static float cos(double d) {
+        return lookup((int) (d * 10430.378350470453 + 16384.0) & 0xFFFF);
     }
 
     private static float lookup(int index) {

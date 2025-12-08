@@ -25,8 +25,8 @@ public class MthMixin {
      * @reason use an optimized implementation
      */
     @Overwrite
-    public static float sin(float f) {
-        return CompactSineLUT.sin(f);
+    public static float sin(double d) {
+        return CompactSineLUT.sin(d);
     }
 
     /**
@@ -34,7 +34,7 @@ public class MthMixin {
      * @reason use an optimized implementation
      */
     @Overwrite
-    public static float cos(float f) {
-        return CompactSineLUT.cos(f);
+    public static float cos(double d) {
+        return CompactSineLUT.cos(d);
     }
 }
