@@ -4,7 +4,7 @@ import com.google.common.base.Predicates;
 import net.caffeinemc.mods.lithium.common.entity.pushable.EntityPushablePredicate;
 import net.caffeinemc.mods.lithium.common.world.WorldHelper;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.vehicle.OldMinecartBehavior;
+import net.minecraft.world.entity.vehicle.minecart.OldMinecartBehavior;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntitySectionStorage;
 import net.minecraft.world.phys.AABB;

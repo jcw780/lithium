@@ -250,10 +250,6 @@ Copy entity hashmap instead of duplicating the list using iteration
 (default: `true`)  
 Use ReferenceArraySet instead of HashSet to store the fluids the entity is currently submerged in.
   
-### `mixin.collections.gamerules`
-(default: `true`)  
-Uses fastutil hashmaps for gamerules
-  
 ### `mixin.collections.mob_spawning`
 (default: `true`)  
 Uses custom hashset/list combination for faster mob spawn checks

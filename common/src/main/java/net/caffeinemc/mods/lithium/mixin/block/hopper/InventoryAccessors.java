@@ -2,7 +2,7 @@ package net.caffeinemc.mods.lithium.mixin.block.hopper;
 
 import net.caffeinemc.mods.lithium.api.inventory.LithiumInventory;
 import net.minecraft.core.NonNullList;
-import net.minecraft.world.entity.vehicle.AbstractMinecartContainer;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecartContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.*;
 import org.spongepowered.asm.mixin.Mixin;

@@ -106,7 +106,6 @@
     "collections.entity_filtering.ClassInstanceMultiMapMixin",
     "collections.entity_ticking.EntityTickListMixin",
     "collections.fluid_submersion.EntityMixin",
-    "collections.gamerules.GameRulesMixin",
     "collections.mob_spawning.MobSpawnSettingsMixin",
     "collections.mob_spawning.WeightedListMixin",
     "entity.collisions.intersection.EntityGetterMixin",

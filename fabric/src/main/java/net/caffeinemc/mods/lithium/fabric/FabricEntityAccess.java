@@ -2,7 +2,7 @@ package net.caffeinemc.mods.lithium.fabric;
 
 import net.caffeinemc.mods.lithium.common.services.PlatformEntityAccess;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.boss.EnderDragonPart;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 

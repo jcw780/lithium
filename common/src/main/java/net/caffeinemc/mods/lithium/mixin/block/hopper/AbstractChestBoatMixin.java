@@ -3,7 +3,7 @@ package net.caffeinemc.mods.lithium.mixin.block.hopper;
 import net.caffeinemc.mods.lithium.common.tracking.entity.ToggleableMovementTracker;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.vehicle.AbstractChestBoat;
+import net.minecraft.world.entity.vehicle.boat.AbstractChestBoat;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityInLevelCallback;
 import net.minecraft.world.phys.Vec3;

@@ -23,7 +23,7 @@ public abstract class TemptingSensorMixin {
     private static TargetingConditions TEMPT_TARGETING;
 
     @Shadow
-    protected abstract boolean playerHoldingTemptation(Player player);
+    protected abstract boolean playerHoldingTemptation(PathfinderMob pathfinderMob, Player player);
 
     /**
      * @author 2No2Name
@@ -39,7 +39,7 @@ public abstract class TemptingSensorMixin {
         for (ServerPlayer serverPlayer : serverLevel.players()) {
             if (EntitySelector.NO_SPECTATORS.test(serverPlayer)) {
                 if (targetingConditions.test(serverLevel, pathfinderMob, serverPlayer)) {
-                    if (playerHoldingTemptation(serverPlayer)) {
+                    if (playerHoldingTemptation(pathfinderMob, serverPlayer)) {
                         if (!pathfinderMob.hasPassenger(serverPlayer)) {
                             double dist = pathfinderMob.distanceToSqr(serverPlayer);
                             if (dist < minDist) {

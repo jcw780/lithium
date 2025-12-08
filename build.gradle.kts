@@ -1,22 +1,22 @@
 plugins {
     id("java")
-    id("fabric-loom") version ("1.11-SNAPSHOT") apply (false)
+    id("fabric-loom") version ("1.14-SNAPSHOT") apply (false)
     id("me.modmuss50.mod-publish-plugin") version ("0.8.1") apply (false)
 
 }
 
 // Fabric: https://fabricmc.net/develop/
 // Neoforge: https://neoforged.net/
-val MINECRAFT_VERSION by extra { "1.21.10" } //MUST manually update fabric.mod.json and neoforge.mods.toml
+val MINECRAFT_VERSION by extra { "1.21.11-rc3" } //MUST manually update fabric.mod.json and neoforge.mods.toml
 val NEOFORGE_VERSION by extra { "21.10.1-beta" }
-val FABRIC_LOADER_VERSION by extra { "0.17.2" }
-val FABRIC_API_VERSION by extra { "0.134.1+1.21.10" }
+val FABRIC_LOADER_VERSION by extra { "0.18.1" }
+val FABRIC_API_VERSION by extra { "0.139.4+1.21.11" }
 
 // This value can be set to null to disable Parchment.
 val PARCHMENT_VERSION by extra { null }
 
 // https://semver.org/
-val MOD_VERSION by extra { "0.20.1" }
+val MOD_VERSION by extra { "0.21.0" }
 
 allprojects {
     apply(plugin = "java")

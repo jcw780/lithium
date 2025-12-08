@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.entity.inactive_navigations;
 
 import net.caffeinemc.mods.lithium.common.entity.NavigatingEntity;
-import net.minecraft.world.entity.monster.Drowned;
+import net.minecraft.world.entity.monster.zombie.Drowned;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

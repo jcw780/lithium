@@ -34,9 +34,9 @@ public class WorldBorderPositionListenerMulti implements BorderChangeListener {
     }
 
     @Override
-    public void onLerpSize(@NotNull WorldBorder border, double fromSize, double toSize, long time) {
+    public void onLerpSize(@NotNull WorldBorder border, double fromSize, double toSize, long ticks, long gameTime) {
         for (WorldBorderListenerOnce listener : this.delegate.keySet()) {
-            listener.onLerpSize(border, fromSize, toSize, time);
+            listener.onLerpSize(border, fromSize, toSize, ticks, gameTime);
         }
         this.delegate.clear();
     }

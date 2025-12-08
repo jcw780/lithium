@@ -2,8 +2,8 @@ package net.caffeinemc.mods.lithium.mixin.world.chunk_access;
 
 import net.caffeinemc.mods.lithium.common.world.ChunkLoadTricks;
 import net.caffeinemc.mods.lithium.common.world.chunk.ChunkHolderExtended;
-import net.minecraft.Util;
 import net.minecraft.server.level.*;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;

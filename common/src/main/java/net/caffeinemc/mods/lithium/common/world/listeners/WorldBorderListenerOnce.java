@@ -20,7 +20,7 @@ public interface WorldBorderListenerOnce extends BorderChangeListener {
     }
 
     @Override
-    default void onLerpSize(@NotNull WorldBorder border, double fromSize, double toSize, long time) {
+    default void onLerpSize(@NotNull WorldBorder border, double fromSize, double toSize, long ticks, long gameTime) {
         this.lithium$onWorldBorderShapeChange(border);
     }
 
