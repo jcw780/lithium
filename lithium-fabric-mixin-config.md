@@ -300,7 +300,7 @@ Requirements:
 - `mixin.util.chunk_access=true`  
   
 ### `mixin.entity.collisions.unpushable_cramming`
-(default: `false`)  
+(default: `true`)  
 In chunks with many mobs in ladders a separate list of pushable entities for cramming tests is used  
 Requirements:
 - `mixin.chunk.entity_class_groups=true`  
