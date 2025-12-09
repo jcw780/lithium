@@ -31,6 +31,29 @@ dependencies {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
         modCompileOnly(module)
     }
+
+    fun addEmbeddedFabricModule(name: String) {
+        val module = fabricApi.module(name, FABRIC_API_VERSION)
+        modImplementation(module)
+        include(module)
+    }
+
+    fun addCompileOnlyFabricModule(name: String) {
+        val module = fabricApi.module(name, FABRIC_API_VERSION)
+        modCompileOnly(module)
+    }
+
+    fun addFabricModule(name: String) {
+        val module = fabricApi.module(name, FABRIC_API_VERSION)
+        modImplementation(module)
+    }
+
+    //Copied from fabric build.gradle to avoid having multiple slightly different (few fabric interfaces added) minecraft merged mapped jars
+    addCompileOnlyFabricModule("fabric-transfer-api-v1")
+    addFabricModule("fabric-gametest-api-v1")
+    addFabricModule("fabric-registry-sync-v0")
+
+
     // example usage:
     //    addDependentFabricModule("fabric-block-view-api-v2")
 
