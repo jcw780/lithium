@@ -4,14 +4,10 @@ _LithiumVersion_ is automatically replaced with the lithium version, e.g. 0.14.5
 Everything above the line is ignored and not included in the changelog. Everything below will be in the
 changelog on GitHub, Modrinth and CurseForge.
 ----------
-Lithium _LithiumVersion_ is the first release for Minecraft _MCVersion_.
+Lithium _LithiumVersion_ for Minecraft _MCVersion_ fixes a minor issue.
 
 Make sure to take a backup of your world before using the mod and please report any bugs and mod compatibility issues at the [issue tracker](https://github.com/CaffeineMC/lithium-fabric/issues). You can check the [description of each optimization](https://github.com/CaffeineMC/lithium/blob/_ReleaseTag_/lithium-mixin-config.md) and how to disable it when encountering a problem.
 
-## Changes
-- Improvements to multiple POI search methods
-
 ## Fixes
-- Find POI in the same order as vanilla in all cases
-- Incorrect visual explosion sizes due to multiple explosion rays hitting the same air block multiple times
+- Register happy ghast navigation correctly after growth state change
 
