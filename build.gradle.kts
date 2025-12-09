@@ -7,9 +7,9 @@ plugins {
 
 // Fabric: https://fabricmc.net/develop/
 // Neoforge: https://neoforged.net/
-val MINECRAFT_VERSION by extra { "1.21.11-rc3" } //MUST manually update fabric.mod.json and neoforge.mods.toml
-val NEOFORGE_VERSION by extra { "21.10.1-beta" }
-val FABRIC_LOADER_VERSION by extra { "0.18.1" }
+val MINECRAFT_VERSION by extra { "1.21.11" } //MUST manually update fabric.mod.json and neoforge.mods.toml
+val NEOFORGE_VERSION by extra { "21.11.0-beta" }
+val FABRIC_LOADER_VERSION by extra { "0.18.2" }
 val FABRIC_API_VERSION by extra { "0.139.4+1.21.11" }
 
 // This value can be set to null to disable Parchment.
