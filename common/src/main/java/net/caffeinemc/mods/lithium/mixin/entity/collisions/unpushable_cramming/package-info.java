@@ -2,7 +2,8 @@
         description = "In chunks with many mobs in ladders a separate list of pushable entities for cramming tests is used",
         depends = {
                 @MixinConfigDependency(dependencyPath = "mixin.chunk.entity_class_groups")
-        }
+        },
+        enabled = false // Broken due to elytra flight making entities pushable, even when they are in a climbable block
 )
 package net.caffeinemc.mods.lithium.mixin.entity.collisions.unpushable_cramming;
 
