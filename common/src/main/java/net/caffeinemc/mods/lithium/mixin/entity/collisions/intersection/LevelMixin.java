@@ -46,7 +46,7 @@ public abstract class LevelMixin implements LevelAccessor {
     }
 
     /**
-     * Use ChunkAwareBlockSweeper for supporting block search
+     * Use ChunkAwareBlockCollisionSweeper for supporting block search
      * Order is already irrelevant since vanilla compares block positions as a tiebreaker.
      * @author jcw780
      */
