@@ -1,12 +1,20 @@
 package net.caffeinemc.mods.lithium.mixin.entity.collisions.intersection;
 
 import net.caffeinemc.mods.lithium.common.entity.LithiumEntityCollisions;
+import net.caffeinemc.mods.lithium.common.entity.movement.ChunkAwareBlockCollisionSweeperPos;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+import java.util.Optional;
 
 /**
  * Replaces collision testing methods with jumps to our own (faster) entity collision testing code.
@@ -35,5 +43,28 @@ public abstract class LevelMixin implements LevelAccessor {
         }
 
         return ret;
+    }
+
+    /**
+     * Use ChunkAwareBlockSweeper for supporting block search
+     * Order is already irrelevant since vanilla compares block positions as a tiebreaker.
+     * @author jcw780
+     */
+    @Override
+    public @NotNull Optional<BlockPos> findSupportingBlock(@NotNull Entity entity, @NotNull AABB aABB) {
+        BlockPos blockPos = null;
+        double d = Double.MAX_VALUE;
+        ChunkAwareBlockCollisionSweeperPos blockCollisions = new ChunkAwareBlockCollisionSweeperPos((Level) (Object) this, entity, aABB, false);
+
+        while (blockCollisions.hasNext()) {
+            BlockPos blockPos2 = blockCollisions.next();
+            double e = blockPos2.distToCenterSqr(entity.position());
+            if (e < d || e == d && (blockPos == null || blockPos.compareTo(blockPos2) < 0)) {
+                blockPos = blockPos2.immutable();
+                d = e;
+            }
+        }
+
+        return Optional.ofNullable(blockPos);
     }
 }
