@@ -1,18 +1,15 @@
 package net.caffeinemc.mods.lithium.mixin.entity.collisions.intersection;
 
 import net.caffeinemc.mods.lithium.common.entity.LithiumEntityCollisions;
-import net.caffeinemc.mods.lithium.common.entity.movement.ChunkAwareBlockCollisionSweeperPos;
+import net.caffeinemc.mods.lithium.common.entity.movement.ChunkAwareBlockCollisionSweeperBlockPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Optional;
 
@@ -54,7 +51,7 @@ public abstract class LevelMixin implements LevelAccessor {
     public @NotNull Optional<BlockPos> findSupportingBlock(@NotNull Entity entity, @NotNull AABB aABB) {
         BlockPos blockPos = null;
         double d = Double.MAX_VALUE;
-        ChunkAwareBlockCollisionSweeperPos blockCollisions = new ChunkAwareBlockCollisionSweeperPos((Level) (Object) this, entity, aABB, false);
+        ChunkAwareBlockCollisionSweeperBlockPos blockCollisions = new ChunkAwareBlockCollisionSweeperBlockPos((Level) (Object) this, entity, aABB, false);
 
         while (blockCollisions.hasNext()) {
             BlockPos blockPos2 = blockCollisions.next();
