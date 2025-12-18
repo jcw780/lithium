@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.lithium.common.entity;
 
 import com.google.common.collect.AbstractIterator;
-import net.caffeinemc.mods.lithium.common.entity.movement.ChunkAwareBlockCollisionSweeper;
+import net.caffeinemc.mods.lithium.common.entity.movement.ChunkAwareBlockCollisionSweeperVoxelShape;
 import net.caffeinemc.mods.lithium.common.util.Pos;
 import net.caffeinemc.mods.lithium.common.world.WorldHelper;
 import net.minecraft.core.BlockPos;
@@ -37,14 +37,14 @@ public class LithiumEntityCollisions {
      * VoxelShape system.
      */
     public static List<VoxelShape> getBlockCollisions(Level world, Entity entity, AABB box) {
-        return new ChunkAwareBlockCollisionSweeper(world, entity, box).collectAll();
+        return new ChunkAwareBlockCollisionSweeperVoxelShape(world, entity, box).collectAll();
     }
 
     /***
      * @return True if the box (possibly that of an entity's) collided with any blocks
      */
     public static boolean doesBoxCollideWithBlocks(Level world, @Nullable Entity entity, AABB box) {
-        final ChunkAwareBlockCollisionSweeper sweeper = new ChunkAwareBlockCollisionSweeper(world, entity, box);
+        final ChunkAwareBlockCollisionSweeperVoxelShape sweeper = new ChunkAwareBlockCollisionSweeperVoxelShape(world, entity, box);
 
         final VoxelShape shape = sweeper.computeNext();
 
@@ -213,7 +213,7 @@ public class LithiumEntityCollisions {
             // that cancels the downwards motion, but usually it is, and this is only for a quick, additional test.
             //TODO: This may lead to the movement attempt not creating any chunk load tickets.
             // Entities and pistons **probably** create these tickets elsewhere anyways. This probably also applies
-            // to usages of ChunkAwareBlockCollisionSweeper and others
+            // to usages of ChunkAwareBlockCollisionSweeperVoxelShape and others
             VoxelShape voxelShape = supportingBlockCollisionShapeProvider.lithium$getCollisionShapeBelow();
             if (voxelShape != null) {
                 return voxelShape;
@@ -238,7 +238,7 @@ public class LithiumEntityCollisions {
         return null;
     }
 
-    public static boolean addLastBlockCollisionIfRequired(boolean addLastBlockCollision, ChunkAwareBlockCollisionSweeper blockCollisionSweeper, List<VoxelShape> list) {
+    public static boolean addLastBlockCollisionIfRequired(boolean addLastBlockCollision, ChunkAwareBlockCollisionSweeperVoxelShape blockCollisionSweeper, List<VoxelShape> list) {
         if (addLastBlockCollision) {
             VoxelShape lastCollision = blockCollisionSweeper.getLastCollision();
             if (lastCollision != null) {

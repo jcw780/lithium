@@ -3,7 +3,7 @@ package net.caffeinemc.mods.lithium.mixin.entity.collisions.movement;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import net.caffeinemc.mods.lithium.common.entity.LithiumEntityCollisions;
-import net.caffeinemc.mods.lithium.common.entity.movement.ChunkAwareBlockCollisionSweeper;
+import net.caffeinemc.mods.lithium.common.entity.movement.ChunkAwareBlockCollisionSweeperVoxelShape;
 import net.caffeinemc.mods.lithium.common.util.collections.LazyList;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
@@ -117,7 +117,7 @@ public abstract class EntityMixin {
         boolean shouldAddWorldBorder = true;
         // For 1-e7 margin behavior correctness, the last block collision must be last of all collisions
         boolean shouldAddLastBlock = true;
-        ChunkAwareBlockCollisionSweeper blockCollisionSweeper = new ChunkAwareBlockCollisionSweeper(world, entity, movementSpace, true);
+        ChunkAwareBlockCollisionSweeperVoxelShape blockCollisionSweeper = new ChunkAwareBlockCollisionSweeperVoxelShape(world, entity, movementSpace, true);
 
         LazyList<VoxelShape> blockCollisions = new LazyList<>(new ArrayList<>(), blockCollisionSweeper);
         ArrayList<VoxelShape> worldBorderAndLastBlockCollision = new ArrayList<>(2);
