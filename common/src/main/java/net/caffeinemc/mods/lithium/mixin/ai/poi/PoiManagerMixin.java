@@ -81,7 +81,7 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
         NearbyPointOfInterestStream poisInRange = new NearbyPointOfInterestStream(
                 typeFilter,
                 status,
-                null,
+                poiRecord -> posFilter.test(poiRecord.getPos()),
                 center,
                 radius,
                 this,
