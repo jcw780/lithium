@@ -4,7 +4,15 @@ import net.caffeinemc.mods.lithium.common.util.Distances;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 
-public record SortedPointOfInterest(PoiRecord poi, int distanceSq) {
+public final class SortedPointOfInterest {
+    private final PoiRecord poi;
+    private final int distanceSq;
+    private boolean consumed;
+
+    public SortedPointOfInterest(PoiRecord poi, int distanceSq) {
+        this.poi = poi;
+        this.distanceSq = distanceSq;
+    }
 
     public SortedPointOfInterest(PoiRecord poi, BlockPos origin) {
         this(poi, Distances.distanceSqInt(poi.getPos(), origin));
@@ -24,5 +32,21 @@ public record SortedPointOfInterest(PoiRecord poi, int distanceSq) {
 
     public int getZ() {
         return this.getPos().getZ();
+    }
+
+    public PoiRecord poi() {
+        return poi;
+    }
+
+    public int distanceSq() {
+        return distanceSq;
+    }
+
+    public boolean isConsumed() {
+        return consumed;
+    }
+
+    public void setConsumed() {
+        this.consumed = true;
     }
 }

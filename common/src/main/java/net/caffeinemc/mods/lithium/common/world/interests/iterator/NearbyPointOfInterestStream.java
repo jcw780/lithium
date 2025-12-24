@@ -215,6 +215,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
     private void collectPoint(PoiRecord point) {
         SortedPointOfInterest poi = new SortedPointOfInterest(point, this.origin);
         this.points.add(poi);
+        this.sortedToIndex = Math.max(0, this.nextPointIndex - 1);
         if (poi.distanceSq() <= this.minCollectedElementDistanceSq) {
             this.updateMinPoint(poi, this.points.size() - 1);
         }
@@ -287,8 +288,6 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
                 if (next.distanceSq() >= this.getMinimumNextPotentialDistanceSq()) {
                     return false;
                 } else {
-                    //Avoid consuming the point twice
-                    this.points.set(this.minCollectedElementIndex, null);
                     this.minCollectedElementIndex = -2;
                     this.minCollectedElementDistanceSq = Integer.MAX_VALUE;
                 }
@@ -310,7 +309,9 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
             }
 
 
-            if (next != null && (this.afterSortingPredicate == null || this.afterSortingPredicate.test(next.poi()))) {
+            if (next != null && !next.isConsumed() && (this.afterSortingPredicate == null || this.afterSortingPredicate.test(next.poi()))) {
+                //Avoid consuming the point twice when it was consumed as the unsorted minimal element already
+                next.setConsumed();
                 action.accept(next.poi());
                 return true; //Progress was made
             }
