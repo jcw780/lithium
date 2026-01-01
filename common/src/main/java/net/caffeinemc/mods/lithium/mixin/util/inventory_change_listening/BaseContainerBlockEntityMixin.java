@@ -11,10 +11,13 @@ import net.caffeinemc.mods.lithium.common.hopper.LithiumStackList;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(BaseContainerBlockEntity.class)
 public abstract class BaseContainerBlockEntityMixin implements InventoryChangeEmitter, Container {
+    @Unique
     ReferenceArraySet<InventoryChangeListener> inventoryChangeListeners = null;
+    @Unique
     ReferenceArraySet<InventoryChangeListener> inventoryHandlingTypeListeners = null;
 
     @Override
@@ -31,11 +34,15 @@ public abstract class BaseContainerBlockEntityMixin implements InventoryChangeEm
     @Override
     public void lithium$emitStackListReplaced() {
         ReferenceArraySet<InventoryChangeListener> listeners = this.inventoryHandlingTypeListeners;
+        this.inventoryHandlingTypeListeners = null; //Prevent concurrent modification
         if (listeners != null && !listeners.isEmpty()) {
             for (InventoryChangeListener inventoryChangeListener : listeners) {
                 inventoryChangeListener.handleStackListReplaced(this);
             }
             listeners.clear();
+        }
+        if (this.inventoryHandlingTypeListeners == null) {
+            this.inventoryHandlingTypeListeners = listeners;
         }
 
         if (this instanceof InventoryChangeListener listener) {
@@ -48,11 +55,15 @@ public abstract class BaseContainerBlockEntityMixin implements InventoryChangeEm
     @Override
     public void lithium$emitRemoved() {
         ReferenceArraySet<InventoryChangeListener> listeners = this.inventoryHandlingTypeListeners;
+        this.inventoryHandlingTypeListeners = null; //Prevent concurrent modification
         if (listeners != null && !listeners.isEmpty()) {
             for (InventoryChangeListener listener : listeners) {
                 listener.lithium$handleInventoryRemoved(this);
             }
             listeners.clear();
+        }
+        if (this.inventoryHandlingTypeListeners == null) {
+            this.inventoryHandlingTypeListeners = listeners;
         }
 
         if (this instanceof InventoryChangeListener listener) {
@@ -62,6 +73,7 @@ public abstract class BaseContainerBlockEntityMixin implements InventoryChangeEm
         this.invalidateChangeListening();
     }
 
+    @Unique
     private void invalidateChangeListening() {
         if (this.inventoryChangeListeners != null) {
             this.inventoryChangeListeners.clear();

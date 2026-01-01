@@ -1,4 +1,6 @@
 name: Release GH+MR+CF
+permissions:
+  contents: write
 
 on:
   workflow_dispatch:
@@ -21,6 +23,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: Publishing
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
