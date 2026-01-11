@@ -336,6 +336,10 @@ Skip checking whether an entity is inside powder snow for movement speed slowdow
 (default: `true`)  
 Access entities faster when accessing a relatively small number of entity sections
   
+### `mixin.entity.framed_maps`
+(default: `true`)  
+Avoid map items in item frames performing inventory scanning quadratic in the number of online players. Instead, scan each player inventory once per map item in item frame only.
+  
 ### `mixin.entity.inactive_navigations`
 (default: `true`)  
 Block updates skip notifying mobs that won't react to the block update anyways  
