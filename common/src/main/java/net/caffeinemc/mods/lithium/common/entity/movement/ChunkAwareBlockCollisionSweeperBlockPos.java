@@ -10,22 +10,17 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 
-final public class ChunkAwareBlockCollisionSweeperBlockPos extends ChunkAwareBlockCollisionSweeper<BlockPos.MutableBlockPos> {
-    private boolean collided;
-    final private BlockPos.MutableBlockPos prevMaxPos = new BlockPos.MutableBlockPos();
+public class ChunkAwareBlockCollisionSweeperBlockPos extends ChunkAwareBlockCollisionSweeper<BlockPos.MutableBlockPos> {
 
     public ChunkAwareBlockCollisionSweeperBlockPos(Level world, @Nullable Entity entity, AABB box) {
         super(world, entity, box, false);
     }
-    public ChunkAwareBlockCollisionSweeperBlockPos(Level world, @Nullable Entity entity, AABB box, boolean hideLastCollision) {
-        super(world, entity, box, hideLastCollision);
-        this.collided = false;
-    }
 
     /**
-     * Advances the sweep forward until finding a block with a box-colliding VoxelShape
+     * Advances the sweep forward until finding a position with a box-colliding block.
      *
-     * @return null if no VoxelShape is left in the area, otherwise the next VoxelShape
+     * @return the next position with a collision as {@link BlockPos.MutableBlockPos}, or {@link #endOfData()} when no collisions
+     * are left
      */
     @Override
     public BlockPos.MutableBlockPos computeNext() {
@@ -80,35 +75,12 @@ final public class ChunkAwareBlockCollisionSweeperBlockPos extends ChunkAwareBlo
             VoxelShape collisionShape = this.context.getCollisionShape(state, this.world, this.pos);
 
             //noinspection ConstantValue
-            if (collisionShape != Shapes.empty() && collisionShape != null /*collisionShape should never be null, but we received crash reports.*/) {
+            if (collisionShape != null && collisionShape != Shapes.empty() /* collisionShape should never be null, but we received crash reports. */) {
                 VoxelShape collidedShape = getCollidedShape(this.box, this.shape, collisionShape, x, y, z);
                 if (collidedShape != null) {
-                    if (z >= this.maxHitZ && (z > this.maxHitZ || y >= this.maxHitY && (y > this.maxHitY || x > this.maxHitX))) {
-                        this.prevMaxPos.set(maxHitX, maxHitY, maxHitZ);
-
-                        this.maxHitX = x;
-                        this.maxHitY = y;
-                        this.maxHitZ = z;
-                        //Always make sure the shape at the maximum position is the last one returned, because
-                        // the last shape has a different 1e-7 behavior (no next shape that clips movement to 0).
-                        // This does affect certain contraptions: https://github.com/CaffeineMC/lithium-fabric/issues/443
-                        this.maxShape = collidedShape;
-                        if (collided) {
-                            return prevMaxPos;
-                        } else {
-                            collided = true;
-                        }
-                    } else {
-                        return pos;
-                    }
+                    return this.pos;
                 }
             }
-        }
-
-        if (!this.hideLastCollision && this.maxShape != null) {
-            this.prevMaxPos.set(maxHitX, maxHitY, maxHitZ);
-            this.maxShape = null;
-            return prevMaxPos;
         }
 
         return this.endOfData();

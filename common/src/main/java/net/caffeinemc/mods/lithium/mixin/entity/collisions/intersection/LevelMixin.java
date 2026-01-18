@@ -51,7 +51,7 @@ public abstract class LevelMixin implements LevelAccessor {
     public @NotNull Optional<BlockPos> findSupportingBlock(@NotNull Entity entity, @NotNull AABB aABB) {
         BlockPos blockPos = null;
         double d = Double.MAX_VALUE;
-        ChunkAwareBlockCollisionSweeperBlockPos blockCollisions = new ChunkAwareBlockCollisionSweeperBlockPos((Level) (Object) this, entity, aABB, false);
+        ChunkAwareBlockCollisionSweeperBlockPos blockCollisions = new ChunkAwareBlockCollisionSweeperBlockPos((Level) (Object) this, entity, aABB);
 
         while (blockCollisions.hasNext()) {
             BlockPos blockPos2 = blockCollisions.next();

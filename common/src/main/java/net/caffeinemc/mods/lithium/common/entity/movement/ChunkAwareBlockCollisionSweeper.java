@@ -53,11 +53,6 @@ public abstract class ChunkAwareBlockCollisionSweeper<T> extends AbstractIterato
     protected int cEndX, cEndZ;
     protected int cX, cY, cZ;
 
-    protected int maxHitX, maxHitY, maxHitZ;
-    protected VoxelShape maxShape;
-    protected final boolean hideLastCollision;
-
-
     protected int cTotalSize;
     protected int cIterated;
 
@@ -84,12 +79,6 @@ public abstract class ChunkAwareBlockCollisionSweeper<T> extends AbstractIterato
         this.cIterated = 0;
         this.cTotalSize = 0;
 
-        this.maxHitX = Integer.MIN_VALUE;
-        this.maxHitY = Integer.MIN_VALUE;
-        this.maxHitZ = Integer.MIN_VALUE;
-        this.maxShape = null;
-        this.hideLastCollision = hideLastCollision;
-
         //decrement as first nextSection call will increment it again
         this.chunkX--;
     }
@@ -97,12 +86,12 @@ public abstract class ChunkAwareBlockCollisionSweeper<T> extends AbstractIterato
     final protected boolean nextSection() {
         do {
             do {
-                //find the coordinates of the next section inside the area expanded by 1 block on all sides
-                //note: this.minX, maxX etc are not expanded, so there are lots of +1 and -1 around.
+                // Find the coordinates of the next section inside the area expanded by 1 block on all sides.
+                // Note: this.minX/maxX/etc are not expanded, so there are lots of +1 and -1 around.
                 if (
                         this.cachedChunk != null &&
                                 this.chunkYIndex < Pos.SectionYIndex.getMaxYSectionIndexInclusive(this.world) &&
-                                this.chunkYIndex < Pos.SectionYIndex.fromBlockCoord(this.world,expandMax(this.maxY))
+                                this.chunkYIndex < Pos.SectionYIndex.fromBlockCoord(this.world, expandMax(this.maxY))
                 ) {
                     this.chunkYIndex++;
                     this.cachedChunkSection = this.cachedChunk.getSections()[this.chunkYIndex];
@@ -115,10 +104,11 @@ public abstract class ChunkAwareBlockCollisionSweeper<T> extends AbstractIterato
                             this.chunkX = Pos.ChunkCoord.fromBlockCoord(expandMin(this.minX));
                             this.chunkZ++;
                         } else {
-                            //Important: No field assignment / mutation happens in the code path to this, so
-                            // consecutive nextSection calls keep returning false, instead of working on invalid data
-                            // Otherwise this additional chunk sections to be iterated wrongly: https://github.com/CaffeineMC/lithium/issues/628
-                            return false; //no more sections to iterate
+                            // Important: No field assignment / mutation happens in the code path to this, so
+                            // consecutive nextSection calls keep returning false, instead of working on invalid data.
+                            // Otherwise, additional chunk sections would be iterated incorrectly:
+                            // https://github.com/CaffeineMC/lithium/issues/628
+                            return false; // no more sections to iterate
                         }
                     }
                     this.cachedChunk = this.world.getChunk(this.chunkX, this.chunkZ, ChunkStatus.FULL, false);
@@ -168,11 +158,12 @@ public abstract class ChunkAwareBlockCollisionSweeper<T> extends AbstractIterato
     }
 
     /**
-     * Checks if the {@param entityShape} or {@param entityBox} intersects the given {@param shape} which is translated
-     * to the given position. This is a very specialized implementation which tries to avoid going through VoxelShape
-     * for full-cube shapes.
+     * Checks if the {@code entityShape} or {@code entityBox} intersects the given {@code shape} which is translated
+     * to the given position. This is a very specialized implementation which tries to avoid going through
+     * {@link VoxelShape} for full-cube shapes.
      *
-     * @return A {@link VoxelShape} which contains the shape representing that which was collided with, otherwise null
+     * @return a {@link VoxelShape} which contains the shape representing that which was collided with, otherwise
+     * {@code null}
      */
     protected static VoxelShape getCollidedShape(AABB entityBox, VoxelShape entityShape, VoxelShape shape, int x, int y, int z) {
         if (shape == Shapes.block()) {
@@ -203,9 +194,9 @@ public abstract class ChunkAwareBlockCollisionSweeper<T> extends AbstractIterato
     }
 
     /**
-     * Checks the cached information whether the {@param chunkY} section of the {@param chunk} has oversized blocks.
+     * Checks the cached information whether the {@code chunkY} section of the {@code chunk} has oversized blocks.
      *
-     * @return Whether there are any oversized blocks in the chunk section.
+     * @return whether there are any oversized blocks in the chunk section
      */
     private static boolean hasChunkSectionOversizedBlocks(ChunkAccess chunk, int chunkY) {
         if (BlockStateFlags.ENABLED) {

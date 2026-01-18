@@ -9,52 +9,44 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-
-import static net.caffeinemc.mods.lithium.common.entity.LithiumEntityCollisions.EPSILON;
 
 /**
  * ChunkAwareBlockCollisionSweeperVoxelShape iterates over blocks in one chunk section at a time. Together with the chunk
  * section keeping track of the amount of oversized blocks inside the number of iterations can often be reduced.
+ * <p>
+ * Since VoxelShape collisions are not fully associative, this collision sweeper ensures the collision at the
+ * greatest position (lexicographically by z, then y, then x) is returned last.
  */
-final public class ChunkAwareBlockCollisionSweeperVoxelShape extends ChunkAwareBlockCollisionSweeper<VoxelShape> {
+public class ChunkAwareBlockCollisionSweeperVoxelShape extends ChunkAwareBlockCollisionSweeper<VoxelShape> {
+
+    private final boolean hideLastCollision;
+    private int maxHitX;
+    private int maxHitY;
+    private int maxHitZ;
+    private VoxelShape maxShape;
 
     public ChunkAwareBlockCollisionSweeperVoxelShape(Level world, @Nullable Entity entity, AABB box) {
-        super(world, entity, box, false);
+        this(world, entity, box, false);
     }
     public ChunkAwareBlockCollisionSweeperVoxelShape(Level world, @Nullable Entity entity, AABB box, boolean hideLastCollision) {
         super(world, entity, box, hideLastCollision);
+
+        this.maxHitX = Integer.MIN_VALUE;
+        this.maxHitY = Integer.MIN_VALUE;
+        this.maxHitZ = Integer.MIN_VALUE;
+        this.maxShape = null;
+        this.hideLastCollision = hideLastCollision;
     }
 
     public VoxelShape getLastCollision() {
         return this.maxShape;
     }
 
-    public Iterator<VoxelShape> getLastCollisionIterator() {
-        return new Iterator<>() {
-            @Override
-            public boolean hasNext() {
-                return hideLastCollision && maxShape != null;
-            }
-
-            @Override
-            public VoxelShape next() {
-                if (this.hasNext()) {
-                    VoxelShape previousMaxShape = maxShape;
-                    maxShape = null;
-                    return previousMaxShape;
-                }
-                throw new NoSuchElementException();
-            }
-        };
-    }
-
     /**
-     * Advances the sweep forward until finding a block with a box-colliding VoxelShape
+     * Advances the sweep forward until finding a block with a box-colliding {@link VoxelShape}.
      *
-     * @return null if no VoxelShape is left in the area, otherwise the next VoxelShape
+     * @return the next collided {@link VoxelShape}, or {@link #endOfData()} when no collisions are left
      */
     @Override
     public VoxelShape computeNext() {
@@ -109,7 +101,7 @@ final public class ChunkAwareBlockCollisionSweeperVoxelShape extends ChunkAwareB
             VoxelShape collisionShape = this.context.getCollisionShape(state, this.world, this.pos);
 
             //noinspection ConstantValue
-            if (collisionShape != Shapes.empty() && collisionShape != null /*collisionShape should never be null, but we received crash reports.*/) {
+            if (collisionShape != null && collisionShape != Shapes.empty() /* collisionShape should never be null, but we received crash reports. */) {
                 VoxelShape collidedShape = getCollidedShape(this.box, this.shape, collisionShape, x, y, z);
                 if (collidedShape != null) {
                     if (z >= this.maxHitZ && (z > this.maxHitZ || y >= this.maxHitY && (y > this.maxHitY || x > this.maxHitX))) {
