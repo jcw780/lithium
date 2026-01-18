@@ -1,4 +1,4 @@
-package net.caffeinemc.mods.lithium.mixin.experimental.entity.projectile_projectile_collisions;
+package net.caffeinemc.mods.lithium.mixin.entity.projectile_projectile_collisions;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

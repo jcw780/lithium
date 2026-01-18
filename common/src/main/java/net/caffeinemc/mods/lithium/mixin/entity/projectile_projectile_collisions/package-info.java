@@ -4,7 +4,7 @@
                 "each other, e.g. ender pearls never collide with ender pearls.",
         depends = @MixinConfigDependency(dependencyPath = "mixin.chunk.entity_class_groups")
 )
-package net.caffeinemc.mods.lithium.mixin.experimental.entity.projectile_projectile_collisions;
+package net.caffeinemc.mods.lithium.mixin.entity.projectile_projectile_collisions;
 
 import net.caffeinemc.gradle.MixinConfigDependency;
 import net.caffeinemc.gradle.MixinConfigOption;

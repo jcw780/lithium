@@ -346,6 +346,12 @@ Block updates skip notifying mobs that won't react to the block update anyways
 Requirements:
 - `mixin.util.data_storage=true`  
   
+### `mixin.entity.projectile_projectile_collisions`
+(default: `true`)  
+Optimize huge stacks of projectiles (e.g. 1000+ ender pearls in a single statis chamber) by skipping projectile-projectile collision checks for projectile types that are unable to collide with each other, e.g. ender pearls never collide with ender pearls.  
+Requirements:
+- `mixin.chunk.entity_class_groups=true`  
+  
 ### `mixin.entity.replace_entitytype_predicates`
 (default: `true`)  
 Accesses entities of the correct type directly instead of accessing all nearby entities and filtering them afterwards
@@ -425,12 +431,6 @@ Requirements:
 - `mixin.util.accessors=true`
 - `mixin.util.entity_collection_replacement=true`
 - `mixin.util.item_component_and_count_tracking=true`  
-  
-### `mixin.experimental.entity.projectile_projectile_collisions`
-(default: `true`)  
-Optimize huge stacks of projectiles (e.g. 1000+ ender pearls in a single statis chamber) by skipping projectile-projectile collision checks for projectile types that are unable to collide with each other, e.g. ender pearls never collide with ender pearls.  
-Requirements:
-- `mixin.chunk.entity_class_groups=true`  
   
 ### `mixin.gen`
 (default: `true`)  
