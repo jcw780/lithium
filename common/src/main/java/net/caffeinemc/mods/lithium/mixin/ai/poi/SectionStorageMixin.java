@@ -2,6 +2,7 @@ package net.caffeinemc.mods.lithium.mixin.ai.poi;
 
 import com.google.common.collect.AbstractIterator;
 import com.mojang.serialization.Codec;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.caffeinemc.mods.lithium.common.util.Distances;
@@ -13,15 +14,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.entity.ai.village.poi.PoiSection;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
 import net.minecraft.world.level.chunk.storage.SectionStorage;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
-import org.spongepowered.asm.mixin.Shadow;
+import org.jspecify.annotations.Nullable;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -36,7 +36,7 @@ import java.util.function.Predicate;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType") // We don't get a choice, this is Minecraft's doing!
 @Mixin(SectionStorage.class)
-public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectionExtended<R> {
+public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSectionExtended<R, P> {
     @Mutable
     @Shadow
     @Final
@@ -194,5 +194,29 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
     @Override
     public int lithium$getChunkYMaxInclusive() {
         return Pos.SectionYCoord.getMaxYSectionInclusive(this.levelHeightAccessor);
+    }
+
+    @Overwrite
+    private void unpackChunk(ChunkPos chunkPos,
+                             @Nullable SectionStorage.PackedChunk<P> packedChunk) {
+        if (packedChunk == null) {
+            for (int i = this.levelHeightAccessor.getMinSectionY(); i <= this.levelHeightAccessor.getMaxSectionY(); i++) {
+                this.storage.put(getKey(chunkPos, i), Optional.empty());
+            }
+        } else {
+            boolean bl = packedChunk.versionChanged();
+
+            for (int j = this.levelHeightAccessor.getMinSectionY(); j <= this.levelHeightAccessor.getMaxSectionY(); j++) {
+                long l = getKey(chunkPos, j);
+                Optional<R> optional = Optional.ofNullable(packedChunk.sectionsByY.get(j)).map(object -> this.unpacker.apply(object, (Runnable)() -> this.setDirty(l)));
+                this.storage.put(l, optional);
+                optional.ifPresent(object -> {
+                    this.onSectionLoad(l);
+                    if (bl) {
+                        this.setDirty(l);
+                    }
+                });
+            }
+        }
     }
 }
