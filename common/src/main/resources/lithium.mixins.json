@@ -34,6 +34,8 @@
     "ai.task.memory_change_counting.BehaviorMixin",
     "ai.task.memory_change_counting.BrainMixin",
     "ai.task.replace_streams.GateBehaviorMixin",
+    "ai.task.replace_streams.RunningPolicyRunOneMixin",
+    "ai.task.replace_streams.RunningPolicyTryAllMixin",
     "ai.task.replace_streams.ShufflingListMixin",
     "ai.task.run.long_jump_weighted_choice.LongJumpToRandomPosMixin",
     "ai.useless_sensors.BrainAccessor",
