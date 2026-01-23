@@ -1,20 +1,15 @@
-package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor;
+package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor_shrieker;
 
 import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk_sensor.ListeningVibrationData;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.level.gameevent.vibrations.VibrationInfo;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 @Mixin(VibrationSystem.Listener.class)
 public abstract class VibrationSystemListenerMixin implements ListeningVibrationData {

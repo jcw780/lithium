@@ -1,4 +1,4 @@
-package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor;
+package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor_shrieker;
 
 import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
 import net.minecraft.core.BlockPos;

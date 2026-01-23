@@ -1,12 +1,10 @@
-package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor;
+package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor_shrieker;
 
 import net.caffeinemc.mods.lithium.common.block.entity.SetChangedHandlingBlockEntity;
 import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
 import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk_sensor.ListeningVibrationData;
 import net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.WrappedBlockEntityTickInvokerAccessor;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.SculkSensorBlockEntity;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
@@ -15,10 +13,8 @@ import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SculkSensorBlockEntity.class)
