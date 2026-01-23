@@ -662,6 +662,10 @@ BlockEntity sleeping for inactive furnaces
 (default: `true`)  
 BlockEntity sleeping for locked hoppers
   
+### `mixin.world.block_entity_ticking.sleeping.sculk_sensor`
+(default: `true`)  
+BlockEntity sleeping for inactive sculk sensors
+  
 ### `mixin.world.block_entity_ticking.sleeping.shulker_box`
 (default: `true`)  
 BlockEntity sleeping for closed shulker boxes
