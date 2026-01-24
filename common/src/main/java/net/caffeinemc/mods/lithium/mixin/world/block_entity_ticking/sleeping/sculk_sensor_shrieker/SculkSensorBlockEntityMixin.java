@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor_shrieker;
 
 import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
-import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk.ListeningVibrationData;
+import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk.GameEventListenerWithCallback;
 import net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.WrappedBlockEntityTickInvokerAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -52,7 +52,7 @@ public abstract class SculkSensorBlockEntityMixin implements SleepingBlockEntity
 
     @Inject(method = "<init>(Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V", at = @At("RETURN"))
     private void setVibrationListenerListener(BlockEntityType blockEntityType, BlockPos blockPos, BlockState blockState, CallbackInfo ci) {
-        ((ListeningVibrationData) this.vibrationListener).lithium$setCurrentVibrationUpdateListener(this::wakeUpNow);
+        ((GameEventListenerWithCallback) this.vibrationListener).lithium$setGameEventCallback(this::wakeUpNow);
     }
 
     // This is to detect modification by commands

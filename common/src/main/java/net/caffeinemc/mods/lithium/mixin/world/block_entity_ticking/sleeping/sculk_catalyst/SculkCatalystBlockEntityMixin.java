@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_catalyst;
 
 import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
-import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk.ListeningSculkSpreader;
+import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk.GameEventListenerWithCallback;
 import net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.WrappedBlockEntityTickInvokerAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -51,7 +51,7 @@ public abstract class SculkCatalystBlockEntityMixin implements SleepingBlockEnti
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void addCatalystListenerCallback(BlockPos blockPos, BlockState blockState, CallbackInfo ci) {
-        ((ListeningSculkSpreader) this.catalystListener.getSculkSpreader()).lithium$setCurrentVibrationUpdateListener(this::wakeUpNow);
+        ((GameEventListenerWithCallback) this.catalystListener.getSculkSpreader()).lithium$setGameEventCallback(this::wakeUpNow);
     }
 
     @Inject(method = "serverTick", at = @At("RETURN"))

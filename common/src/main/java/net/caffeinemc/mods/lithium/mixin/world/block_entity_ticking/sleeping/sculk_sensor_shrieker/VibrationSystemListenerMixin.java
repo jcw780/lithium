@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor_shrieker;
 
-import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk.ListeningVibrationData;
+import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk.GameEventListenerWithCallback;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -13,12 +13,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(VibrationSystem.Listener.class)
-public abstract class VibrationSystemListenerMixin implements ListeningVibrationData {
+public abstract class VibrationSystemListenerMixin implements GameEventListenerWithCallback {
     @Unique
     private Runnable listener;
 
     @Override
-    public void lithium$setCurrentVibrationUpdateListener(Runnable listener) {
+    public void lithium$setGameEventCallback(Runnable listener) {
         this.listener = listener;
     }
 
