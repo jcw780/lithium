@@ -225,6 +225,8 @@
     "world.block_entity_ticking.sleeping.crafter.CrafterBlockEntityMixin",
     "world.block_entity_ticking.sleeping.furnace.AbstractFurnaceBlockEntityMixin",
     "world.block_entity_ticking.sleeping.hopper.HopperBlockEntityMixin",
+    "world.block_entity_ticking.sleeping.sculk_catalyst.CatalystListenerMixin",
+    "world.block_entity_ticking.sleeping.sculk_catalyst.SculkCatalystBlockEntityMixin",
     "world.block_entity_ticking.sleeping.sculk_sensor_shrieker.CalibratedSculkSensorBlockMixin",
     "world.block_entity_ticking.sleeping.sculk_sensor_shrieker.SculkSensorBlockEntityMixin",
     "world.block_entity_ticking.sleeping.sculk_sensor_shrieker.SculkSensorBlockMixin",

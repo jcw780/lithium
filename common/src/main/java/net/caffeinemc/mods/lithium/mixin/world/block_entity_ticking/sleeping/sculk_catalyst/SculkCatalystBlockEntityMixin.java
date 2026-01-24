@@ -1,33 +1,33 @@
-package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor_shrieker;
+package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_catalyst;
 
 import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
-import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk.ListeningVibrationData;
+import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk.ListeningCatalystListener;
 import net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.WrappedBlockEntityTickInvokerAccessor;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.SculkSensorBlockEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.SculkCatalystBlockEntity;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 import net.minecraft.world.level.storage.ValueInput;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(SculkSensorBlockEntity.class)
-public abstract class SculkSensorBlockEntityMixin implements SleepingBlockEntity, VibrationSystem {
+@Mixin(SculkCatalystBlockEntity.class)
+public abstract class SculkCatalystBlockEntityMixin implements SleepingBlockEntity {
+    private WrappedBlockEntityTickInvokerAccessor tickWrapper = null;
+    private TickingBlockEntity sleepingTicker = null;
+
     @Shadow
-    private VibrationSystem.Data vibrationData;
+    public abstract SculkCatalystBlockEntity.CatalystListener getListener();
 
     @Shadow
     @Final
-    private Listener vibrationListener;
-
-    private WrappedBlockEntityTickInvokerAccessor tickWrapper = null;
-    private TickingBlockEntity sleepingTicker = null;
+    private SculkCatalystBlockEntity.CatalystListener catalystListener;
 
     @Override
     public WrappedBlockEntityTickInvokerAccessor lithium$getTickWrapper() {
@@ -50,15 +50,22 @@ public abstract class SculkSensorBlockEntityMixin implements SleepingBlockEntity
         this.sleepingTicker = sleepingTicker;
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V", at = @At("RETURN"))
-    private void setVibrationListenerListener(BlockEntityType blockEntityType, BlockPos blockPos, BlockState blockState, CallbackInfo ci) {
-        ((ListeningVibrationData) this.vibrationListener).lithium$setCurrentVibrationUpdateListener(this::wakeUpNow);
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void addCatalystListenerCallback(BlockPos blockPos, BlockState blockState, CallbackInfo ci) {
+        ((ListeningCatalystListener) this.catalystListener).lithium$setCurrentVibrationUpdateListener(this::wakeUpNow);
+    }
+
+    @Inject(method = "serverTick", at = @At("RETURN"))
+    private static void sleepIfNoCursors(Level level, BlockPos blockPos, BlockState blockState, SculkCatalystBlockEntity sculkCatalystBlockEntity, CallbackInfo ci) {
+        if(sculkCatalystBlockEntity.getListener().getSculkSpreader().getCursors().isEmpty()) {
+            ((SleepingBlockEntity) sculkCatalystBlockEntity).lithium$startSleeping();
+        }
     }
 
     // This is to detect modification by commands
     @Inject(method = "loadAdditional", at=@At("RETURN"))
     private void wakeupIfLoadedWithData(ValueInput valueInput, CallbackInfo ci) {
-        if (vibrationData.getSelectionStrategy().chosenCandidate(Long.MAX_VALUE).isPresent()) {
+        if (!this.getListener().getSculkSpreader().getCursors().isEmpty()) {
             this.wakeUpNow();
         }
     }

@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor_shrieker;
 
 import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
-import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk_sensor.ListeningVibrationData;
+import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk.ListeningVibrationData;
 import net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.WrappedBlockEntityTickInvokerAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.SculkShriekerBlockEntity;
