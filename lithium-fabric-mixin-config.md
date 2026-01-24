@@ -664,7 +664,7 @@ BlockEntity sleeping for locked hoppers
   
 ### `mixin.world.block_entity_ticking.sleeping.sculk_sensor_shrieker`
 (default: `true`)  
-BlockEntity sleeping for inactive sculk sensors
+BlockEntity sleeping for inactive sculk sensors and sculk shriekers
   
 ### `mixin.world.block_entity_ticking.sleeping.shulker_box`
 (default: `true`)  

@@ -55,6 +55,7 @@ public abstract class SculkSensorBlockEntityMixin implements SleepingBlockEntity
         ((ListeningVibrationData) this.vibrationListener).lithium$setCurrentVibrationUpdateListener(this::wakeUpNow);
     }
 
+    // This is to detect modification by commands
     @Inject(method = "loadAdditional", at=@At("RETURN"))
     private void wakeupIfLoadedWithData(ValueInput valueInput, CallbackInfo ci) {
         if (vibrationData.getSelectionStrategy().chosenCandidate(Long.MAX_VALUE).isPresent()) {
