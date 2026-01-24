@@ -24,6 +24,8 @@ public abstract class VibrationSystemListenerMixin implements GameEventListenerW
 
     @Inject(method = "handleGameEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/gameevent/vibrations/VibrationSystem$Listener;scheduleVibration(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/gameevent/vibrations/VibrationSystem$Data;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/gameevent/GameEvent$Context;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)V"))
     private void onCurrentVibrationUpdate(ServerLevel serverLevel, Holder<GameEvent> holder, GameEvent.Context context, Vec3 vec3, CallbackInfoReturnable<Boolean> cir) {
-        this.listener.run();
+        if (this.listener != null) {
+            this.listener.run();
+        }
     }
 }

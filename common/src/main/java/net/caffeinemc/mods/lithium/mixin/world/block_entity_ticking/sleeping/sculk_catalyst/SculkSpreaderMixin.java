@@ -14,7 +14,9 @@ public class SculkSpreaderMixin implements GameEventListenerWithCallback {
 
     @Inject(method = "addCursors", at = @At("RETURN"))
     public void listenToCursorAddition(BlockPos blockPos, int i, CallbackInfo ci) {
-        this.listener.run();
+        if (this.listener != null) {
+            this.listener.run();
+        }
     }
 
     @Override
