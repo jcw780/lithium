@@ -1,6 +1,5 @@
 package net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.sculk_sensor_shrieker;
 
-import net.caffeinemc.mods.lithium.common.block.entity.SetChangedHandlingBlockEntity;
 import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
 import net.caffeinemc.mods.lithium.common.block.entity.sleeping_sculk_sensor.ListeningVibrationData;
 import net.caffeinemc.mods.lithium.mixin.world.block_entity_ticking.sleeping.WrappedBlockEntityTickInvokerAccessor;
@@ -10,6 +9,7 @@ import net.minecraft.world.level.block.entity.SculkSensorBlockEntity;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
+import net.minecraft.world.level.storage.ValueInput;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SculkSensorBlockEntity.class)
-public abstract class SculkSensorBlockEntityMixin implements SleepingBlockEntity, SetChangedHandlingBlockEntity, VibrationSystem {
+public abstract class SculkSensorBlockEntityMixin implements SleepingBlockEntity, VibrationSystem {
     @Shadow
     private VibrationSystem.Data vibrationData;
 
@@ -55,10 +55,10 @@ public abstract class SculkSensorBlockEntityMixin implements SleepingBlockEntity
         ((ListeningVibrationData) this.vibrationListener).lithium$setCurrentVibrationUpdateListener(this::wakeUpNow);
     }
 
-    @Override
-    public void lithium$handleSetChanged() {
-        if (this.vibrationData.getCurrentVibration() == null) {
-            this.lithium$startSleeping();
+    @Inject(method = "loadAdditional", at=@At("RETURN"))
+    private void wakeupIfLoadedWithData(ValueInput valueInput, CallbackInfo ci) {
+        if (vibrationData.getSelectionStrategy().chosenCandidate(Long.MAX_VALUE).isPresent()) {
+            this.wakeUpNow();
         }
     }
 }
