@@ -6,6 +6,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.CalibratedSculkSensorBlock;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,7 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class CalibratedSculkSensorBlockMixin {
     @Inject(method = {"method_49813"}, at = @At(value = "RETURN"))
     private static void checkSleep(Level level, BlockPos blockPos, BlockState blockState, CalibratedSculkSensorBlockEntity calibratedSculkSensorBlockEntity, CallbackInfo ci) {
-        if (calibratedSculkSensorBlockEntity.getVibrationData().getCurrentVibration() == null) {
+        final VibrationSystem.Data vibrationData = calibratedSculkSensorBlockEntity.getVibrationData();
+        if (vibrationData.getCurrentVibration() == null &&
+                vibrationData.getSelectionStrategy().chosenCandidate(Long.MAX_VALUE).isEmpty()) {
             ((SleepingBlockEntity) calibratedSculkSensorBlockEntity).lithium$startSleeping();
         }
     }

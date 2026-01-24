@@ -6,6 +6,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SculkShriekerBlock;
 import net.minecraft.world.level.block.entity.SculkShriekerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,7 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class SculkShriekerBlockMixin {
     @Inject(method = {"method_42317"}, at = @At(value = "RETURN"))
     private static void checkSleep(Level level, BlockPos blockPos, BlockState blockState, SculkShriekerBlockEntity sculkShriekerBlockEntity, CallbackInfo ci) {
-        if (sculkShriekerBlockEntity.getVibrationData().getCurrentVibration() == null) {
+        final VibrationSystem.Data vibrationData = sculkShriekerBlockEntity.getVibrationData();
+        if (vibrationData.getCurrentVibration() == null &&
+                vibrationData.getSelectionStrategy().chosenCandidate(Long.MAX_VALUE).isEmpty()) {
             ((SleepingBlockEntity) sculkShriekerBlockEntity).lithium$startSleeping();
         }
     }
