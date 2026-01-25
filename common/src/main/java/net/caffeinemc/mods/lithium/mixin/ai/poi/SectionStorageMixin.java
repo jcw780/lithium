@@ -251,17 +251,22 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     public Optional<R> get(long l) { // Has to be public even though it is protected in vanilla for some reason
         // For some reason PoiManager::isVillageCenter updates called from SectionTracker::getComputedLevel can be out of bounds
         final int columnIndex = Pos.SectionYIndex.fromSectionCoord(this.levelHeightAccessor, SectionPos.y(l));
+
+        //Out of range sections will not be in the storage
         if (columnIndex < 0 || columnIndex >= Pos.SectionYIndex.getNumYSections(this.levelHeightAccessor)) {
-            return Optional.empty();
+            return null;
         }
 
         final int x = SectionPos.x(l);
         final int z = SectionPos.z(l);
         final BitSet flags = this.columns.get(ChunkPos.asLong(x, z));
+
+        //If there are no flags, then the chunk was never loaded - so the section will not be in storage
         if (flags == null) {
-            return Optional.empty();
+            return null;
         }
 
+        //Sections without POI sections are stored as Optional.empty() in vanilla
         if (!flags.get(columnIndex)) {
             return Optional.empty();
         }
@@ -272,6 +277,8 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     /**
      * @author jcw780
      * @reason Match vanilla returns after removal of Optional.empty() sections from storage
+     * Warning: This has more checks than vanilla to match vanilla behavior.
+     * Please use other methods if it is performance sensitive.
      */
     @Overwrite
     public Optional<R> getOrLoad(long l) {
@@ -279,18 +286,11 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
             return Optional.empty();
         } else {
             ChunkPos chunkPos = SectionPos.of(l).chunk();
-            BitSet column = this.columns.get(chunkPos.toLong());
-
-            if (column == null) {
-                this.unpackChunk(chunkPos);
-                column = this.columns.get(chunkPos.toLong());
-                if (column == null) {
-                    throw new IllegalStateException("Column failed to generate for chunk");
-                }
-            }
+            BitSet column = this.lithium$getNonEmptyPOISections(chunkPos.x, chunkPos.z);
 
             final int columnIndex = Pos.SectionYIndex.fromSectionCoord(this.levelHeightAccessor, SectionPos.y(l));
 
+            //Sections without POI sections are stored as Optional.empty() in vanilla
             if (!column.get(columnIndex)) {
                 return Optional.empty();
             }
