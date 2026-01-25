@@ -1,8 +1,13 @@
 package net.caffeinemc.mods.lithium.mixin.ai.poi;
 
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.DynamicOps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.caffeinemc.mods.lithium.common.util.Distances;
@@ -10,26 +15,27 @@ import net.caffeinemc.mods.lithium.common.util.Pos;
 import net.caffeinemc.mods.lithium.common.util.collections.ListeningLong2ObjectOpenHashMap;
 import net.caffeinemc.mods.lithium.common.util.functions.FunLongAnd5;
 import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
-import net.minecraft.world.entity.ai.village.poi.PoiSection;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
 import net.minecraft.world.level.chunk.storage.SectionStorage;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -42,8 +48,8 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     @Final
     private Long2ObjectMap<Optional<R>> storage;
 
-    @Shadow
-    protected abstract Optional<R> get(long pos);
+    //@Shadow
+    //protected abstract Optional<R> get(long pos);
 
     @Shadow
     @Final
@@ -51,6 +57,21 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
 
     @Shadow
     protected abstract void unpackChunk(ChunkPos chunkPos);
+
+    @Shadow
+    @Final
+    private Codec<P> codec;
+
+    @Shadow
+    @Final
+    static Logger LOGGER;
+
+    @Shadow
+    @Final
+    private Function<R, P> packer;
+
+    @Shadow
+    protected abstract boolean outsideStoredRange(long l);
 
     private Long2ObjectOpenHashMap<BitSet> columns;
 
@@ -196,27 +217,133 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
         return Pos.SectionYCoord.getMaxYSectionInclusive(this.levelHeightAccessor);
     }
 
-    @Overwrite
-    private void unpackChunk(ChunkPos chunkPos,
-                             @Nullable SectionStorage.PackedChunk<P> packedChunk) {
-        if (packedChunk == null) {
-            for (int i = this.levelHeightAccessor.getMinSectionY(); i <= this.levelHeightAccessor.getMaxSectionY(); i++) {
-                this.storage.put(getKey(chunkPos, i), Optional.empty());
-            }
-        } else {
-            boolean bl = packedChunk.versionChanged();
+    /**
+     * These mixins are to remove Optional.empty() sections stored in the storage hashmap.
+     * This is done to mitigate a memory leak in vanilla as these are never unloaded. The long keys will eventually
+     * build up as more chunks have been loaded.
+     * The new logic utilizes the Lithium columns lookup for populated sections instead of Optional.empty() stored
+     * instead the storage hashmap.
+     */
+    @Inject(method = "unpackChunk(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/chunk/storage/SectionStorage$PackedChunk;)V", at= @At(value = "HEAD"))
+    private void initializeColumnBitset(ChunkPos chunkPos, @Coerce Object ignored, CallbackInfo ci) {
+        final long pos = chunkPos.toLong();
+        BitSet flags = this.columns.get(pos);
 
-            for (int j = this.levelHeightAccessor.getMinSectionY(); j <= this.levelHeightAccessor.getMaxSectionY(); j++) {
-                long l = getKey(chunkPos, j);
-                Optional<R> optional = Optional.ofNullable(packedChunk.sectionsByY.get(j)).map(object -> this.unpacker.apply(object, (Runnable)() -> this.setDirty(l)));
-                this.storage.put(l, optional);
-                optional.ifPresent(object -> {
-                    this.onSectionLoad(l);
-                    if (bl) {
-                        this.setDirty(l);
-                    }
-                });
-            }
+        if (flags == null) {
+            this.columns.put(pos, new BitSet(Pos.SectionYIndex.getNumYSections(this.levelHeightAccessor)));
         }
     }
+
+    @Redirect(method = "unpackChunk(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/chunk/storage/SectionStorage$PackedChunk;)V", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;put(JLjava/lang/Object;)Ljava/lang/Object;"))
+    private Object removeOptionalEmpties(Long2ObjectMap instance, long l, Object o) {
+        if(o.equals(Optional.empty())) {
+            return null;
+        }
+        return instance.put(l, o);
+    }
+
+    /**
+     * @author jcw780
+     * @reason Match vanilla returns after removal of Optional.empty() sections from storage
+     */
+    @Overwrite
+    @Nullable
+    public Optional<R> get(long l) { // Has to be public even though it is protected in vanilla for some reason
+        // For some reason PoiManager::isVillageCenter updates called from SectionTracker::getComputedLevel can be out of bounds
+        final int columnIndex = Pos.SectionYIndex.fromSectionCoord(this.levelHeightAccessor, SectionPos.y(l));
+        if (columnIndex < 0 || columnIndex >= Pos.SectionYIndex.getNumYSections(this.levelHeightAccessor)) {
+            return Optional.empty();
+        }
+
+        final int x = SectionPos.x(l);
+        final int z = SectionPos.z(l);
+        final BitSet flags = this.columns.get(ChunkPos.asLong(x, z));
+        if (flags == null) {
+            return Optional.empty();
+        }
+
+        if (!flags.get(columnIndex)) {
+            return Optional.empty();
+        }
+
+        return this.storage.get(l);
+    }
+
+    /**
+     * @author jcw780
+     * @reason Match vanilla returns after removal of Optional.empty() sections from storage
+     */
+    @Overwrite
+    public Optional<R> getOrLoad(long l) {
+        if (this.outsideStoredRange(l)) {
+            return Optional.empty();
+        } else {
+            ChunkPos chunkPos = SectionPos.of(l).chunk();
+            BitSet column = this.columns.get(chunkPos.toLong());
+
+            if (column == null) {
+                this.unpackChunk(chunkPos);
+                column = this.columns.get(chunkPos.toLong());
+                if (column == null) {
+                    throw new IllegalStateException("Column failed to generate for chunk");
+                }
+            }
+
+            final int columnIndex = Pos.SectionYIndex.fromSectionCoord(this.levelHeightAccessor, SectionPos.y(l));
+
+            if (!column.get(columnIndex)) {
+                return Optional.empty();
+            }
+
+            Optional<R> optional = this.storage.get(l);
+            if (optional == null) {
+                throw Util.pauseInIde(new IllegalStateException());
+            } else {
+                return optional;
+            }
+
+        }
+    }
+
+    /**
+     * @author jcw780
+     * @reason Use Lithium columns look up in write chunk
+     */
+    @Overwrite
+    private <T> com.mojang.serialization.Dynamic<T> writeChunk(ChunkPos chunkPos, DynamicOps<T> dynamicOps) {
+        Map<T, T> map = Maps.<T, T>newHashMap();
+        final int chunkX = chunkPos.x;
+        final int chunkZ = chunkPos.z;
+        BitSet sectionsWithPOI = this.columns.get(chunkPos.toLong());
+
+        if (sectionsWithPOI != null) {
+            int nextBit = sectionsWithPOI.nextSetBit(0);
+            while (nextBit >= 0) {
+                final int chunkY = Pos.SectionYCoord.fromSectionIndex(this.levelHeightAccessor, nextBit);
+                Optional<R> next = this.storage.get(SectionPos.asLong(chunkX, chunkY, chunkZ));
+
+                // Find and advance to the next set bit
+                nextBit = sectionsWithPOI.nextSetBit(nextBit + 1);
+
+                if (next.isPresent()) {
+                    DataResult<T> dataResult = this.codec.encodeStart(dynamicOps, (P)this.packer.apply(next.get()));
+                    String string = Integer.toString(chunkY);
+                    dataResult.resultOrPartial(LOGGER::error).ifPresent(object -> map.put(dynamicOps.createString(string), object));
+                }
+            }
+        }
+
+        return new Dynamic<>(
+                dynamicOps,
+                dynamicOps.createMap(
+                        ImmutableMap.of(
+                                dynamicOps.createString("Sections"),
+                                dynamicOps.createMap(map),
+                                dynamicOps.createString("DataVersion"),
+                                dynamicOps.createInt(SharedConstants.getCurrentVersion().dataVersion().version())
+                        )
+                )
+        );
+    }
+
 }
