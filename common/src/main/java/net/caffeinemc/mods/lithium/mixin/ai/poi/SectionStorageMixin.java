@@ -42,7 +42,7 @@ import java.util.function.Predicate;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType") // We don't get a choice, this is Minecraft's doing!
 @Mixin(SectionStorage.class)
-public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSectionExtended<R, P> {
+public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSectionExtended<R> {
     @Mutable
     @Shadow
     @Final

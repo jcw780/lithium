@@ -8,7 +8,7 @@ import java.util.BitSet;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public interface RegionBasedStorageSectionExtended<R, P> {
+public interface RegionBasedStorageSectionExtended<R> {
 
     <S, T, U> U lithium$getFirstInRangeInChunkColumn(int chunkX, int chunkZ,
                                                      long deltaYSqMargin,

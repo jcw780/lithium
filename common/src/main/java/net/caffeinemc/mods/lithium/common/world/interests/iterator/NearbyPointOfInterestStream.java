@@ -92,7 +92,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
 
     };
 
-    private final RegionBasedStorageSectionExtended<PoiSection, PoiSection.Packed> storage;
+    private final RegionBasedStorageSectionExtended<PoiSection> storage;
     private final Predicate<Holder<PoiType>> typeSelector;
     private final PoiManager.Occupancy occupationStatus;
 
@@ -142,7 +142,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
             PoiManager.Occupancy status,
             @Nullable Predicate<PoiRecord> afterSortingPredicate,
             BlockPos origin, int radius,
-            RegionBasedStorageSectionExtended<PoiSection, PoiSection.Packed> storage,
+            RegionBasedStorageSectionExtended<PoiSection> storage,
             BiPredicate<BlockPos, BlockPos> distanceLimit,
             Comparator<SortedPointOfInterest> sortOrder
     ) {

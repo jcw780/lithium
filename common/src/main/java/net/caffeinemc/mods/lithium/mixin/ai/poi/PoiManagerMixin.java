@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @Mixin(PoiManager.class)
-public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSection.Packed> implements PointOfInterestStorageExtended, RegionBasedStorageSectionExtended<PoiSection, PoiSection.Packed> {
+public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSection.Packed> implements PointOfInterestStorageExtended, RegionBasedStorageSectionExtended<PoiSection> {
 
 
     public PoiManagerMixin(SimpleRegionStorage simpleRegionStorage, Codec<PoiSection.Packed> codec, Function<PoiSection, PoiSection.Packed> function, BiFunction<PoiSection.Packed, Runnable, PoiSection> biFunction, Function<Runnable, PoiSection> function2, RegistryAccess registryAccess, ChunkIOErrorReporter chunkIOErrorReporter, LevelHeightAccessor levelHeightAccessor) {

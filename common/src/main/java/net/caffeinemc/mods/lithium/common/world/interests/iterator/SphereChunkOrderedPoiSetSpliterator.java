@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class SphereChunkOrderedPoiSetSpliterator extends Spliterators.AbstractSpliterator<PoiRecord> {
-    private final RegionBasedStorageSectionExtended<PoiSection, PoiSection.Packed> storage;
+    private final RegionBasedStorageSectionExtended<PoiSection> storage;
     private final int chunkYMin;
 
     private final int chunkLimit;
@@ -40,7 +40,7 @@ public class SphereChunkOrderedPoiSetSpliterator extends Spliterators.AbstractSp
     int nextPoiSectionIndex;
     Iterator<PoiRecord> sectionIterator;
 
-    public SphereChunkOrderedPoiSetSpliterator(int radius, BlockPos origin, RegionBasedStorageSectionExtended<PoiSection, PoiSection.Packed> storage, Predicate<Holder<PoiType>> typeFilter, PoiManager.Occupancy status) {
+    public SphereChunkOrderedPoiSetSpliterator(int radius, BlockPos origin, RegionBasedStorageSectionExtended<PoiSection> storage, Predicate<Holder<PoiType>> typeFilter, PoiManager.Occupancy status) {
         super((long) ((origin.getX() + radius + 1 >> 4) - (origin.getX() - radius - 1 >> 4) + 1) * ((origin.getZ() + radius + 1 >> 4) - (origin.getZ() - radius - 1 >> 4) + 1), Spliterator.ORDERED);
         this.storage = storage;
         this.chunkYMin = this.storage.lithium$getChunkYMin();
