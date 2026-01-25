@@ -3,6 +3,7 @@ package net.caffeinemc.mods.lithium.mixin.ai.poi.fast_portals;
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
@@ -17,12 +18,11 @@ import net.minecraft.world.level.chunk.storage.SectionStorage;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import org.spongepowered.asm.mixin.*;
 
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Mixin(PoiManager.class)
-public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSection.Packed> {
+public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSection.Packed> implements RegionBasedStorageSectionExtended<PoiSection> {
 
     @Shadow
     @Final
@@ -61,34 +61,29 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
         int chunkZ = SectionPos.blockToSectionCoord(pos.getZ());
 
         int chunkRadius = Math.floorDiv(radius, 16);
-        int maxHeight = this.levelHeightAccessor.getMaxSectionY() - 1;
-        int minHeight = this.levelHeightAccessor.getMinSectionY();
 
         for (int x = chunkX - chunkRadius, xMax = chunkX + chunkRadius; x <= xMax; x++) {
             for (int z = chunkZ - chunkRadius, zMax = chunkZ + chunkRadius; z <= zMax; z++) {
-                lithium$preloadChunkIfAnySubChunkContainsPOI(worldView, x, z, minHeight, maxHeight);
+                lithium$preloadChunkIfAnySubChunkContainsPOI(worldView, x, z);
             }
         }
         this.preloadedCenterChunks.add(chunkPos);
     }
 
     @Unique
-    private void lithium$preloadChunkIfAnySubChunkContainsPOI(LevelReader worldView, int x, int z, int minSubChunk, int maxSubChunk) {
+    private void lithium$preloadChunkIfAnySubChunkContainsPOI(LevelReader worldView, int x, int z) {
         ChunkPos chunkPos = new ChunkPos(x, z);
         long longChunkPos = chunkPos.toLong();
 
         if (this.loadedChunks.contains(longChunkPos)) return;
 
-        for (int y = minSubChunk; y <= maxSubChunk; y++) {
-            Optional<PoiSection> section = this.getOrLoad(SectionPos.asLong(x, y, z));
-            if (section.isPresent()) {
-                boolean result = section.get().isValid();
-                if (result) {
-                    if (this.loadedChunks.add(longChunkPos)) {
-                        worldView.getChunk(x, z, ChunkStatus.EMPTY);
-                    }
-                    break;
+        for (PoiSection chunkSection : this.lithium$getInChunkColumn(x, z)) {
+            boolean result = chunkSection.isValid();
+            if (result) {
+                if (this.loadedChunks.add(longChunkPos)) {
+                    worldView.getChunk(x, z, ChunkStatus.EMPTY);
                 }
+                break;
             }
         }
     }
