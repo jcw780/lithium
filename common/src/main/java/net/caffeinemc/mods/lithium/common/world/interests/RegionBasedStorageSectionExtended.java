@@ -3,12 +3,19 @@ package net.caffeinemc.mods.lithium.common.world.interests;
 import net.caffeinemc.mods.lithium.common.util.functions.FunLongAnd5;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.world.level.ChunkPos;
+import org.jspecify.annotations.Nullable;
 
 import java.util.BitSet;
 import java.util.Optional;
 import java.util.function.Predicate;
 
 public interface RegionBasedStorageSectionExtended<R> {
+
+    @Nullable
+    public BitSet lithium$getColumn(long chunkPos);
+
+    BitSet lithium$getOrAddColumnIfNull(long chunkPos);
 
     <S, T, U> U lithium$getFirstInRangeInChunkColumn(int chunkX, int chunkZ,
                                                      long deltaYSqMargin,

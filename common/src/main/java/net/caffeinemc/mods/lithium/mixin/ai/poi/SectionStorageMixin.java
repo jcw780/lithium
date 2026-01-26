@@ -48,9 +48,6 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     @Final
     private Long2ObjectMap<Optional<R>> storage;
 
-    //@Shadow
-    //protected abstract Optional<R> get(long pos);
-
     @Shadow
     @Final
     protected LevelHeightAccessor levelHeightAccessor;
@@ -69,9 +66,6 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     @Shadow
     @Final
     private Function<R, P> packer;
-
-    @Shadow
-    protected abstract boolean outsideStoredRange(long l);
 
     private Long2ObjectOpenHashMap<BitSet> columns;
 
@@ -124,6 +118,23 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
         }
 
         flags.set(y, value.isPresent());
+    }
+
+    @Override
+    @Nullable
+    public BitSet lithium$getColumn(long chunkPos) {
+        return this.columns.get(chunkPos);
+    }
+
+    @Override
+    public BitSet lithium$getOrAddColumnIfNull(long chunkPos) {
+        BitSet column = this.columns.get(chunkPos);
+
+        if (column == null) {
+            this.columns.put(chunkPos, column = new BitSet(Pos.SectionYIndex.getNumYSections(this.levelHeightAccessor)));
+        }
+
+        return column;
     }
 
     @Override
@@ -224,104 +235,7 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
      * The new logic utilizes the Lithium columns lookup for populated sections instead of Optional.empty() stored
      * instead the storage hashmap.
      */
-    @Inject(method = "unpackChunk(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/chunk/storage/SectionStorage$PackedChunk;)V", at= @At(value = "HEAD"))
-    private void initializeColumnBitset(ChunkPos chunkPos, @Coerce Object ignored, CallbackInfo ci) {
-        final long pos = chunkPos.toLong();
-        BitSet flags = this.columns.get(pos);
 
-        if (flags == null) {
-            this.columns.put(pos, new BitSet(Pos.SectionYIndex.getNumYSections(this.levelHeightAccessor)));
-        }
-    }
-
-    @Redirect(method = "unpackChunk(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/chunk/storage/SectionStorage$PackedChunk;)V", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;put(JLjava/lang/Object;)Ljava/lang/Object;"))
-    private Object removeOptionalEmpties(Long2ObjectMap instance, long l, Object o) {
-        if(o.equals(Optional.empty())) {
-            return null;
-        }
-        return instance.put(l, o);
-    }
-
-    /**
-     * @author jcw780
-     * @reason Match vanilla returns after removal of Optional.empty() sections from storage
-     */
-    @Overwrite
-    @Nullable
-    public Optional<R> get(long l) { // Has to be public even though it is protected in vanilla for some reason
-        // For some reason PoiManager::isVillageCenter updates called from SectionTracker::getComputedLevel can be out of bounds
-        final int y = SectionPos.y(l);
-        final int columnIndex = Pos.SectionYIndex.fromSectionCoord(this.levelHeightAccessor, y);
-        // Out of range sections will not be in the storage
-        if (columnIndex < 0 || columnIndex >= Pos.SectionYIndex.getNumYSections(this.levelHeightAccessor)) {
-            //noinspection OptionalAssignedToNull
-            return null;
-        }
-
-        // Move the access to the front to improve best case (already loaded) performance
-        Optional<R> result = this.storage.get(l);
-
-        // noinspection OptionalAssignedToNull
-        if (result != null) {
-            return result;
-        }
-
-        final int x = SectionPos.x(l);
-        final int z = SectionPos.z(l);
-        final BitSet flags = this.columns.get(ChunkPos.asLong(x, z));
-
-        // If there are no flags, then the chunk was never loaded - so the section will not be in storage
-        if (flags == null) {
-            // noinspection OptionalAssignedToNull
-            return null;
-        }
-
-        // Sections without POI sections are stored as Optional.empty() in vanilla
-        if (!flags.get(columnIndex)) {
-            return Optional.empty();
-        }
-
-        // Section marked as having a POI Section is not in the storage hashmap - this should not happen
-        throw new IllegalStateException(String.format("Section %d %d %d missing from storage despite being marked as present", x, y, z));
-    }
-
-    /**
-     * @author jcw780
-     * @reason Match vanilla returns after removal of Optional.empty() sections from storage
-     * Warning: This has more checks than vanilla to match vanilla behavior.
-     * Please use other methods if it is performance sensitive.
-     */
-    @Overwrite
-    public Optional<R> getOrLoad(long l) {
-        if (this.outsideStoredRange(l)) {
-            return Optional.empty();
-        } else {
-            Optional<R> optional = this.storage.get(l);
-
-            // noinspection OptionalAssignedToNull
-            if (optional != null) { // Section is in the storage - return early - doing this since most of the time it will be loaded
-                return optional;
-            }
-
-            ChunkPos chunkPos = SectionPos.of(l).chunk();
-            BitSet column = this.lithium$getNonEmptyPOISections(chunkPos.x, chunkPos.z);
-
-            final int columnIndex = Pos.SectionYIndex.fromSectionCoord(this.levelHeightAccessor, SectionPos.y(l));
-
-            //Sections without POI sections are stored as Optional.empty() in vanilla
-            if (!column.get(columnIndex)) {
-                return Optional.empty();
-            }
-
-            optional = this.storage.get(l);
-            // noinspection OptionalAssignedToNull
-            if (optional == null) {
-                throw Util.pauseInIde(new IllegalStateException());
-            } else {
-                return optional;
-            }
-        }
-    }
 
     /**
      * @author jcw780
