@@ -250,30 +250,39 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     @Nullable
     public Optional<R> get(long l) { // Has to be public even though it is protected in vanilla for some reason
         // For some reason PoiManager::isVillageCenter updates called from SectionTracker::getComputedLevel can be out of bounds
-        final int columnIndex = Pos.SectionYIndex.fromSectionCoord(this.levelHeightAccessor, SectionPos.y(l));
-
-        //Out of range sections will not be in the storage
+        final int y = SectionPos.y(l);
+        final int columnIndex = Pos.SectionYIndex.fromSectionCoord(this.levelHeightAccessor, y);
+        // Out of range sections will not be in the storage
         if (columnIndex < 0 || columnIndex >= Pos.SectionYIndex.getNumYSections(this.levelHeightAccessor)) {
             //noinspection OptionalAssignedToNull
             return null;
+        }
+
+        // Move the access to the front to improve best case (already loaded) performance
+        Optional<R> result = this.storage.get(l);
+
+        // noinspection OptionalAssignedToNull
+        if (result != null) {
+            return result;
         }
 
         final int x = SectionPos.x(l);
         final int z = SectionPos.z(l);
         final BitSet flags = this.columns.get(ChunkPos.asLong(x, z));
 
-        //If there are no flags, then the chunk was never loaded - so the section will not be in storage
+        // If there are no flags, then the chunk was never loaded - so the section will not be in storage
         if (flags == null) {
-            //noinspection OptionalAssignedToNull
+            // noinspection OptionalAssignedToNull
             return null;
         }
 
-        //Sections without POI sections are stored as Optional.empty() in vanilla
+        // Sections without POI sections are stored as Optional.empty() in vanilla
         if (!flags.get(columnIndex)) {
             return Optional.empty();
         }
 
-        return this.storage.get(l);
+        // Section marked as having a POI Section is not in the storage hashmap - this should not happen
+        throw new IllegalStateException(String.format("Section %d %d %d missing from storage despite being marked as present", x, y, z));
     }
 
     /**
@@ -287,6 +296,13 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
         if (this.outsideStoredRange(l)) {
             return Optional.empty();
         } else {
+            Optional<R> optional = this.storage.get(l);
+
+            // noinspection OptionalAssignedToNull
+            if (optional != null) { // Section is in the storage - return early - doing this since most of the time it will be loaded
+                return optional;
+            }
+
             ChunkPos chunkPos = SectionPos.of(l).chunk();
             BitSet column = this.lithium$getNonEmptyPOISections(chunkPos.x, chunkPos.z);
 
@@ -297,13 +313,13 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
                 return Optional.empty();
             }
 
-            Optional<R> optional = this.storage.get(l);
+            optional = this.storage.get(l);
+            // noinspection OptionalAssignedToNull
             if (optional == null) {
                 throw Util.pauseInIde(new IllegalStateException());
             } else {
                 return optional;
             }
-
         }
     }
 
