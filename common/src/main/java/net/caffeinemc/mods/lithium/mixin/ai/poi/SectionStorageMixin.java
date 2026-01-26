@@ -203,7 +203,7 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     }
 
     @Override
-    public Optional<R> lithium$getElementAt(long sectionPos) {
+    public Optional<R> lithium$uncheckedGetElementAt(long sectionPos) {
         return this.storage.get(sectionPos);
     }
 
@@ -254,6 +254,7 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
 
         //Out of range sections will not be in the storage
         if (columnIndex < 0 || columnIndex >= Pos.SectionYIndex.getNumYSections(this.levelHeightAccessor)) {
+            //noinspection OptionalAssignedToNull
             return null;
         }
 
@@ -263,6 +264,7 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
 
         //If there are no flags, then the chunk was never loaded - so the section will not be in storage
         if (flags == null) {
+            //noinspection OptionalAssignedToNull
             return null;
         }
 

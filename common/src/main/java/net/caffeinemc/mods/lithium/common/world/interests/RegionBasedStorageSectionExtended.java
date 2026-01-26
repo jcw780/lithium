@@ -31,5 +31,5 @@ public interface RegionBasedStorageSectionExtended<R> {
 
     int lithium$getChunkYMaxInclusive();
 
-    Optional<R> lithium$getElementAt(long sectionPos);
+    Optional<R> lithium$uncheckedGetElementAt(long sectionPos);
 }
