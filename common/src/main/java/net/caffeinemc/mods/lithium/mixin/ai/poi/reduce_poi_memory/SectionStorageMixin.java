@@ -56,6 +56,8 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
     /**
      * @author jcw780
      * @reason Match vanilla returns after removal of Optional.empty() sections from storage
+     * Warning: This has more checks than vanilla to match vanilla behavior.
+     * Please use other methods if it is performance sensitive.
      */
     @Overwrite
     @Nullable
