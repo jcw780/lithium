@@ -41,6 +41,10 @@ Implements a faster POI search
 (default: `true`)  
 Portal search uses the faster POI search and optimized loaded state caching
   
+### `mixin.ai.poi.reduce_poi_memory`
+(default: `true`)  
+Reduce memory consumption of POI system
+  
 ### `mixin.ai.poi.tasks`
 (default: `true`)  
 Mob Tasks which search for POIs use the optimized POI search
@@ -486,6 +490,13 @@ Requirements:
 ### `mixin.minimal_nonvanilla.world.expiring_chunk_tickets`
 (default: `true`)  
 Only check positions with expiring tickets during ticket expiration. Can cause reordering of chunks unloading. The chunk unloading order in vanilla is predictable, but depends on the hash of the chunk position of the tickets and the hashes of the other chunk tickets, and the order of creation of the chunk tickets when hash collisions occur. No known contraptions depend on the unload order.
+  
+### `mixin.minimal_nonvanilla.world.poi_unloading`
+(default: `true`)  
+Unload non-portal forced POIs. Note: This will cause extra chunk loading when portals run ensureLoadedAndValid into unload areas.However, this will only be detectable during the first portal load into an area with valid POI sections that were loaded by non-portal means and then unloaded.  
+Requirements:
+- `mixin.ai.poi=true`
+- `mixin.ai.poi.reduce_poi_memory=true`  
   
 ### `mixin.shapes`
 (default: `true`)  
