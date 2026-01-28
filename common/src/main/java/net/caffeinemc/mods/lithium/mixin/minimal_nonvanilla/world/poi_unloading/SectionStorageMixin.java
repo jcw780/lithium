@@ -2,7 +2,6 @@ package net.caffeinemc.mods.lithium.mixin.minimal_nonvanilla.world.poi_unloading
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.caffeinemc.mods.lithium.common.util.Pos;
 import net.caffeinemc.mods.lithium.common.util.collections.ListeningLong2ObjectOpenHashMap;
 import net.caffeinemc.mods.lithium.common.world.interests.PoiUnloading;
 import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
@@ -39,10 +38,6 @@ public abstract class SectionStorageMixin<R> implements PoiUnloading, RegionBase
     @Final
     private Long2ObjectMap<Optional<R>> storage;
 
-    @Shadow
-    @Final
-    protected LevelHeightAccessor levelHeightAccessor;
-
     @Override
     public void lithium$unloadChunkPOIs(ChunkPos chunkPos) {
         if (!this.lithium$shouldUnloadChunkPOIs(chunkPos)) {
@@ -58,9 +53,9 @@ public abstract class SectionStorageMixin<R> implements PoiUnloading, RegionBase
         }
 
         final int chunkYMin = this.lithium$getChunkYMin();
-        int nextSectionY = 0;
-        while ((nextSectionY = chunkSections.nextSetBit(nextSectionY)) != -1) {
-            ((ListeningLong2ObjectOpenHashMap)this.storage).removeSilently(
+        int nextSectionY = -1;
+        while ((nextSectionY = chunkSections.nextSetBit(nextSectionY + 1)) != -1) {
+            ((ListeningLong2ObjectOpenHashMap<Optional<R>>)this.storage).removeSilently(
                     SectionPos.asLong(chunkPos.x, chunkYMin + nextSectionY, chunkPos.z)
             );
         }
