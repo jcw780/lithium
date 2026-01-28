@@ -34,6 +34,14 @@ public interface RegionBasedStorageSectionExtended<R> {
 
     BitSet lithium$getNonEmptyPOISections(int chunkX, int chunkZ);
 
+    /**
+     * Manually remove a chunk section column bitset - only used when unloading chunk with no POISections
+     *
+     * @param chunkPos
+     * @return
+     */
+    BitSet lithium$removeColumn(ChunkPos chunkPos);
+
     int lithium$getChunkYMin();
 
     int lithium$getChunkYMaxInclusive();

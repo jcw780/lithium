@@ -1,0 +1,73 @@
+package net.caffeinemc.mods.lithium.mixin.minimal_nonvanilla.world.poi_unloading;
+
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import net.caffeinemc.mods.lithium.common.util.Pos;
+import net.caffeinemc.mods.lithium.common.util.collections.ListeningLong2ObjectOpenHashMap;
+import net.caffeinemc.mods.lithium.common.world.interests.PoiUnloading;
+import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.chunk.storage.SectionStorage;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+
+import java.util.BitSet;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+@Mixin(SectionStorage.class)
+public abstract class SectionStorageMixin<R> implements PoiUnloading, RegionBasedStorageSectionExtended<R> {
+    @Shadow
+    protected abstract void writeChunk(ChunkPos chunkPos);
+
+    @Shadow
+    @Final
+    Object loadLock;
+
+    @Shadow
+    @Final
+    private LongSet loadedChunks;
+
+    @Shadow
+    @Final
+    private Long2ObjectMap<CompletableFuture<Optional<SectionStorage.PackedChunk<?>>>> pendingLoads;
+
+    @Shadow
+    @Final
+    private Long2ObjectMap<Optional<R>> storage;
+
+    @Shadow
+    @Final
+    protected LevelHeightAccessor levelHeightAccessor;
+
+    @Override
+    public void lithium$unloadChunkPOIs(ChunkPos chunkPos) {
+        if (!this.lithium$shouldUnloadChunkPOIs(chunkPos)) {
+            return;
+        }
+
+        // Note: shouldn't need to write chunks since it's after PoiManager::flush in chunk unload
+
+        // Remove column bitset
+        BitSet chunkSections = this.lithium$removeColumn(chunkPos);
+        if (chunkSections == null) {
+            return;
+        }
+
+        final int chunkYMin = this.lithium$getChunkYMin();
+        int nextSectionY = 0;
+        while ((nextSectionY = chunkSections.nextSetBit(nextSectionY)) != -1) {
+            ((ListeningLong2ObjectOpenHashMap)this.storage).removeSilently(
+                    SectionPos.asLong(chunkPos.x, chunkYMin + nextSectionY, chunkPos.z)
+            );
+        }
+
+        synchronized (this.loadLock) {
+            this.loadedChunks.remove(chunkPos.toLong());
+            this.pendingLoads.remove(chunkPos.toLong());
+        }
+    }
+}

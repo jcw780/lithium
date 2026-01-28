@@ -1,12 +1,12 @@
 {
-  "package": "net.caffeinemc.mods.lithium.mixin",
-  "required": true,
-  "compatibilityLevel": "JAVA_21",
-  "plugin": "net.caffeinemc.mods.lithium.mixin.LithiumMixinPlugin",
-  "injectors": {
-    "defaultRequire": 1
+  "package" : "net.caffeinemc.mods.lithium.mixin",
+  "required" : true,
+  "compatibilityLevel" : "JAVA_21",
+  "plugin" : "net.caffeinemc.mods.lithium.mixin.LithiumMixinPlugin",
+  "injectors" : {
+    "defaultRequire" : 1
   },
-  "mixins": [
+  "mixins" : [
     "ai.non_poi_block_search.HoglinSpecificSensorMixin",
     "ai.non_poi_block_search.MoveToBlockGoalMixin",
     "ai.non_poi_block_search.PiglinSpecificSensorMixin",
@@ -169,6 +169,9 @@
     "minimal_nonvanilla.world.block_entity_ticking.support_cache.DirectBlockEntityTickInvokerMixin",
     "minimal_nonvanilla.world.block_entity_ticking.support_cache.LevelChunkMixin",
     "minimal_nonvanilla.world.expiring_chunk_tickets.TicketStorageMixin",
+    "minimal_nonvanilla.world.poi_unloading.ChunkMapMixin",
+    "minimal_nonvanilla.world.poi_unloading.PoiManagerMixin",
+    "minimal_nonvanilla.world.poi_unloading.SectionStorageMixin",
     "shapes.blockstate_cache.BlockMixin",
     "shapes.lazy_shape_context.EntityCollisionContextMixin",
     "shapes.optimized_matching.ShapesMixin",
@@ -258,7 +261,7 @@
     "world.temperature_cache.BiomeMixin",
     "world.tick_scheduler.LevelChunkTicksMixin"
   ],
-  "client": [
+  "client" : [
     "chunk.entity_class_groups.ClientLevelMixin",
     "debug.palette.ClientBoundLevelChunkPacketDataAccessor",
     "debug.palette.ClientPacketListenerMixin",

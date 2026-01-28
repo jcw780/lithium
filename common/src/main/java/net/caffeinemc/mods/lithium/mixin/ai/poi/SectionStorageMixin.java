@@ -3,7 +3,6 @@ package net.caffeinemc.mods.lithium.mixin.ai.poi;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
@@ -20,7 +19,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
-import net.minecraft.util.Util;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
@@ -30,9 +28,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.*;
@@ -124,6 +120,11 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     @Nullable
     public BitSet lithium$getColumn(long chunkPos) {
         return this.columns.get(chunkPos);
+    }
+
+    @Override
+    public BitSet lithium$removeColumn(ChunkPos chunkPos) {
+        return this.columns.remove(chunkPos.toLong());
     }
 
     @Override
