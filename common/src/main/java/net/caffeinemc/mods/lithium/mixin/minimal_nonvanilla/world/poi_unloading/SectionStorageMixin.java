@@ -20,11 +20,8 @@ import java.util.concurrent.CompletableFuture;
 @Mixin(SectionStorage.class)
 public abstract class SectionStorageMixin<R> implements PoiUnloading, RegionBasedStorageSectionExtended<R> {
     @Shadow
-    protected abstract void writeChunk(ChunkPos chunkPos);
-
-    @Shadow
     @Final
-    Object loadLock;
+    private Object loadLock;
 
     @Shadow
     @Final
@@ -48,16 +45,16 @@ public abstract class SectionStorageMixin<R> implements PoiUnloading, RegionBase
 
         // Remove column bitset
         BitSet chunkSections = this.lithium$removeColumn(chunkPos);
-        if (chunkSections == null) {
-            return;
-        }
-
-        final int chunkYMin = this.lithium$getChunkYMin();
-        int nextSectionY = -1;
-        while ((nextSectionY = chunkSections.nextSetBit(nextSectionY + 1)) != -1) {
-            ((ListeningLong2ObjectOpenHashMap<Optional<R>>)this.storage).removeSilently(
-                    SectionPos.asLong(chunkPos.x, chunkYMin + nextSectionY, chunkPos.z)
-            );
+        if (chunkSections != null) {
+            // This relies on the reduce poi memory optimizations so we only need to remove sections with a POISection
+            final int chunkYMin = this.lithium$getChunkYMin();
+            int nextSectionY = -1;
+            while ((nextSectionY = chunkSections.nextSetBit(nextSectionY + 1)) != -1) {
+                // Column is already removed so we do not need to update the column in the columns hashmap
+                ((ListeningLong2ObjectOpenHashMap<Optional<R>>)this.storage).removeSilently(
+                        SectionPos.asLong(chunkPos.x, chunkYMin + nextSectionY, chunkPos.z)
+                );
+            }
         }
 
         synchronized (this.loadLock) {
