@@ -45,6 +45,10 @@ Portal search uses the faster POI search and optimized loaded state caching
 (default: `true`)  
 Reduce memory consumption of POI system
   
+### `mixin.ai.poi.reduce_poi_memory.check_consistency_with_blocks`
+(default: `true`)  
+Optimize checkConsistencyWithBlocks when using reduce_poi_memory optimizations
+  
 ### `mixin.ai.poi.tasks`
 (default: `true`)  
 Mob Tasks which search for POIs use the optimized POI search
