@@ -91,6 +91,14 @@ Various optimizations inside AI tasks
 (default: `true`)  
 Speed up the weighted random choice of long jump target positions.
   
+### `mixin.ai.useless_behaviors`
+(default: `true`)  
+Disable useless behaviors
+  
+### `mixin.ai.useless_behaviors.nitwit_job_search`
+(default: `true`)  
+Remove job site AcquirePoi behavior for nitwits
+  
 ### `mixin.ai.useless_sensors`
 (default: `true`)  
 Disabling useless brain sensors to avoid useless sensing calculations.
