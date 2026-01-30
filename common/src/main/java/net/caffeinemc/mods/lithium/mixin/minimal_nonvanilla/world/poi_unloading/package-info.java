@@ -1,6 +1,6 @@
 @MixinConfigOption(
         description = "Unload non-portal forced POIs. " +
-                "Note: This will cause extra chunk loading when portals run ensureLoadedAndValid into unload areas." +
+                "Note: This will cause extra chunk loading when portals run ensureLoadedAndValid into unload areas. " +
                 "However, this will only be detectable during the first portal load into an area with valid POI " +
                 "sections that were loaded before by non-portal means and then unloaded. No known use is affected by this.",
         depends = {
