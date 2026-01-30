@@ -33,6 +33,7 @@
     "ai.task.launch.BrainMixin",
     "ai.task.memory_change_counting.BehaviorMixin",
     "ai.task.memory_change_counting.BrainMixin",
+    "ai.task.nitwit_job_search.VillagerGoalPackagesMixin",
     "ai.task.replace_streams.GateBehaviorMixin",
     "ai.task.replace_streams.RunningPolicyRunOneMixin",
     "ai.task.replace_streams.RunningPolicyTryAllMixin",
