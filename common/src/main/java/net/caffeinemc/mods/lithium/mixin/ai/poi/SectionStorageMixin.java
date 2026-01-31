@@ -123,8 +123,8 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     }
 
     @Override
-    public BitSet lithium$removeColumn(ChunkPos chunkPos) {
-        return this.columns.remove(chunkPos.toLong());
+    public BitSet lithium$removeColumn(long chunkPos) {
+        return this.columns.remove(chunkPos);
     }
 
     @Override

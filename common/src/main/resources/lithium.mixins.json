@@ -174,7 +174,6 @@
     "minimal_nonvanilla.world.expiring_chunk_tickets.TicketStorageMixin",
     "minimal_nonvanilla.world.poi_unloading.ChunkMapMixin",
     "minimal_nonvanilla.world.poi_unloading.PoiManagerMixin",
-    "minimal_nonvanilla.world.poi_unloading.SectionStorageMixin",
     "shapes.blockstate_cache.BlockMixin",
     "shapes.lazy_shape_context.EntityCollisionContextMixin",
     "shapes.optimized_matching.ShapesMixin",

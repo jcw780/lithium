@@ -15,8 +15,9 @@ public abstract class PoiManagerMixin implements PoiUnloading {
     @Final
     private LongSet loadedChunks = new LongOpenHashSet();
 
+    // Keep portal loaded POIs to improve performance and reduce observable behavior changes
     @Override
-    public boolean lithium$shouldUnloadChunkPOIs(ChunkPos chunkPos) {
-        return !loadedChunks.contains(chunkPos.toLong());
+    public boolean lithium$shouldUnloadChunkPOIs(long chunkPos) {
+        return !loadedChunks.contains(chunkPos);
     }
 }

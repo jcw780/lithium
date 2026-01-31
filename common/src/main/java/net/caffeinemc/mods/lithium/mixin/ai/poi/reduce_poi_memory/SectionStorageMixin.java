@@ -1,7 +1,10 @@
 package net.caffeinemc.mods.lithium.mixin.ai.poi.reduce_poi_memory;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.caffeinemc.mods.lithium.common.util.Pos;
+import net.caffeinemc.mods.lithium.common.util.collections.ListeningLong2ObjectOpenHashMap;
+import net.caffeinemc.mods.lithium.common.world.interests.PoiUnloading;
 import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
 import net.minecraft.core.SectionPos;
 import net.minecraft.util.Util;
@@ -18,9 +21,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.BitSet;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Mixin(SectionStorage.class)
-public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectionExtended<R> {
+public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectionExtended<R>, PoiUnloading {
+    @Shadow
+    @Final
+    private Object loadLock;
+
+    @Shadow
+    @Final
+    private LongSet loadedChunks;
+
+    @Shadow
+    @Final
+    private Long2ObjectMap<CompletableFuture<Optional<SectionStorage.PackedChunk<?>>>> pendingLoads;
+
     @Mutable
     @Shadow
     @Final
@@ -133,6 +149,40 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
             } else {
                 return optional;
             }
+        }
+    }
+
+    /**
+     * This is for unloading all the points of interest in the chunk using the new storage logic.
+     * This greatly improves performance since most sections will not have points of interest sections.
+     * Intended for use by Lithium's minimal_nonvanilla.poi_unloading or as part of Neoforge default behavior
+     * @param chunkPos
+     */
+    @Override
+    public void lithium$unloadChunkPOIs(long chunkPos) {
+        // Make sure the injection happens after PoiManager::flush in chunk unload
+        // Then we will not need to call flush separately
+
+        // Remove column bitset
+        BitSet chunkSections = this.lithium$removeColumn(chunkPos);
+        if (chunkSections != null) {
+            // This relies on the reduce poi memory optimizations so we only need to remove sections with a POISection
+            final int chunkYMin = this.lithium$getChunkYMin();
+            final int x = ChunkPos.getX(chunkPos);
+            final int z = ChunkPos.getZ(chunkPos);
+
+            int nextSectionY = -1;
+            while ((nextSectionY = chunkSections.nextSetBit(nextSectionY + 1)) != -1) {
+                // Column is already removed so we do not need to update the column in the columns hashmap
+                ((ListeningLong2ObjectOpenHashMap<Optional<R>>)this.storage).removeSilently(
+                        SectionPos.asLong(x, chunkYMin + nextSectionY, z)
+                );
+            }
+        }
+
+        synchronized (this.loadLock) {
+            this.loadedChunks.remove(chunkPos);
+            this.pendingLoads.remove(chunkPos);
         }
     }
 }

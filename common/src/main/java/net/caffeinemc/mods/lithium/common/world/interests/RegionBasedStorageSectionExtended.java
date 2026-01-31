@@ -40,7 +40,7 @@ public interface RegionBasedStorageSectionExtended<R> {
      * @param chunkPos
      * @return
      */
-    BitSet lithium$removeColumn(ChunkPos chunkPos);
+    BitSet lithium$removeColumn(long chunkPos);
 
     int lithium$getChunkYMin();
 
