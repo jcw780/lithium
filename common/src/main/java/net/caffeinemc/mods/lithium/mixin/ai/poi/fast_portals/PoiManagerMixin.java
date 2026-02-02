@@ -73,26 +73,20 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
 
         int chunkRadius = Math.floorDiv(radius, 16);
         long[] lowestSectionsChunkX = new long[2 * chunkRadius + 1];
+        final int maxYSectionIndexExclusive = Pos.SectionYIndex.getMaxYSectionIndexExclusive(worldView);
         for (int z = chunkZ - chunkRadius, zMax = chunkZ + chunkRadius; z <= zMax; z++) {
-            int chunkCounter = 0;
+            int loadingChunkCounter = 0;
             for (int x = chunkX - chunkRadius, xMax = chunkX + chunkRadius; x <= xMax; x++) {
-                int lowestSection;
-                if ((lowestSection = this.lithium$checkLowestEmptyInvalidSection(worldView, x, z)) != Integer.MAX_VALUE) {
-                    if (!loadedChunks.add(ChunkPos.asLong(x, z))) {
-                        lowestSection = Integer.MAX_VALUE; // Use Integer MAX Value as a sentinel for chunk to not load
-                    }
-                }
-
-                if (lowestSection != Integer.MAX_VALUE) {
-                    // Pack into 64bit long - [lowestSection] [x + Integer.MAX_VALUE + 1] - latter is done for sorting
-                    final long packedValue = ((long) lowestSection << 32) | ((long) x + Integer.MAX_VALUE + 1);
-                    lowestSectionsChunkX[chunkCounter++] = packedValue;
+                final int lowestSection  = this.lithium$getLowestEmptyOrInvalidSection(worldView, x, z);
+                if (lowestSection < maxYSectionIndexExclusive && loadedChunks.add(ChunkPos.asLong(x, z))) {
+                    lowestSectionsChunkX[loadingChunkCounter++] =
+                            ((long) lowestSection << 32) | ((long) x + Integer.MAX_VALUE + 1);
                 }
             }
-            LongArrays.quickSort(lowestSectionsChunkX, 0, chunkCounter);
-            for (int chunkIndex = 0; chunkIndex < chunkCounter; chunkIndex++) {
+            LongArrays.quickSort(lowestSectionsChunkX, 0, loadingChunkCounter);
+            for (int chunkIndex = 0; chunkIndex < loadingChunkCounter; chunkIndex++) {
                 final long packedValue = lowestSectionsChunkX[chunkIndex];
-                final int x = (int) ((packedValue << 32 >>> 32) - Integer.MAX_VALUE - 1);
+                final int x = (int) ((packedValue & 0xFFFFFFFFL) - Integer.MAX_VALUE - 1);
                 worldView.getChunk(x, z, ChunkStatus.EMPTY);
             }
         }
@@ -100,11 +94,9 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
     }
 
     @Unique
-    private int lithium$checkLowestEmptyInvalidSection(LevelReader worldView, int x, int z) {
+    private int lithium$getLowestEmptyOrInvalidSection(LevelReader worldView, int x, int z) {
         final BitSet column = this.lithium$getNonEmptyPOISections(x, z);
         int lowestUnsetSection = column.nextClearBit(0);
-        lowestUnsetSection = lowestUnsetSection != -1 ? lowestUnsetSection : Integer.MAX_VALUE;
-
         int setSectionIndex = -1;
         while ((setSectionIndex = column.nextSetBit(setSectionIndex + 1)) != -1
                 && setSectionIndex < lowestUnsetSection) {
@@ -117,6 +109,6 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
             }
         }
 
-        return lowestUnsetSection; // Use Integer MAX Value as a sentinel for chunk to not load
+        return lowestUnsetSection;
     }
 }
