@@ -1,8 +1,10 @@
 package net.caffeinemc.mods.lithium.mixin.ai.poi.fast_portals;
 
 import com.mojang.serialization.Codec;
+import it.unimi.dsi.fastutil.longs.LongArrays;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.caffeinemc.mods.lithium.common.util.Pos;
 import net.caffeinemc.mods.lithium.common.world.interests.RegionBasedStorageSectionExtended;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
@@ -18,6 +20,8 @@ import net.minecraft.world.level.chunk.storage.SectionStorage;
 import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import org.spongepowered.asm.mixin.*;
 
+import java.util.BitSet;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -44,6 +48,13 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
      * considerable performance. Noticeable when large amount of entities are traveling through nether portals.
      * Furthermore, caching whether all surrounding chunks are loaded is more efficient than caching the state
      * of single chunks only.
+     *
+     * @author jcw780
+     * @reason Correct logic to match vanilla chunk loading conditions and order.
+     * For a chunk to be loaded, the chunk must have at least one section that either has no POISection or the POISection
+     * is not valid.
+     * Vanilla iterates sections by x, y and then z. In order to use the Lithium column lookup, we need to sort by the
+     * lowest y section then x in each z row.
      */
     @Overwrite
     public void ensureLoadedAndValid(LevelReader worldView, BlockPos pos, int radius) {
@@ -61,30 +72,51 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
         int chunkZ = SectionPos.blockToSectionCoord(pos.getZ());
 
         int chunkRadius = Math.floorDiv(radius, 16);
+        long[] lowestSectionsChunkX = new long[2 * chunkRadius + 1];
+        for (int z = chunkZ - chunkRadius, zMax = chunkZ + chunkRadius; z <= zMax; z++) {
+            int chunkCounter = 0;
+            for (int x = chunkX - chunkRadius, xMax = chunkX + chunkRadius; x <= xMax; x++) {
+                int lowestSection;
+                if ((lowestSection = this.lithium$checkLowestEmptyInvalidSection(worldView, x, z)) != Integer.MAX_VALUE) {
+                    if (!loadedChunks.add(ChunkPos.asLong(x, z))) {
+                        lowestSection = Integer.MAX_VALUE; // Use Integer MAX Value as a sentinel for chunk to not load
+                    }
+                }
 
-        for (int x = chunkX - chunkRadius, xMax = chunkX + chunkRadius; x <= xMax; x++) {
-            for (int z = chunkZ - chunkRadius, zMax = chunkZ + chunkRadius; z <= zMax; z++) {
-                lithium$preloadChunkIfAnySubChunkContainsPOI(worldView, x, z);
+                if (lowestSection != Integer.MAX_VALUE) {
+                    // Pack into 64bit long - [lowestSection] [x + Integer.MAX_VALUE + 1] - latter is done for sorting
+                    final long packedValue = ((long) lowestSection << 32) | ((long) x + Integer.MAX_VALUE + 1);
+                    lowestSectionsChunkX[chunkCounter++] = packedValue;
+                }
+            }
+            LongArrays.quickSort(lowestSectionsChunkX, 0, chunkCounter);
+            for (int chunkIndex = 0; chunkIndex < chunkCounter; chunkIndex++) {
+                final long packedValue = lowestSectionsChunkX[chunkIndex];
+                final int x = (int) ((packedValue << 32 >>> 32) - Integer.MAX_VALUE - 1);
+                worldView.getChunk(x, z, ChunkStatus.EMPTY);
             }
         }
         this.preloadedCenterChunks.add(chunkPos);
     }
 
     @Unique
-    private void lithium$preloadChunkIfAnySubChunkContainsPOI(LevelReader worldView, int x, int z) {
-        ChunkPos chunkPos = new ChunkPos(x, z);
-        long longChunkPos = chunkPos.toLong();
+    private int lithium$checkLowestEmptyInvalidSection(LevelReader worldView, int x, int z) {
+        final BitSet column = this.lithium$getNonEmptyPOISections(x, z);
+        int lowestUnsetSection = column.nextClearBit(0);
+        lowestUnsetSection = lowestUnsetSection != -1 ? lowestUnsetSection : Integer.MAX_VALUE;
 
-        if (this.loadedChunks.contains(longChunkPos)) return;
+        int setSectionIndex = -1;
+        while ((setSectionIndex = column.nextSetBit(setSectionIndex + 1)) != -1
+                && setSectionIndex < lowestUnsetSection) {
+            Optional<PoiSection> section = this.lithium$getElementAt(
+                    SectionPos.asLong(x, Pos.SectionYCoord.fromSectionIndex(worldView, setSectionIndex), z)
+            );
 
-        for (PoiSection chunkSection : this.lithium$getInChunkColumn(x, z)) {
-            boolean result = chunkSection.isValid();
-            if (result) {
-                if (this.loadedChunks.add(longChunkPos)) {
-                    worldView.getChunk(x, z, ChunkStatus.EMPTY);
-                }
-                break;
+            if (section.isPresent() && !section.get().isValid()) {
+                return setSectionIndex;
             }
         }
+
+        return lowestUnsetSection; // Use Integer MAX Value as a sentinel for chunk to not load
     }
 }
