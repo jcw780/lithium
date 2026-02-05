@@ -14,7 +14,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SculkShriekerBlock.class)
 public abstract class SculkShriekerBlockMixin {
-    @Inject(method = {"method_42317"}, at = @At(value = "RETURN"))
+    @SuppressWarnings("UnresolvedMixinReference")
+    @Inject(
+            method = { "method_42317", "lambda$getTicker$2" }, //Fabric, NeoForge
+            at = @At(value = "RETURN")
+    )
     private static void checkSleep(Level level, BlockPos blockPos, BlockState blockState, SculkShriekerBlockEntity sculkShriekerBlockEntity, CallbackInfo ci) {
         final VibrationSystem.Data vibrationData = sculkShriekerBlockEntity.getVibrationData();
         if (vibrationData.getCurrentVibration() == null &&

@@ -4,7 +4,7 @@ import net.caffeinemc.mods.lithium.common.block.entity.SleepingBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.CalibratedSculkSensorBlock;
-import net.minecraft.world.level.block.entity.*;
+import net.minecraft.world.level.block.entity.CalibratedSculkSensorBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,7 +14,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(CalibratedSculkSensorBlock.class)
 public abstract class CalibratedSculkSensorBlockMixin {
-    @Inject(method = {"method_49813"}, at = @At(value = "RETURN"))
+    @SuppressWarnings("UnresolvedMixinReference")
+    @Inject(
+            method = { "method_49813", "lambda$getTicker$0" }, // Fabric, Neoforge
+            at = @At(value = "RETURN")
+    )
     private static void checkSleep(Level level, BlockPos blockPos, BlockState blockState, CalibratedSculkSensorBlockEntity calibratedSculkSensorBlockEntity, CallbackInfo ci) {
         final VibrationSystem.Data vibrationData = calibratedSculkSensorBlockEntity.getVibrationData();
         if (vibrationData.getCurrentVibration() == null &&
