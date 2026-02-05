@@ -72,25 +72,37 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
         int chunkZ = SectionPos.blockToSectionCoord(pos.getZ());
 
         int chunkRadius = Math.floorDiv(radius, 16);
-        long[] lowestSectionsChunkX = new long[2 * chunkRadius + 1];
+        long[] sectionsYXPacked = new long[2 * chunkRadius + 1];
         final int maxYSectionIndexExclusive = Pos.SectionYIndex.getMaxYSectionIndexExclusive(worldView);
         for (int z = chunkZ - chunkRadius, zMax = chunkZ + chunkRadius; z <= zMax; z++) {
             int loadingChunkCounter = 0;
             for (int x = chunkX - chunkRadius, xMax = chunkX + chunkRadius; x <= xMax; x++) {
                 final int lowestSection  = this.lithium$getLowestEmptyOrInvalidSection(worldView, x, z);
                 if (lowestSection < maxYSectionIndexExclusive && loadedChunks.add(ChunkPos.asLong(x, z))) {
-                    lowestSectionsChunkX[loadingChunkCounter++] =
-                            ((long) lowestSection << 32) | ((long) x + Integer.MAX_VALUE + 1);
+                    sectionsYXPacked[loadingChunkCounter++] = packYX(lowestSection, x);
                 }
             }
-            LongArrays.quickSort(lowestSectionsChunkX, 0, loadingChunkCounter);
+            //Sort by signed Y, signed X as tie-break
+            LongArrays.quickSort(sectionsYXPacked, 0, loadingChunkCounter);
             for (int chunkIndex = 0; chunkIndex < loadingChunkCounter; chunkIndex++) {
-                final long packedValue = lowestSectionsChunkX[chunkIndex];
-                final int x = (int) ((packedValue & 0xFFFFFFFFL) - Integer.MAX_VALUE - 1);
-                worldView.getChunk(x, z, ChunkStatus.EMPTY);
+                final long packedYX = sectionsYXPacked[chunkIndex];
+                worldView.getChunk(unpackX(packedYX), z, ChunkStatus.EMPTY);
             }
         }
         this.preloadedCenterChunks.add(chunkPos);
+    }
+
+    @Unique
+    private static int unpackX(long packedYX) {
+        return (int) ((packedYX & 0xFFFF_FFFFL) + Integer.MIN_VALUE);
+    }
+
+    /**
+     * Pack YX for sorting, two's complement conversion applied for sorting by signed X.
+     */
+    @Unique
+    private static long packYX(long y, long x) {
+        return (y << 32) | (x - Integer.MIN_VALUE);
     }
 
     @Unique
