@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 @Mixin(PoiManager.class)
-public abstract class PoiManagerMixin implements PoiCheckConsistency<PoiSection> {
+public abstract class PoiManagerMixin implements PoiCheckConsistency<PoiSection>, RegionBasedStorageSectionExtended<PoiSection> {
     @Shadow
     protected abstract void updateFromSection(LevelChunkSection levelChunkSection, SectionPos sectionPos, BiConsumer<BlockPos, Holder<PoiType>> biConsumer);
 
@@ -34,10 +34,11 @@ public abstract class PoiManagerMixin implements PoiCheckConsistency<PoiSection>
      */
     @Override
     public void lithium$CheckConsistencyWithBlocks(SectionPos sectionPos, LevelChunkSection levelChunkSection, BitSet column) {
-        final int chunkYMin = ((RegionBasedStorageSectionExtended<?>) this).lithium$getChunkYMin();
-        if (column.get(sectionPos.y() - chunkYMin)) {
+        final int chunkYMin = this.lithium$getChunkYMin();
+        final int currentYSectionIndex = sectionPos.y() - chunkYMin;
+        if (column.get(currentYSectionIndex)) {
             // Chunk should already be unpacked - do not need to check further
-            Optional<PoiSection> optional = ((RegionBasedStorageSectionExtended<PoiSection>) this).lithium$uncheckedGetElementAt(sectionPos.asLong());
+            Optional<PoiSection> optional = this.lithium$uncheckedGetElementAt(sectionPos.asLong());
             if (optional.isPresent()) {
                 PoiSection section = optional.get();
                 section.refresh(biConsumer -> {

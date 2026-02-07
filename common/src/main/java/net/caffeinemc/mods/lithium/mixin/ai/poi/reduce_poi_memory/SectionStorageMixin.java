@@ -174,9 +174,7 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
             int nextSectionY = -1;
             while ((nextSectionY = chunkSections.nextSetBit(nextSectionY + 1)) != -1) {
                 // Column is already removed so we do not need to update the column in the columns hashmap
-                ((ListeningLong2ObjectOpenHashMap<Optional<R>>)this.storage).removeSilently(
-                        SectionPos.asLong(x, chunkYMin + nextSectionY, z)
-                );
+                this.lithium$removeSectionWithoutUpdatingColumn(SectionPos.asLong(x, chunkYMin + nextSectionY, z));
             }
         }
 

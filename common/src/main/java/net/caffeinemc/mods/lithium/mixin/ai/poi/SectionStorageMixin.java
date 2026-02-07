@@ -128,6 +128,11 @@ public abstract class SectionStorageMixin<R, P> implements RegionBasedStorageSec
     }
 
     @Override
+    public Optional<R> lithium$removeSectionWithoutUpdatingColumn (long sectionPos) {
+        return ((ListeningLong2ObjectOpenHashMap<Optional<R>>) this.storage).removeSilently(sectionPos);
+    }
+
+    @Override
     public BitSet lithium$getOrAddColumnIfNull(long chunkPos) {
         BitSet column = this.columns.get(chunkPos);
 

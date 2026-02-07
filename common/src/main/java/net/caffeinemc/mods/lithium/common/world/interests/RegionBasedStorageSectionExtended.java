@@ -42,6 +42,13 @@ public interface RegionBasedStorageSectionExtended<R> {
      */
     BitSet lithium$removeColumn(long chunkPos);
 
+    /**
+     * Remove a section from the storage without updating the columns map - column adjustment must be handled manually
+     * @param l
+     * @return
+     */
+    Optional<R> lithium$removeSectionWithoutUpdatingColumn(long l);
+
     int lithium$getChunkYMin();
 
     int lithium$getChunkYMaxInclusive();
