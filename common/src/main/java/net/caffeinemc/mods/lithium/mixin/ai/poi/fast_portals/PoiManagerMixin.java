@@ -112,7 +112,7 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
         int setSectionIndex = -1;
         while ((setSectionIndex = column.nextSetBit(setSectionIndex + 1)) != -1
                 && setSectionIndex < lowestUnsetSection) {
-            Optional<PoiSection> section = this.lithium$getElementAt(
+            Optional<PoiSection> section = this.lithium$uncheckedGetElementAt(
                     SectionPos.asLong(x, Pos.SectionYCoord.fromSectionIndex(worldView, setSectionIndex), z)
             );
 
