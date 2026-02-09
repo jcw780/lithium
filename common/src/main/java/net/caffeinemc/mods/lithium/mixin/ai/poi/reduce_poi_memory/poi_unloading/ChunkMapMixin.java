@@ -1,4 +1,4 @@
-package net.caffeinemc.mods.lithium.mixin.minimal_nonvanilla.world.poi_unloading;
+package net.caffeinemc.mods.lithium.mixin.ai.poi.reduce_poi_memory.poi_unloading;
 
 import net.caffeinemc.mods.lithium.common.world.interests.PoiUnloading;
 import net.minecraft.server.level.ChunkHolder;
