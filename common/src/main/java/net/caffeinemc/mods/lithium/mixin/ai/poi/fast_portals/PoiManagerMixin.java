@@ -78,7 +78,12 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
             int loadingChunkCounter = 0;
             for (int x = chunkX - chunkRadius, xMax = chunkX + chunkRadius; x <= xMax; x++) {
                 final int lowestSection  = this.lithium$getLowestEmptyOrInvalidSection(worldView, x, z);
-                if (lowestSection < maxYSectionIndexExclusive && loadedChunks.add(ChunkPos.asLong(x, z))) {
+                // Flip the check for poi unloading so portal chunk POIs are never unloaded
+                // This prevents an edgecase where all sections are loaded and valid in chunk being unloaded despite
+                // being portal loaded - which creates additional lag on subsequent tp's after unloading.
+                // Note: This technically means that loaded chunks may have different contents but literally nothing
+                // else in minecraft uses this and it does not affect the behavior of this method.
+                if (loadedChunks.add(ChunkPos.asLong(x, z)) && lowestSection < maxYSectionIndexExclusive) {
                     sectionsYXPacked[loadingChunkCounter++] = packYX(lowestSection, x);
                 }
             }

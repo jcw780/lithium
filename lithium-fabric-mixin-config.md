@@ -51,7 +51,9 @@ Optimize checkConsistencyWithBlocks when using reduce_poi_memory optimizations
   
 ### `mixin.ai.poi.reduce_poi_memory.poi_unloading`
 (default: `true`)  
-Unload non-portal forced POIs.
+Unload non-portal forced POIs.  
+Requirements:
+- `mixin.ai.poi.fast_portals=true`  
   
 ### `mixin.ai.poi.tasks`
 (default: `true`)  
