@@ -50,12 +50,11 @@ public abstract class BrainMixin<E extends LivingEntity> {
         }
 
         for (Pair<Integer, ? extends BehaviorControl<? super E>> pair : immutableList) {
-            if (pair.getSecond() == null) {
-                continue;
+            if (pair.getSecond() != null) {
+                ((Set)((Map)this.availableBehaviorsByPriority.computeIfAbsent(pair.getFirst(), integer -> Maps.newHashMap()))
+                        .computeIfAbsent(activity, activityx -> Sets.newLinkedHashSet()))
+                        .add(pair.getSecond());
             }
-            ((Set)((Map)this.availableBehaviorsByPriority.computeIfAbsent(pair.getFirst(), integer -> Maps.newHashMap()))
-                    .computeIfAbsent(activity, activityx -> Sets.newLinkedHashSet()))
-                    .add(pair.getSecond());
         }
     }
 }
