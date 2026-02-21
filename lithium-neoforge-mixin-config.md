@@ -79,10 +79,6 @@ Keep track of running and runnable tasks to speed up task launching checks
 (default: `true`)  
 Keep track of AI memory changes to skip checking AI task memory prerequisites
   
-### `mixin.ai.task.nitwit_job_search`
-(default: `true`)  
-Disable job site POI search for nitwits
-  
 ### `mixin.ai.task.replace_streams`
 (default: `true`)  
 Replace Stream code of AI tasks with more traditional iteration.
@@ -94,6 +90,14 @@ Various optimizations inside AI tasks
 ### `mixin.ai.task.run.long_jump_weighted_choice`
 (default: `true`)  
 Speed up the weighted random choice of long jump target positions.
+  
+### `mixin.ai.useless_behaviors`
+(default: `true`)  
+Disable useless behaviors
+  
+### `mixin.ai.useless_behaviors.nitwit_job_search`
+(default: `true`)  
+Remove job site AcquirePoi behavior for nitwits
   
 ### `mixin.ai.useless_sensors`
 (default: `true`)  
