@@ -171,7 +171,8 @@ public abstract class FlowingFluidMixin {
     }
 
     @Unique
-    private BlockState getBlock(Level world, BlockPos pos, BlockState[] blockStateCache, int key) {
+    private BlockState getBlock(Level world, BlockPos pos, BlockState[] blockStateCache, byte byteKey) {
+        int key = Byte.toUnsignedInt(byteKey);
         BlockState blockState = blockStateCache[key];
         if (blockState == null) {
             blockState = world.getBlockState(pos);
