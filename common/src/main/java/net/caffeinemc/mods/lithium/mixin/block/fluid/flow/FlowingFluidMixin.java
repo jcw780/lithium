@@ -222,7 +222,7 @@ public abstract class FlowingFluidMixin {
         byte holeAccess = 0;
         int searchRadius = this.getSlopeFindDistance(world) + 1;
 
-        //Like vanilla, the first iteration is separate, because getUpdatedState is called to check whether a
+        //Like vanilla, the first iteration is separate, because getNewLiquid is called to check whether a
         // renewable fluid source block is created in the flow direction.
         for (int i = 0; i < DirectionConstants.HORIZONTAL.length; i++) {
             Direction flowDirection = DirectionConstants.HORIZONTAL[i];
@@ -230,7 +230,7 @@ public abstract class FlowingFluidMixin {
             byte blockIndex = indexFromDiamondXZOffset(startPos, flowTargetPos, searchRadius);
 
             BlockState targetBlockState = getBlock(world, flowTargetPos, blockStateCache, blockIndex);
-            //TODO use block cache in getUpdatedState
+            //TODO use block cache in getNewLiquid
             if (this.canMaybePassThrough(world, startPos, startState, flowDirection, flowTargetPos, targetBlockState, targetBlockState.getFluidState())) {
                 FluidState targetNewFluidState = this.getNewLiquid(world, flowTargetPos, targetBlockState);
                 if (canHoldSpecificFluid(world, flowTargetPos, targetBlockState, targetNewFluidState.getType())) {//Store the resulting fluid state for each direction, remove later if no closest hole access in this direction.
