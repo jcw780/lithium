@@ -5,8 +5,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.UnmodifiableIterator;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.datafixers.util.Pair;
+import net.caffeinemc.mods.lithium.common.ai.useless_behaviors.LithiumEmptyBehavior;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import java.util.Iterator;
 
 @Mixin(Brain.class)
-public abstract class BrainMixin<E extends LivingEntity> {
+public abstract class BrainMixin<T extends LivingEntity> {
 
     /**
      * @author jcw780, 2No2Name
@@ -22,13 +25,16 @@ public abstract class BrainMixin<E extends LivingEntity> {
      */
     @WrapOperation(method = "addActivityAndRemoveMemoriesWhenStopped",
             at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableList;iterator()Lcom/google/common/collect/UnmodifiableIterator;"))
-    private UnmodifiableIterator<E> filterSentinels(ImmutableList<E> instance, Operation<UnmodifiableIterator<E>> original) {
+    private <E extends Pair<Integer, ? extends BehaviorControl<? super T>>> UnmodifiableIterator<E> filterSentinels(ImmutableList<E> instance, Operation<UnmodifiableIterator<E>> original) {
         Iterator<E> wrapped = original.call(instance);
         return new AbstractIterator<>() {
             @Override
             protected @Nullable E computeNext() {
-                if (wrapped.hasNext()) {
-                    return wrapped.next();
+                while (wrapped.hasNext()) {
+                    E next = wrapped.next();
+                    if (next.getSecond() != LithiumEmptyBehavior.EMPTY_BEHAVIOR_SENTINEL) {
+                        return next;
+                    }
                 }
                 return this.endOfData();
             }
