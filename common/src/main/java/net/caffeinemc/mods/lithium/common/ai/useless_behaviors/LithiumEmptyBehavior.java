@@ -13,7 +13,7 @@ public class LithiumEmptyBehavior<E extends LivingEntity> implements BehaviorCon
     public static LithiumEmptyBehavior EMPTY_BEHAVIOR_SENTINEL = new LithiumEmptyBehavior();
     @Override
     public Behavior.Status getStatus() {
-        return null;
+        return Behavior.Status.STOPPED;
     }
 
     @Override
