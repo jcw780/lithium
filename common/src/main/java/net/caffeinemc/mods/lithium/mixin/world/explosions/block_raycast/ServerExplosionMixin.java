@@ -1,5 +1,7 @@
 package net.caffeinemc.mods.lithium.mixin.world.explosions.block_raycast;
 
+import it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.caffeinemc.mods.lithium.common.util.Pos;
@@ -41,6 +43,8 @@ import java.util.Optional;
  * @author 2No2Name
  * Remove extra iterations in ray generation logic - minor performance improvement
  * @author jcw780
+ * Cache explosion resistances and block states
+ * @author 2No2Name, original PR by pwouik
  */
 @Mixin(ServerExplosion.class)
 public abstract class ServerExplosionMixin {
@@ -82,12 +86,18 @@ public abstract class ServerExplosionMixin {
 
     /**
      * Whether the explosion cares about air blocks. If false, air blocks do not have to be added to the set of destroyed blocks.
-     * Skipping air blocks reduces the number of BlockPos allocations, shuffling and getBlockState calls in {@link Explosion#finalizeExplosion(boolean)}
+     * Skipping air blocks reduces the number of BlockPos allocations, shuffling and getBlockState calls in {@link ServerExplosion#interactWithBlocks(List)}
      */
     @Unique
     private boolean explodeAirBlocks;
     @Unique
     private LongOpenHashSet explodedPositions; //Vanilla uses the number of exploded blocks, which is reduced by the air block optimization. Deduplication using a hashset is necessary as different explosion rays traverse the same blocks.
+
+    @Unique
+    private Long2ReferenceOpenHashMap<BlockState> cachedBlockStates;
+
+    @Unique
+    private Long2FloatOpenHashMap cachedResistances;
 
     @Unique
     private int bottomY, topY;
@@ -113,6 +123,10 @@ public abstract class ServerExplosionMixin {
         this.explodeAirBlocks = explodeAir;
 
         this.explodedPositions = new LongOpenHashSet();
+
+        this.cachedBlockStates = new Long2ReferenceOpenHashMap<>();
+        this.cachedResistances = new Long2FloatOpenHashMap();
+        this.cachedResistances.defaultReturnValue(-1f);
     }
 
     @SuppressWarnings("unchecked")
@@ -182,6 +196,9 @@ public abstract class ServerExplosionMixin {
         while (it.hasNext()) {
             affectedBlocks.add(BlockPos.of(it.nextLong()));
         }
+
+        this.cachedBlockStates = null;
+        this.cachedResistances = null;
     }
 
     @Unique
@@ -256,6 +273,15 @@ public abstract class ServerExplosionMixin {
      */
     @Unique
     private float traverseBlock(float strength, int blockX, int blockY, int blockZ, LongOpenHashSet touched) {
+        long posLong = BlockPos.asLong(blockX, blockY, blockZ);
+
+        // Use cached blast resistance and block state info
+        float cachedResistance = this.cachedResistances.get(posLong);
+        if (cachedResistance >= 0) {
+            this.tryMarkBlockForDestruction(strength, cachedResistance, posLong, this.cachedBlockStates.get(posLong), blockX, blockY, blockZ, touched);
+            return cachedResistance;
+        }
+
         BlockPos pos = this.cachedPos.set(blockX, blockY, blockZ);
 
         int chunkX = Pos.ChunkCoord.fromBlockCoord(blockX);
@@ -308,20 +334,29 @@ public abstract class ServerExplosionMixin {
             totalResistance = (blastResistance.get() + 0.3F) * 0.3F;
         }
 
+        // Cache the block state and the resistance for other explosion rays hitting the same position
+        this.cachedBlockStates.put(posLong, blockState);
+        this.cachedResistances.put(posLong, totalResistance);
+
         // Check if this ray is still strong enough to break blocks, and if so, add this position to the set
         // of positions to destroy
+        this.tryMarkBlockForDestruction(strength, totalResistance, posLong, blockState, blockX, blockY, blockZ, touched);
+
+        return totalResistance;
+    }
+
+    @Unique
+    private void tryMarkBlockForDestruction(float strength, float totalResistance, long posLong, BlockState blockState, int blockX, int blockY, int blockZ, LongOpenHashSet touched) {
         float reducedStrength = strength - totalResistance;
         if (reducedStrength > 0.0F) {
-            long posLong = pos.asLong();
             this.explodedPositions.add(posLong);
             if (this.explodeAirBlocks || !blockState.isAir()) {
+                BlockPos pos = this.cachedPos.set(blockX, blockY, blockZ);
                 if (this.damageCalculator.shouldBlockExplode((Explosion) (Object) this, this.level, pos, blockState, reducedStrength)) {
                     touched.add(posLong);
                 }
             }
         }
-
-        return totalResistance;
     }
 
 }
