@@ -1,5 +1,6 @@
 package net.caffeinemc.mods.lithium.mixin.ai.useless_behaviors.nitwit_job_search;
 
+import net.caffeinemc.mods.lithium.common.ai.useless_behaviors.LithiumEmptyBehavior;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Holder;
@@ -33,7 +34,7 @@ public abstract class VillagerGoalPackagesMixin {
                                                                  boolean bl, Optional<Byte> optional,
                                                                  BiPredicate<ServerLevel, BlockPos> biPredicate) {
         if (predicate == PoiType.NONE) {
-            return null; // Warning: You have to remove this before the brain adds it to the task list or else it will crash.
+            return LithiumEmptyBehavior.EMPTY_BEHAVIOR_SENTINEL;
         }
         return AcquirePoi.create(predicate, memoryModuleType, memoryModuleType2, bl, optional, biPredicate);
     }
