@@ -14,4 +14,6 @@ public @interface MixinConfigOption {
     MixinConfigDependency[] depends() default {};
 
     String description();
+
+    String nonVanillaBehavior() default "";
 }

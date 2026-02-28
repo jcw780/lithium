@@ -70,6 +70,7 @@ public class DefaultConfigCreator {
                 if (option.config().description().length() > 0) {
                     writer.write(option.config().description() + (hasDependencies ? "  " : "") + "\n");
                 }
+                //TODO add nonvanilla behavior text here
                 if (hasDependencies) {
                     MixinConfigDependency[] dependencies = option.config().depends();
                     StringBuilder dependencyList = new StringBuilder();
