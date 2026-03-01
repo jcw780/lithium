@@ -67,10 +67,13 @@ public class DefaultConfigCreator {
                 writer.write("### `" + option.path() + "`\n");
                 writer.write("(default: `" + option.config().enabled() + "`)  \n");
                 boolean hasDependencies = option.config().depends().length > 0;
+                boolean hasNonvanillaBehavior = !option.config().nonVanillaBehavior().isEmpty();
                 if (option.config().description().length() > 0) {
-                    writer.write(option.config().description() + (hasDependencies ? "  " : "") + "\n");
+                    writer.write(option.config().description() + (hasDependencies || hasNonvanillaBehavior ? "  " : "") + "\n");
                 }
-                //TODO add nonvanilla behavior text here
+                if (hasNonvanillaBehavior) {
+                    writer.write("Non-vanilla behavior:\n  " + option.config().nonVanillaBehavior() + (hasDependencies ? "  " : "") + "\n");
+                }
                 if (hasDependencies) {
                     MixinConfigDependency[] dependencies = option.config().depends();
                     StringBuilder dependencyList = new StringBuilder();
