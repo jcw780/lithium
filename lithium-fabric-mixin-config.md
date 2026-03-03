@@ -294,6 +294,10 @@ Various entity optimizations
 (default: `true`)  
 Various entity collision optimizations
   
+### `mixin.entity.collisions.block_effects`
+(default: `true`)  
+Avoid iterations when entities did not collect block effects (freeze, fire, extinguish, etc.)
+  
 ### `mixin.entity.collisions.fluid`
 (default: `true`)  
 Skips being pushed by fluids when the nearby chunk sections do not contain this fluid  

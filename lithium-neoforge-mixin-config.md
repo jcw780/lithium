@@ -288,6 +288,10 @@ Various entity optimizations
 (default: `true`)  
 Various entity collision optimizations
   
+### `mixin.entity.collisions.block_effects`
+(default: `true`)  
+Avoid iterations when entities did not collect block effects (freeze, fire, extinguish, etc.)
+  
 ### `mixin.entity.collisions.intersection`
 (default: `true`)  
 Uses faster block access for block collisions and delayed entity access with grouped boat/shulker for entity collisions when available  
