@@ -10,6 +10,7 @@ Make sure to take a backup of your world before using the mod and please report 
 
 ## Additions
 - Optimize nitwit jobsite search (Thanks to jcw780)
+- Optimize explosions by caching block states (Based on PR by pwouik)
 - Reduce iteration and allocation of block to entity effects
 - Add missing palette crash recovery attempt
 - Use cached false values for fluid hole search
