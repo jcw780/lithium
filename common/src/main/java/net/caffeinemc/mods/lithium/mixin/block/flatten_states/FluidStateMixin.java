@@ -1,7 +1,5 @@
 package net.caffeinemc.mods.lithium.mixin.block.flatten_states;
 
-import com.mojang.serialization.MapCodec;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,7 +17,7 @@ public abstract class FluidStateMixin {
     private boolean isEmptyCache;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void initFluidCache(Fluid fluid, Reference2ObjectArrayMap<?, ?> propertyMap, MapCodec<?> codec, CallbackInfo ci) {
+    private void initFluidCache(CallbackInfo ci) {
         this.isEmptyCache = this.getType().isEmpty();
     }
 

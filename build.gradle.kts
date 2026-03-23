@@ -1,16 +1,16 @@
 plugins {
     id("java")
-    id("fabric-loom") version ("1.14-SNAPSHOT") apply (false)
+    id("net.fabricmc.fabric-loom") version ("1.15-SNAPSHOT") apply (false)
     id("me.modmuss50.mod-publish-plugin") version ("0.8.1") apply (false)
 
 }
 
 // Fabric: https://fabricmc.net/develop/
 // Neoforge: https://neoforged.net/
-val MINECRAFT_VERSION by extra { "1.21.11" } //MUST manually update fabric.mod.json and neoforge.mods.toml
-val NEOFORGE_VERSION by extra { "21.11.0-beta" }
-val FABRIC_LOADER_VERSION by extra { "0.18.2" }
-val FABRIC_API_VERSION by extra { "0.139.4+1.21.11" }
+val MINECRAFT_VERSION by extra { "26.1-rc-3" } //MUST manually update fabric.mod.json and neoforge.mods.toml
+val NEOFORGE_VERSION by extra { "26.1.0.0-alpha.4+snapshot-1" }
+val FABRIC_LOADER_VERSION by extra { "0.18.4" }
+val FABRIC_API_VERSION by extra { "0.144.0+26.1" }
 
 // This value can be set to null to disable Parchment.
 val PARCHMENT_VERSION by extra { null }
@@ -35,7 +35,7 @@ subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "me.modmuss50.mod-publish-plugin")
 
-    java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+    java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 
     fun createVersionString(): String {
@@ -73,9 +73,11 @@ subprojects {
     version = createVersionString()
     group = "net.caffeinemc.mods"
 
+    java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
-        options.release.set(21)
+        options.release.set(25)
     }
 
     tasks.withType<GenerateModuleMetadata>().configureEach {

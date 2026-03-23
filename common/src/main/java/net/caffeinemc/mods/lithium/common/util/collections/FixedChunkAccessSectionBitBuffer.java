@@ -91,7 +91,7 @@ public class FixedChunkAccessSectionBitBuffer {
     }
 
     public ChunkAccess getChunkAccess(BlockPos blockPos){
-        return this.getChunkAccess(ChunkPos.asLong(blockPos));
+        return this.getChunkAccess(ChunkPos.pack(blockPos));
     }
 
     public void setChunkAccess(long chunkPos, ChunkAccess chunkAccess) {
@@ -99,7 +99,7 @@ public class FixedChunkAccessSectionBitBuffer {
     }
 
     public void setChunkAccess(BlockPos blockPos, ChunkAccess chunkAccess) {
-        this.setChunkAccess(ChunkPos.asLong(blockPos), chunkAccess);
+        this.setChunkAccess(ChunkPos.pack(blockPos), chunkAccess);
     }
 
     public boolean hasNoTrueChunkSections(){
@@ -126,7 +126,7 @@ public class FixedChunkAccessSectionBitBuffer {
 
             @Override
             public long nextLong () {
-                long result = ChunkPos.asLong(x, z);
+                long result = ChunkPos.pack(x, z);
                 if (z < zMax) {
                     z++;
                 } else {

@@ -4,6 +4,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+
+import java.util.Set;
 
 /**
  * Dummy behavior to replace useless behaviors with.
@@ -14,6 +17,11 @@ public class LithiumEmptyBehavior<E extends LivingEntity> implements BehaviorCon
     @Override
     public Behavior.Status getStatus() {
         return Behavior.Status.STOPPED;
+    }
+
+    @Override
+    public Set<MemoryModuleType<?>> getRequiredMemories() {
+        return Set.of();
     }
 
     @Override

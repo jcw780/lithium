@@ -359,9 +359,9 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
     }
 
     @Unique
-    private @Nullable Container lithium$getExtractEntityInventory(Level world) {
+    private @Nullable Container lithium$getExtractEntityInventory(Level level) {
         if (this.extractInventoryEntityTracker == null) {
-            this.initExtractInventoryTracker(world);
+            this.initExtractInventoryTracker(level);
         }
         if (this.extractInventoryEntityTracker.isUnchangedSince(this.extractInventoryEntityFailedSearchTime)) {
             this.extractInventoryEntityFailedSearchTime = this.tickedGameTime;
@@ -377,7 +377,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
             //shortcutting the entity present case requires checking its change counter
             return null;
         }
-        Container inventory = inventoryEntities.get(world.random.nextInt(inventoryEntities.size()));
+        Container inventory = inventoryEntities.get(level.getRandom().nextInt(inventoryEntities.size()));
         if (inventory instanceof LithiumInventory optimizedInventory) {
             LithiumStackList extractInventoryStackList = InventoryHelper.getLithiumStackList(optimizedInventory);
             if (inventory != this.extractInventory || this.extractStackList != extractInventoryStackList) {
@@ -603,7 +603,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
             //Remember failed entity search timestamp. This allows shortcutting if no entity movement happens.
             return null;
         }
-        Container inventory = inventoryEntities.get(world.random.nextInt(inventoryEntities.size()));
+        Container inventory = inventoryEntities.get(world.getRandom().nextInt(inventoryEntities.size()));
         if (inventory instanceof LithiumInventory optimizedInventory) {
             LithiumStackList insertInventoryStackList = InventoryHelper.getLithiumStackList(optimizedInventory);
             if (inventory != this.insertInventory || this.insertStackList != insertInventoryStackList) {

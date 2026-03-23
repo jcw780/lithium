@@ -12,7 +12,8 @@ public class LithiumFabricGameTest implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        StructureUtils.testStructuresDir = Paths.get(LITHIUM_GAMETEST_SNBT_PATH);
+        StructureUtils.testStructuresSourceDir = Paths.get(LITHIUM_GAMETEST_SNBT_PATH);
+        StructureUtils.testStructuresTargetDir = Paths.get(LITHIUM_GAMETEST_SNBT_PATH);
     }
 }
 

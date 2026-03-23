@@ -78,7 +78,7 @@ public interface PoiOrdering {
 
             int orderZ = Integer.compare(aChunkZ, bChunkZ);
             if (orderZ != 0) {
-                throw new IllegalStateException("Positions are not in the same chunk: " + posA + " in " + new ChunkPos(posA) + " vs " + posB + " in " + new ChunkPos(posB));
+                throw new IllegalStateException("Positions are not in the same chunk: " + posA + " in " + ChunkPos.containing(posA) + " vs " + posB + " in " + ChunkPos.containing(posB));
             }
 
             int aChunkX = posA.getX() >> 4;
@@ -86,7 +86,7 @@ public interface PoiOrdering {
 
             int orderX = Integer.compare(aChunkX, bChunkX);
             if (orderX != 0) {
-                throw new IllegalStateException("Positions are not in the same chunk: " + posA + " in " + new ChunkPos(posA) + " vs " + posB + " in " + new ChunkPos(posB));
+                throw new IllegalStateException("Positions are not in the same chunk: " + posA + " in " + ChunkPos.containing(posA) + " vs " + posB + " in " + ChunkPos.containing(posB));
             }
 
             int aChunkY = posA.getY() >> 4;

@@ -125,7 +125,7 @@ public abstract class ServerChunkCacheMixin {
      */
     @Unique
     private ChunkAccess getChunkBlocking(int x, int z, ChunkStatus leastStatus, boolean create) {
-        final long key = ChunkPos.asLong(x, z);
+        final long key = ChunkPos.pack(x, z);
         final int level = ChunkLevel.byStatus(leastStatus);
 
         ChunkHolder holder = this.getVisibleChunkIfPresent(key);

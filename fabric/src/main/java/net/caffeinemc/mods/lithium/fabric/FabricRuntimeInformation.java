@@ -35,9 +35,4 @@ public class FabricRuntimeInformation implements PlatformRuntimeInformation {
     public boolean isModInLoadingList(String modId) {
         return FabricLoader.getInstance().isModLoaded(modId);
     }
-
-    @Override
-    public boolean usesAlphaMultiplication() {
-        return false;
-    }
 }

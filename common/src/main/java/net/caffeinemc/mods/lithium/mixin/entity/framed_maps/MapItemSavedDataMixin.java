@@ -3,6 +3,7 @@ package net.caffeinemc.mods.lithium.mixin.entity.framed_maps;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -24,19 +25,19 @@ public abstract class MapItemSavedDataMixin extends SavedData {
     private Map<Player, MapItemSavedData.HoldingPlayer> carriedByPlayers;
 
     @WrapOperation(
-            method = "tickCarriedBy(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V",
+            method = "tickCarriedBy(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/decoration/ItemFrame;)V",
             at = @At(value = "INVOKE", target = "Ljava/util/List;size()I")
     )
-    private int sizeOrOne(List<MapItemSavedData.HoldingPlayer> instance, Operation<Integer> original, @Local(argsOnly = true) ItemStack mapStack) {
-        return mapStack.isFramed() ? 1 : original.call(instance);
+    private int sizeOrOne(List<MapItemSavedData.HoldingPlayer> instance, Operation<Integer> original, @Local(argsOnly = true) ItemStack mapStack, @Local(argsOnly = true) ItemFrame placedInFrame) {
+        return placedInFrame != null ? 1 : original.call(instance);
     }
 
     @WrapOperation(
-            method = "tickCarriedBy(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V",
+            method = "tickCarriedBy(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/decoration/ItemFrame;)V",
             at = @At(value = "INVOKE", target = "Ljava/util/List;get(I)Ljava/lang/Object;")
     )
-    private <E> E getOrGetThePlayer(List<E> instance, int i, Operation<E> original, @Local(argsOnly = true) Player player, @Local(argsOnly = true) ItemStack mapStack) {
+    private <E> E getOrGetThePlayer(List<E> instance, int i, Operation<E> original, @Local(argsOnly = true) Player player, @Local(argsOnly = true) ItemStack mapStack, @Local(argsOnly = true) ItemFrame placedInFrame) {
         //noinspection unchecked
-        return mapStack.isFramed() ? (E) Objects.requireNonNull(this.carriedByPlayers.get(player)) : original.call(instance, i);
+        return placedInFrame != null ? (E) Objects.requireNonNull(this.carriedByPlayers.get(player)) : original.call(instance, i);
     }
 }

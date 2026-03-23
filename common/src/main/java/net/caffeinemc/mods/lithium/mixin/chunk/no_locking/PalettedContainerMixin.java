@@ -35,7 +35,7 @@ public class PalettedContainerMixin {
                     "<init>(Lnet/minecraft/world/level/chunk/PalettedContainer;)V",
                     "<init>(Lnet/minecraft/world/level/chunk/Strategy;Lnet/minecraft/world/level/chunk/Configuration;Lnet/minecraft/util/BitStorage;Lnet/minecraft/world/level/chunk/Palette;)V",
             },
-            at = @At("TAIL")
+            at = @At("RETURN")
     )
     public void removeLockHelper(CallbackInfo ci) {
         this.threadingDetector = null;

@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -20,11 +21,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(AbstractFurnaceBlockEntity.class)
 public abstract class AbstractFurnaceBlockEntityMixin extends BlockEntity implements SleepingBlockEntity, SetChangedHandlingBlockEntity {
 
+    @SuppressWarnings("ShadowModifiers")
     @Shadow
-    protected abstract boolean isLit();
-
+    public int cookingTimer;
+    @SuppressWarnings("ShadowModifiers")
     @Shadow
-    int cookingTimer;
+    public int litTimeRemaining;
     private WrappedBlockEntityTickInvokerAccessor tickWrapper = null;
     private TickingBlockEntity sleepingTicker = null;
 
@@ -58,6 +60,12 @@ public abstract class AbstractFurnaceBlockEntityMixin extends BlockEntity implem
         ((AbstractFurnaceBlockEntityMixin) (Object) abstractFurnaceBlockEntity).checkSleep(blockState);
     }
 
+    @Unique
+    private boolean isLit() {
+        return this.litTimeRemaining > 0;
+    }
+
+    @Unique
     private void checkSleep(BlockState state) {
         if (!this.isLit() && this.cookingTimer == 0 && (state.is(Blocks.FURNACE) || state.is(Blocks.BLAST_FURNACE) || state.is(Blocks.SMOKER)) && this.level != null) {
             this.lithium$startSleeping();

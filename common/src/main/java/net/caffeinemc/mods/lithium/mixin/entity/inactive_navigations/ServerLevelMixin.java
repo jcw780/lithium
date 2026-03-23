@@ -8,17 +8,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.RandomSequences;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.storage.LevelStorageSource;
-import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.*;
@@ -32,7 +27,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 /**
  * This patch is supposed to reduce the cost of setblockstate calls that change the collision shape of a block.
@@ -51,10 +45,11 @@ import java.util.concurrent.Executor;
  */
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin extends Level implements ServerWorldExtended {
+    @SuppressWarnings("ShadowModifiers")
     @Mutable
     @Shadow
     @Final
-    Set<Mob> navigatingMobs;
+    public Set<Mob> navigatingMobs;
 
     protected ServerLevelMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, boolean bl, boolean bl2, long l, int i) {
         super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
@@ -77,9 +72,8 @@ public abstract class ServerLevelMixin extends Level implements ServerWorldExten
         return Collections.emptyIterator();
     }
 
-    @SuppressWarnings("rawtypes")
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void init(MinecraftServer minecraftServer, Executor executor, LevelStorageSource.LevelStorageAccess levelStorageAccess, ServerLevelData serverLevelData, ResourceKey resourceKey, LevelStem levelStem, boolean bl, long l, List list, boolean bl2, RandomSequences randomSequences, CallbackInfo ci) {
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void init(CallbackInfo ci) {
         this.navigatingMobs = new ReferenceOpenHashSet<>(this.navigatingMobs);
     }
 

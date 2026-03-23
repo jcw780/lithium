@@ -1,9 +1,8 @@
-import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
     id("java")
     id("idea")
-    id("fabric-loom") version ("1.14-SNAPSHOT")
+    id("net.fabricmc.fabric-loom") version ("1.15-SNAPSHOT")
 }
 
 repositories {
@@ -18,34 +17,27 @@ val FABRIC_API_VERSION: String by rootProject.extra
 
 dependencies {
     minecraft(group = "com.mojang", name = "minecraft", version = MINECRAFT_VERSION)
-    mappings(loom.layered() {
-        officialMojangMappings()
-        if (PARCHMENT_VERSION != null) {
-            parchment("org.parchmentmc.data:parchment-${MINECRAFT_VERSION}:${PARCHMENT_VERSION}@zip")
-        }
-    })
-
-    modCompileOnly("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
+    compileOnly("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
 
     fun addDependentFabricModule(name: String) {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modCompileOnly(module)
+        compileOnly(module)
     }
 
     fun addEmbeddedFabricModule(name: String) {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modImplementation(module)
+        implementation(module)
         include(module)
     }
 
     fun addCompileOnlyFabricModule(name: String) {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modCompileOnly(module)
+        compileOnly(module)
     }
 
     fun addFabricModule(name: String) {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modImplementation(module)
+        implementation(module)
     }
 
     //Copied from fabric build.gradle to avoid having multiple slightly different (few fabric interfaces added) minecraft merged mapped jars
@@ -96,21 +88,13 @@ tasks.register<Jar>("apiJar") {
     destinationDirectory = rootDir.resolve("build").resolve("libs")
 }
 
-tasks.register<RemapJarTask>("remapApiJar") {
-    dependsOn("apiJar")
-    archiveBaseName.set("lithium-fabric")
-    archiveClassifier.set("api")
-    inputFile.set(tasks.named<Jar>("apiJar").get().archiveFile)
-    destinationDirectory = rootDir.resolve("build").resolve("libs")
-}
-
 tasks.named<Jar>("jar") {
     from(sourceSets["api"].output.classesDirs)
     from(sourceSets["api"].output.resourcesDir)
 }
 
 tasks.named("build") {
-    dependsOn("remapApiJar", "apiJar")
+    dependsOn("apiJar")
 }
 
 loom {

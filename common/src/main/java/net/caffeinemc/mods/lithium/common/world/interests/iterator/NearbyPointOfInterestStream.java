@@ -439,7 +439,7 @@ public class NearbyPointOfInterestStream extends Spliterators.AbstractSpliterato
 
             @Override
             public long nextLong() {
-                long res = ChunkPos.asLong(fx, fz);
+                long res = ChunkPos.pack(fx, fz);
                 do {
                     z = z > 0 ? -z : 1 - z;
                     if (z > ring) {

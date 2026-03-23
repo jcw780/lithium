@@ -64,7 +64,7 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
             this.preloadedCenterChunks.clear();
             this.preloadRadius = radius;
         }
-        long chunkPos = ChunkPos.asLong(pos);
+        long chunkPos = ChunkPos.pack(pos);
         if (this.preloadedCenterChunks.contains(chunkPos)) {
             return;
         }
@@ -78,7 +78,7 @@ public abstract class PoiManagerMixin extends SectionStorage<PoiSection, PoiSect
             int loadingChunkCounter = 0;
             for (int x = chunkX - chunkRadius, xMax = chunkX + chunkRadius; x <= xMax; x++) {
                 final int lowestSection  = this.lithium$getLowestEmptyOrInvalidSection(worldView, x, z);
-                if (lowestSection < maxYSectionIndexExclusive && loadedChunks.add(ChunkPos.asLong(x, z))) {
+                if (lowestSection < maxYSectionIndexExclusive && loadedChunks.add(ChunkPos.pack(x, z))) {
                     sectionsYXPacked[loadingChunkCounter++] = packYX(lowestSection, x);
                 }
             }

@@ -4,7 +4,6 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ByteOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceReferenceImmutablePair;
 import net.caffeinemc.mods.lithium.common.reflection.ReflectionUtil;
-import net.caffeinemc.mods.lithium.common.services.PlatformMappingInformation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -33,7 +32,7 @@ public class EntityClassGroup {
     public static final EntityClassGroup CUSTOM_COLLIDE_LIKE_MINECART_BOAT_WINDCHARGE; //aka entities that will attempt to collide with all other entities when moving
 
     static {
-        String remapped_collidesWith = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1297", "method_30949", "(Lnet/minecraft/class_1297;)Z", "canCollideWith");
+        String remapped_collidesWith = "canCollideWith";
         CUSTOM_COLLIDE_LIKE_MINECART_BOAT_WINDCHARGE = new EntityClassGroup(
                 (Class<?> entityClass, Supplier<EntityType<?>> entityType) -> ReflectionUtil.hasMethodOverride(entityClass, Entity.class, true, remapped_collidesWith, Entity.class));
 
@@ -135,7 +134,7 @@ public class EntityClassGroup {
         public static final NoDragonClassGroup BOAT_SHULKER_LIKE_COLLISION; //aka entities that other entities will do block-like collisions with when moving
 
         static {
-            String remapped_canBeCollidedWith = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1297", "method_30948", "(Lnet/minecraft/class_1297;)Z", "canBeCollidedWith");
+            String remapped_canBeCollidedWith = "canBeCollidedWith";
             BOAT_SHULKER_LIKE_COLLISION = new NoDragonClassGroup(
                     (Class<?> entityClass, Supplier<EntityType<?>> entityType) -> ReflectionUtil.hasMethodOverride(entityClass, Entity.class, true, remapped_canBeCollidedWith, Entity.class));
 

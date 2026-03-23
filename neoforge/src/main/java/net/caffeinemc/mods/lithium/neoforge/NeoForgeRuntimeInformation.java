@@ -37,9 +37,4 @@ public class NeoForgeRuntimeInformation implements PlatformRuntimeInformation {
     public boolean isModInLoadingList(String modId) {
         return FMLLoader.getCurrent().getLoadingModList().getModFileById(modId) != null;
     }
-
-    @Override
-    public boolean usesAlphaMultiplication() {
-        return true;
-    }
 }

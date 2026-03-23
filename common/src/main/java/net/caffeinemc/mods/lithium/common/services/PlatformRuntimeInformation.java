@@ -1,9 +1,5 @@
 package net.caffeinemc.mods.lithium.common.services;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-
 import java.nio.file.Path;
 
 public interface PlatformRuntimeInformation {
@@ -42,9 +38,4 @@ public interface PlatformRuntimeInformation {
      * Returns if a mod is in the mods folder during loading.
      */
     boolean isModInLoadingList(String modId);
-
-    /**
-     * @return Whether {@link VertexConsumer#putBulkData(PoseStack.Pose, BakedQuad, float[], float, float, float, float, int[], int, boolean)} should multiply the vertex alpha component.
-     */
-    boolean usesAlphaMultiplication();
 }

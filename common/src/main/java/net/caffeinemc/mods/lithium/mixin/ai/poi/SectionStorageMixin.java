@@ -72,7 +72,7 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
         int x = SectionPos.x(key);
         int z = SectionPos.z(key);
 
-        long pos = ChunkPos.asLong(x, z);
+        long pos = ChunkPos.pack(x, z);
         BitSet flags = this.columns.get(pos);
 
         if (flags != null) {
@@ -94,7 +94,7 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
         int x = SectionPos.x(key);
         int z = SectionPos.z(key);
 
-        long pos = ChunkPos.asLong(x, z);
+        long pos = ChunkPos.pack(x, z);
 
         BitSet flags = this.columns.get(pos);
 
@@ -168,7 +168,7 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
 
     @Override
     public BitSet lithium$getNonEmptyPOISections(int chunkX, int chunkZ) {
-        long pos = ChunkPos.asLong(chunkX, chunkZ);
+        long pos = ChunkPos.pack(chunkX, chunkZ);
 
         BitSet flags = this.columns.get(pos);
 
@@ -176,7 +176,7 @@ public abstract class SectionStorageMixin<R> implements RegionBasedStorageSectio
             return flags;
         }
 
-        this.unpackChunk(new ChunkPos(pos));
+        this.unpackChunk(ChunkPos.unpack(pos));
 
         return Objects.requireNonNull(this.columns.get(pos), "Failed to load POI section data!");
     }

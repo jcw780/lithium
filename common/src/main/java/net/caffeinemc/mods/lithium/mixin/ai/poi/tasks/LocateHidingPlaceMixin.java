@@ -18,9 +18,8 @@ import java.util.function.Predicate;
 @Mixin(LocateHidingPlace.class)
 public class LocateHidingPlaceMixin {
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(
-            method = { "method_46979", "lambda$create$5" }, // Fabric, Neoforge
+            method = "lambda$create$6",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/ai/village/poi/PoiManager;getRandom(Ljava/util/function/Predicate;Ljava/util/function/Predicate;Lnet/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy;Lnet/minecraft/core/BlockPos;ILnet/minecraft/util/RandomSource;)Ljava/util/Optional;"
@@ -30,9 +29,8 @@ public class LocateHidingPlaceMixin {
         return pointOfInterestStorage.getRandom(new SinglePointOfInterestTypeFilter(POIRegistryEntries.HOME_ENTRY), positionPredicate, occupationStatus, pos, radius, random);
     }
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(
-            method = { "method_46978", "lambda$create$8" }, // Fabric, Neoforge
+            method = "lambda$create$2",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/ai/village/poi/PoiManager;find(Ljava/util/function/Predicate;Ljava/util/function/Predicate;Lnet/minecraft/core/BlockPos;ILnet/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy;)Ljava/util/Optional;"

@@ -24,7 +24,6 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-@SuppressWarnings("ShadowModifiers")
 @Mixin(BlockGetter.class)
 public interface BlockGetterMixin {
 
@@ -37,11 +36,13 @@ public interface BlockGetterMixin {
     @Shadow
     static <T, C> T traverseBlocks(Vec3 start, Vec3 end, C context, BiFunction<C, BlockPos, T> blockHitFactory, Function<C, T> missFactory) {throw new AssertionError();}
 
-    @Shadow(aliases = { "lambda$clip$2" })
-    public BlockHitResult method_17743(ClipContext par1, BlockPos par2);
+    @Shadow
+    public BlockHitResult lambda$clip$0(ClipContext par1, BlockPos par2);
 
-    @Shadow(aliases = { "lambda$clip$3" })
-    public static BlockHitResult method_17746(ClipContext par1) { throw new AssertionError();}
+    @Shadow
+    public static BlockHitResult lambda$clip$1(ClipContext par1) {
+        throw new AssertionError();
+    }
 
     /**
      * @author 2No2Name
@@ -53,8 +54,8 @@ public interface BlockGetterMixin {
                 context.getTo(),
                 context,
                 // This intentionally excludes custom level implementations of create / ponder due to compatibility issues
-                (this instanceof ServerLevel || this instanceof Level l && l.isClientSide()) ? this.lithium$blockHitFactory(context) : this::method_17743,
-                BlockGetterMixin::method_17746);
+                (this instanceof ServerLevel || this instanceof Level l && l.isClientSide()) ? this.lithium$blockHitFactory(context) : this::lambda$clip$0,
+                BlockGetterMixin::lambda$clip$1);
     }
 
     @Unique

@@ -260,10 +260,6 @@ The expensive check to see if a TypeFilterableList can be filtered by a specific
 (default: `true`)  
 Copy entity hashmap instead of duplicating the list using iteration
   
-### `mixin.collections.fluid_submersion`
-(default: `true`)  
-Use ReferenceArraySet instead of HashSet to store the fluids the entity is currently submerged in.
-  
 ### `mixin.collections.mob_spawning`
 (default: `true`)  
 Uses custom hashset/list combination for faster mob spawn checks
@@ -297,13 +293,6 @@ Various entity collision optimizations
 ### `mixin.entity.collisions.block_effects`
 (default: `true`)  
 Avoid iterations when entities did not collect block effects (freeze, fire, extinguish, etc.)
-  
-### `mixin.entity.collisions.fluid`
-(default: `true`)  
-Skips being pushed by fluids when the nearby chunk sections do not contain this fluid  
-Requirements:
-- `mixin.util.block_tracking=true`
-- `mixin.experimental.entity.block_caching.fluid_pushing=false`  
   
 ### `mixin.entity.collisions.intersection`
 (default: `true`)  
@@ -427,12 +416,6 @@ Requirements:
 ### `mixin.experimental.entity.block_caching.block_support`
 (default: `true`)  
 Use the block listening system to skip supporting block search (used for honey block pushing, velocity modifiers like soulsand, etc)  
-Requirements:
-- `mixin.util.block_tracking=true`  
-  
-### `mixin.experimental.entity.block_caching.fluid_pushing`
-(default: `true`)  
-Use the block listening system to cache entity fluid interaction when not touching fluid currents.  
 Requirements:
 - `mixin.util.block_tracking=true`  
   

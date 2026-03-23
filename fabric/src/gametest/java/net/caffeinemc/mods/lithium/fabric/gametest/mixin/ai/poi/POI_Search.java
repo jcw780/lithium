@@ -46,7 +46,7 @@ public class POI_Search implements CustomTestMethodInvoker {
         List<BlockPos> inRangePositions = poiManager.getInRange(predicate, center, 128, PoiManager.Occupancy.ANY).map(PoiRecord::getPos).collect(Collectors.toList());
         PoiOrdering.InSquare.INSTANCE.checkOrderOrThrow(center, poiManager, inRangePositions);
 
-        List<BlockPos> inChunkPositions = poiManager.getInChunk(predicate, new ChunkPos(center), PoiManager.Occupancy.ANY).map(PoiRecord::getPos).collect(Collectors.toList());
+        List<BlockPos> inChunkPositions = poiManager.getInChunk(predicate, ChunkPos.containing(center), PoiManager.Occupancy.ANY).map(PoiRecord::getPos).collect(Collectors.toList());
         PoiOrdering.InChunk.INSTANCE.checkOrderOrThrow(center, poiManager, inChunkPositions);
 
         List<BlockPos> allPositions = poiManager.findAll(predicate, blockPos1 -> true, center, 128, PoiManager.Occupancy.ANY).collect(Collectors.toList());

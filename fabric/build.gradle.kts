@@ -3,7 +3,7 @@ import me.modmuss50.mpp.ReleaseType
 plugins {
     id("java")
     id("idea")
-    id("fabric-loom") version ("1.14-SNAPSHOT")
+    id("net.fabricmc.fabric-loom") version ("1.15-SNAPSHOT")
     id("net.caffeinemc.mixin-config-plugin") version ("1.0-SNAPSHOT")
 }
 
@@ -39,28 +39,22 @@ afterEvaluate {
 
 dependencies {
     minecraft("com.mojang:minecraft:${MINECRAFT_VERSION}")
-    mappings(loom.layered {
-        officialMojangMappings()
-        if (PARCHMENT_VERSION != null) {
-            parchment("org.parchmentmc.data:parchment-${MINECRAFT_VERSION}:${PARCHMENT_VERSION}@zip")
-        }
-    })
-    modImplementation("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
+    implementation("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
 
     fun addEmbeddedFabricModule(name: String) {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modImplementation(module)
+        implementation(module)
         include(module)
     }
 
     fun addCompileOnlyFabricModule(name: String) {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modCompileOnly(module)
+        compileOnly(module)
     }
 
     fun addFabricModule(name: String) {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modImplementation(module)
+        implementation(module)
     }
 
     addCompileOnlyFabricModule("fabric-transfer-api-v1")
@@ -187,9 +181,8 @@ tasks {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
         from(zipTree(project.project(":common").tasks.jar.get().archiveFile))
+        destinationDirectory = rootDir.resolve("build").resolve("libs")
     }
-
-    remapJar.get().destinationDirectory = rootDir.resolve("build").resolve("libs")
 }
 
 sourceSets {
@@ -232,7 +225,7 @@ tasks.named("processResources") {
 publishMods {
     val mcVersionLithiumVersion = "mc$MINECRAFT_VERSION-$MOD_VERSION"
     version = "$mcVersionLithiumVersion-fabric"
-    file = tasks.remapJar.get().archiveFile
+    file = tasks.jar.get().archiveFile
     changelog = rootProject.file("CHANGELOG.md").readText().trim()
     type = getReleaseType()
     modLoaders.add("fabric")

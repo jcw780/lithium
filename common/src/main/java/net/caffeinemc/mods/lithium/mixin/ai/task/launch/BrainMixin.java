@@ -5,11 +5,13 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.caffeinemc.mods.lithium.common.util.collections.MaskedList;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.VisibleForDebug;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
+import net.minecraft.world.entity.ai.memory.MemoryMap;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.schedule.Activity;
@@ -24,7 +26,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 @Mixin(Brain.class)
 public class BrainMixin<E extends LivingEntity> {
@@ -120,15 +121,15 @@ public class BrainMixin<E extends LivingEntity> {
 
 
     @Inject(
-            method = "<init>(Ljava/util/Collection;Ljava/util/Collection;Lcom/google/common/collect/ImmutableList;Ljava/util/function/Supplier;)V",
+            method = "<init>(Ljava/util/Collection;Ljava/util/Collection;Ljava/util/List;Lnet/minecraft/world/entity/ai/memory/MemoryMap;Lnet/minecraft/util/RandomSource;)V",
             at = @At("RETURN")
     )
-    private void reinitializeBrainCollections(Collection<?> memories, Collection<?> sensors, ImmutableList<?> memoryEntries, Supplier<?> codecSupplier, CallbackInfo ci) {
+    private void reinitializeBrainCollections(Collection memoryTypes, Collection sensorTypes, List activities, MemoryMap memories, RandomSource randomSource, CallbackInfo ci) {
         this.onTasksChanged();
     }
 
     @Inject(
-            method = "addActivityAndRemoveMemoriesWhenStopped(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;Ljava/util/Set;Ljava/util/Set;)V",
+            method = "addActivity",
             at = @At("RETURN")
     )
     private void reinitializeTasksSorted(Activity activity, ImmutableList<? extends Pair<Integer, ? extends BehaviorControl<?>>> indexedTasks, Set<Pair<MemoryModuleType<?>, MemoryStatus>> requiredMemories, Set<MemoryModuleType<?>> forgettingMemories, CallbackInfo ci) {

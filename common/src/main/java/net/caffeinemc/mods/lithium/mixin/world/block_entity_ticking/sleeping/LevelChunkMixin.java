@@ -14,9 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LevelChunk.class)
 public class LevelChunkMixin {
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
-            method = { "method_31719", "lambda$updateBlockEntityTicker$9" }, // Fabric, Neoforge
+            method = "lambda$updateBlockEntityTicker$0",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addBlockEntityTicker(Lnet/minecraft/world/level/block/entity/TickingBlockEntity;)V")
     )
     private void setBlockEntityTickingOrder(BlockEntity blockEntity, BlockEntityTicker<?> blockEntityTicker, BlockPos pos, LevelChunk.RebindableTickingBlockEntityWrapper wrappedBlockEntityTickInvoker, CallbackInfoReturnable<?> cir, @Local(ordinal = 1) LevelChunk.RebindableTickingBlockEntityWrapper wrappedBlockEntityTickInvoker2) {
@@ -25,9 +24,8 @@ public class LevelChunkMixin {
         }
     }
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
-            method = { "method_31719", "lambda$updateBlockEntityTicker$9" }, // Fabric, Neoforge
+            method = "lambda$updateBlockEntityTicker$0",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/chunk/LevelChunk$RebindableTickingBlockEntityWrapper;rebind(Lnet/minecraft/world/level/block/entity/TickingBlockEntity;)V")
     )
     private void setBlockEntityTickingOrder(BlockEntity blockEntity, BlockEntityTicker<?> blockEntityTicker, BlockPos pos, LevelChunk.RebindableTickingBlockEntityWrapper wrappedBlockEntityTickInvoker, CallbackInfoReturnable<?> cir) {

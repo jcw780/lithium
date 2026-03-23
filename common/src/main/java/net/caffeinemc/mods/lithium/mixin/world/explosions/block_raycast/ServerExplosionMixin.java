@@ -104,7 +104,7 @@ public abstract class ServerExplosionMixin {
 
     @Inject(
             method = "<init>(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;Lnet/minecraft/world/phys/Vec3;FZLnet/minecraft/world/level/Explosion$BlockInteraction;)V",
-            at = @At("TAIL")
+            at = @At("RETURN")
     )
     private void init(ServerLevel serverLevel, Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionDamageCalculator, Vec3 vec3, float f, boolean bl, Explosion.BlockInteraction blockInteraction, CallbackInfo ci) {
         this.bottomY = this.level.getMinY();
@@ -165,7 +165,7 @@ public abstract class ServerExplosionMixin {
         // compared to a memory allocation and associated overhead of hashing real objects in a set.
         final LongOpenHashSet touched = new LongOpenHashSet(0);
 
-        final RandomSource random = this.level.random;
+        final RandomSource random = this.level.getRandom();
 
         // Explosions work by casting many rays through the world from the origin of the explosion
         for (int rayX = 0; rayX < 16; ++rayX) {

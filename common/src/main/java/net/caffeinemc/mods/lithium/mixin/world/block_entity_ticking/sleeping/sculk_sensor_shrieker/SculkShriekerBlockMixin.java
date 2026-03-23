@@ -14,9 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SculkShriekerBlock.class)
 public abstract class SculkShriekerBlockMixin {
-    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
-            method = { "method_42317", "lambda$getTicker$2" }, //Fabric, NeoForge
+            method = "lambda$getTicker$0",
             at = @At(value = "RETURN")
     )
     private static void checkSleep(Level level, BlockPos blockPos, BlockState blockState, SculkShriekerBlockEntity sculkShriekerBlockEntity, CallbackInfo ci) {

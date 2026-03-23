@@ -20,8 +20,8 @@ public final class ChunkSectionChangeCallback {
         if (BlockListeningSection.class.isAssignableFrom(LevelChunkSection.class)) {
             ChunkStatusTracker.registerUnloadCallback((serverWorld, chunkPos) -> {
                 Long2ReferenceOpenHashMap<ChunkSectionChangeCallback> changeCallbacks = ((LithiumData) serverWorld).lithium$getData().chunkSectionChangeCallbacks();
-                int x = chunkPos.x;
-                int z = chunkPos.z;
+                int x = chunkPos.x();
+                int z = chunkPos.z();
                 for (int y = Pos.SectionYCoord.getMinYSection(serverWorld); y <= Pos.SectionYCoord.getMaxYSectionInclusive(serverWorld); y++) {
                     SectionPos chunkSectionPos = SectionPos.of(x, y, z);
                     ChunkSectionChangeCallback chunkSectionChangeCallback = changeCallbacks.remove(chunkSectionPos.asLong());

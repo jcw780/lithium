@@ -2,7 +2,7 @@ import me.modmuss50.mpp.ReleaseType
 
 plugins {
     id("idea")
-    id("net.neoforged.moddev") version "2.0.110"
+    id("net.neoforged.moddev") version "2.0.141"
     id("java-library")
     id("net.caffeinemc.mixin-config-plugin") version ("1.0-SNAPSHOT")
 }
@@ -149,7 +149,7 @@ dependencies {
 //    includeDep("org.sinytra.forgified-fabric-api:fabric-block-view-api-v2:1.0.10+9afaaf8c19")
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 project.sourceSets {
     val main by getting {

@@ -18,7 +18,7 @@ public class ServerLevel$EntityCallbacksMixin {
 
     private ServerLevel outer;
 
-    @Inject(method = "<init>", at = @At("TAIL"))
+    @Inject(method = "<init>", at = @At("RETURN"))
     private void inj(ServerLevel outer, CallbackInfo ci) {
         this.outer = outer;
     }

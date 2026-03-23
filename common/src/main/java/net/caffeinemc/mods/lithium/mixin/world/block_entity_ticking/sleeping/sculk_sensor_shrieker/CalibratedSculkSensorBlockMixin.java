@@ -14,9 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(CalibratedSculkSensorBlock.class)
 public abstract class CalibratedSculkSensorBlockMixin {
-    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
-            method = { "method_49813", "lambda$getTicker$0" }, // Fabric, Neoforge
+            method = "lambda$getTicker$0",
             at = @At(value = "RETURN")
     )
     private static void checkSleep(Level level, BlockPos blockPos, BlockState blockState, CalibratedSculkSensorBlockEntity calibratedSculkSensorBlockEntity, CallbackInfo ci) {

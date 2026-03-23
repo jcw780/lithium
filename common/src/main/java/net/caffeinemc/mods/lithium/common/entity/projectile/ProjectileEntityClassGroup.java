@@ -2,7 +2,6 @@ package net.caffeinemc.mods.lithium.common.entity.projectile;
 
 import net.caffeinemc.mods.lithium.common.entity.EntityClassGroup;
 import net.caffeinemc.mods.lithium.common.reflection.ReflectionUtil;
-import net.caffeinemc.mods.lithium.common.services.PlatformMappingInformation;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -30,7 +29,7 @@ public class ProjectileEntityClassGroup {
 
 
     static {
-        String remapped_canHitEntity = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1676", "method_26958", "(Lnet/minecraft/class_1297;)Z", "canHitEntity");
+        String remapped_canHitEntity = "canHitEntity";
         OPTIMIZED_PROJECTILES = new EntityClassGroup(
                 (Class<?> entityClass, Supplier<EntityType<?>> entityType) -> {
                     Class<?> parentClass = Projectile.class;
@@ -48,8 +47,8 @@ public class ProjectileEntityClassGroup {
                     return !ReflectionUtil.hasMethodOverride(entityClass, parentClass, true, remapped_canHitEntity, Entity.class);
                 });
 
-        String remapped_canBeHitByProjectile = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1297", "method_49108", "()Z", "canBeHitByProjectile");
-        String remapped_isPickable = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1297", "method_5863", "()Z", "isPickable");
+        String remapped_canBeHitByProjectile = "canBeHitByProjectile";
+        String remapped_isPickable = "isPickable";
         CAN_MAYBE_BE_HIT_BY_OPTIMIZED_PROJECTILE = new EntityClassGroup(
                 (entityClass, entityType) -> {
                     Class<?> parentClass_isPickable = Entity.class;
@@ -67,7 +66,7 @@ public class ProjectileEntityClassGroup {
                         if (AbstractArrow.class.isAssignableFrom(entityClass)) {
                             parentClass_isPickable = AbstractArrow.class;
                         }
-                        if (entityType.get().is(EntityTypeTags.REDIRECTABLE_PROJECTILE)) {
+                        if (entityType.get().builtInRegistryHolder().is(EntityTypeTags.REDIRECTABLE_PROJECTILE)) {
                             return true;
                         }
                     }

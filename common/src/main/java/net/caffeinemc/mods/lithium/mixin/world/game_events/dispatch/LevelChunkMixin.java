@@ -40,13 +40,13 @@ public abstract class LevelChunkMixin extends ChunkAccess {
         ChunkStatusTracker.registerLoadCallback((serverLevel, chunk) -> {
             GameEventDispatcherStorage dispatcherStorage =
                     ((LithiumData) serverLevel).lithium$getData().gameEventDispatchers();
-            dispatcherStorage.addChunk(chunk.getPos().toLong(), ((LevelChunkMixin) (Object) chunk).gameEventListenerRegistrySections);
+            dispatcherStorage.addChunk(chunk.getPos().pack(), ((LevelChunkMixin) (Object) chunk).gameEventListenerRegistrySections);
         });
 
         ChunkStatusTracker.registerUnloadCallback((serverLevel, pos) -> {
             GameEventDispatcherStorage dispatcherStorage =
                     ((LithiumData) serverLevel).lithium$getData().gameEventDispatchers();
-            dispatcherStorage.removeChunk(pos.toLong());
+            dispatcherStorage.removeChunk(pos.pack());
         });
     }
 
@@ -83,7 +83,7 @@ public abstract class LevelChunkMixin extends ChunkAccess {
     @Unique
     public void setGameEventListenerRegistrySections(Int2ObjectMap<GameEventListenerRegistry> gameEventListenerRegistrySections) {
         GameEventDispatcherStorage storage = ((LithiumData) this.getLevel()).lithium$getData().gameEventDispatchers();
-        storage.replace(this.getPos().toLong(), gameEventListenerRegistrySections);
+        storage.replace(this.getPos().pack(), gameEventListenerRegistrySections);
         this.gameEventListenerRegistrySections = gameEventListenerRegistrySections;
     }
 }

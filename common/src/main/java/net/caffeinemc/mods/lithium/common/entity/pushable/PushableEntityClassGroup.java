@@ -1,10 +1,7 @@
 package net.caffeinemc.mods.lithium.common.entity.pushable;
 
-import java.util.function.Supplier;
-
 import net.caffeinemc.mods.lithium.common.entity.EntityClassGroup;
 import net.caffeinemc.mods.lithium.common.reflection.ReflectionUtil;
-import net.caffeinemc.mods.lithium.common.services.PlatformMappingInformation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,6 +11,8 @@ import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.monster.creaking.Creaking;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
+
+import java.util.function.Supplier;
 
 public class PushableEntityClassGroup {
 
@@ -33,8 +32,8 @@ public class PushableEntityClassGroup {
     public static final EntityClassGroup MAYBE_PUSHABLE;
 
     static {
-        String remapped_isClimbing = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1309", "method_6101", "()Z", "onClimbable");
-        String remapped_isPushable = PlatformMappingInformation.INSTANCE.mapMethodName("intermediary", "net.minecraft.class_1297", "method_5810", "()Z", "isPushable");
+        String remapped_isClimbing = "onClimbable";
+        String remapped_isPushable = "isPushable";
         CACHABLE_UNPUSHABILITY = new EntityClassGroup(
                 (Class<?> entityClass, Supplier<EntityType<?>> entityType) -> {
                     if (LivingEntity.class.isAssignableFrom(entityClass) && !Player.class.isAssignableFrom(entityClass)) {

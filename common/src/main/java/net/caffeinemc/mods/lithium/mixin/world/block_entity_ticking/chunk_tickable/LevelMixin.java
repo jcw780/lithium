@@ -20,7 +20,7 @@ public class LevelMixin {
         if (pos == null) {
             return false;
         }
-        long chunkPos = ChunkPos.asLong(pos);
+        long chunkPos = ChunkPos.pack(pos);
         if (chunkPos == lastTickableChunk.get()) {
             return true;
         }
