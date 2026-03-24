@@ -18,6 +18,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.border.WorldBorder;
 
@@ -218,10 +219,18 @@ public class POI_Search implements CustomTestMethodInvoker {
             ObjectOpenHashSet<BlockPos> positions2 = new ObjectOpenHashSet<>();
             System.out.println("Placing POIs for iteration " + (i + 1) + "/" + (iterations) + " : around (" + x + ", " + y + ", " + z + ") with randomPct=" + randomPct + " and radius=" + radius);
             for (BlockPos blockPos : BlockPos.betweenClosed(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius)) {
-                if (random.nextFloat() < randomPct && level.isInWorldBounds(blockPos)) {
-                    level.setBlock(blockPos, Blocks.NETHER_PORTAL.defaultBlockState(), 0);
-                    positions1.add(blockPos.immutable());
+                BlockState block = level.getBlockState(blockPos);
+                if (!block.isAir()) {
+                    throw new IllegalStateException("Test may be overwriting a huge number of blocks, run test in a fresh void world instead!");
+                } else {
+                    if (random.nextFloat() < randomPct && level.isInWorldBounds(blockPos)) {
+                        positions1.add(blockPos.immutable());
+                    }
                 }
+            }
+
+            for (BlockPos blockPos : positions1) {
+                level.setBlock(blockPos, Blocks.NETHER_PORTAL.defaultBlockState(), 0);
             }
 
             for (BlockPos blockPos : BlockPos.betweenClosed(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius)) {
