@@ -1,6 +1,5 @@
 package net.caffeinemc.mods.lithium.mixin.collections.brain;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
@@ -16,11 +15,11 @@ import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @Mixin(Brain.class)
 public class BrainMixin {
@@ -41,29 +40,13 @@ public class BrainMixin {
     private Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements;
 
     @Inject(
-            method = "<init>(Ljava/util/Collection;Ljava/util/Collection;Lcom/google/common/collect/ImmutableList;Ljava/util/function/Supplier;)V",
+            method = "<init>(Ljava/util/Collection;Ljava/util/Collection;Ljava/util/List;Lnet/minecraft/world/entity/ai/memory/MemoryMap;Lnet/minecraft/util/RandomSource;)V",
             at = @At("RETURN")
     )
-    private void reinitializeBrainCollections(Collection<?> memories, Collection<?> sensors, ImmutableList<?> memoryEntries, Supplier<?> codecSupplier, CallbackInfo ci) {
+    private void reinitializeBrainCollections(CallbackInfo ci) {
         this.memories = new Reference2ObjectOpenHashMap<>(this.memories);
         this.sensors = new Reference2ReferenceLinkedOpenHashMap<>(this.sensors);
         this.activityRequirements = new Object2ObjectOpenHashMap<>(this.activityRequirements);
+        //TODO why is this optimization only replacing 3 of 5 collections?
     }
-
-    @Redirect(
-            method = "forgetOutdatedMemories", at = @At(value = "INVOKE", target = "Ljava/util/Map;entrySet()Ljava/util/Set;")
-    )
-    private <K,V> Set<Map.Entry<K, V>> redirectIterator(Map<K, V> instance) {
-        return null;
-    }
-    @Redirect(
-            method = "forgetOutdatedMemories", at = @At(value = "INVOKE", target = "Ljava/util/Set;iterator()Ljava/util/Iterator;")
-    )
-    private Iterator<? extends Map.Entry<?, ?>> redirectIterator(Set<Map.Entry<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>>> set) {
-        if (this.memories instanceof Reference2ObjectOpenHashMap<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> fastMap) {
-            return fastMap.reference2ObjectEntrySet().fastIterator();
-        }
-        return this.memories.entrySet().iterator();
-    }
-
 }

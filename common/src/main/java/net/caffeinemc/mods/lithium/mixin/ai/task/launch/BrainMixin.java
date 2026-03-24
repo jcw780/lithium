@@ -129,7 +129,7 @@ public class BrainMixin<E extends LivingEntity> {
     }
 
     @Inject(
-            method = "addActivity",
+            method = "addActivity(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;Ljava/util/Set;Ljava/util/Set;)V",
             at = @At("RETURN")
     )
     private void reinitializeTasksSorted(Activity activity, ImmutableList<? extends Pair<Integer, ? extends BehaviorControl<?>>> indexedTasks, Set<Pair<MemoryModuleType<?>, MemoryStatus>> requiredMemories, Set<MemoryModuleType<?>> forgettingMemories, CallbackInfo ci) {

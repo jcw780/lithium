@@ -31,8 +31,6 @@
     "ai.sensor.replace_streams.tempting.TemptingSensorMixin",
     "ai.sensor.secondary_poi.SecondaryPoiSensorMixin",
     "ai.task.launch.BrainMixin",
-    "ai.task.memory_change_counting.BehaviorMixin",
-    "ai.task.memory_change_counting.BrainMixin",
     "ai.task.replace_streams.GateBehaviorMixin",
     "ai.task.replace_streams.RunningPolicyRunOneMixin",
     "ai.task.replace_streams.RunningPolicyTryAllMixin",

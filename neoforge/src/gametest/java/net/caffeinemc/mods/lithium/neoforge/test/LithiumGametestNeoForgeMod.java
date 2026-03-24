@@ -12,7 +12,8 @@ public class LithiumGametestNeoForgeMod {
     public static final String LITHIUM_GAMETEST_SNBT_PATH = System.getenv("LITHIUM_GAMETEST_RESOURCES");
 
     static {
-        StructureUtils.testStructuresDir = Paths.get(LITHIUM_GAMETEST_SNBT_PATH);
+        StructureUtils.testStructuresSourceDir = Paths.get(LITHIUM_GAMETEST_SNBT_PATH);
+        StructureUtils.testStructuresTargetDir = Paths.get(LITHIUM_GAMETEST_SNBT_PATH);
     }
 
     public LithiumGametestNeoForgeMod(IEventBus bus, ModContainer modContainer) {

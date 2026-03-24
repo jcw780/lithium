@@ -23,7 +23,7 @@ public abstract class BrainMixin<T extends LivingEntity> {
      * @author jcw780, 2No2Name
      * @reason Prevent EMPTY_BEHAVIOR_SENTINEL from being added - those are what useless behaviors are replaced with.
      */
-    @WrapOperation(method = "addActivityAndRemoveMemoriesWhenStopped",
+    @WrapOperation(method = "addActivity(Lnet/minecraft/world/entity/schedule/Activity;Lcom/google/common/collect/ImmutableList;Ljava/util/Set;Ljava/util/Set;)V",
             at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableList;iterator()Lcom/google/common/collect/UnmodifiableIterator;"))
     private <E extends Pair<Integer, ? extends BehaviorControl<? super T>>> UnmodifiableIterator<E> filterSentinels(ImmutableList<E> instance, Operation<UnmodifiableIterator<E>> original) {
         Iterator<E> wrapped = original.call(instance);
