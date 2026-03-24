@@ -18,9 +18,9 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(targets = "net/minecraft/world/level/chunk/LevelChunk$BoundTickingBlockEntity")
 public abstract class DirectBlockEntityTickInvokerMixin implements WorldBorderListenerOnce {
 
-    @Shadow(aliases = {"field_27223", "this$0"})
+    @Shadow
     @Final
-    LevelChunk field_27223;
+    LevelChunk this$0;
 
     @Shadow
     public abstract BlockPos getPos();
@@ -36,9 +36,9 @@ public abstract class DirectBlockEntityTickInvokerMixin implements WorldBorderLi
     )
     private boolean cachedCanTickBlockEntity(LevelChunk instance, BlockPos pos) {
         if (this.isInsideWorldBorder()) {
-            Level world = this.field_27223.getLevel();
+            Level world = this.this$0.getLevel();
             if (world instanceof ServerLevel serverWorld) {
-                return this.field_27223.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING) && serverWorld.areEntitiesLoaded(ChunkPos.pack(pos));
+                return this.this$0.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING) && serverWorld.areEntitiesLoaded(ChunkPos.pack(pos));
             }
             return true;
         } else {
@@ -55,12 +55,12 @@ public abstract class DirectBlockEntityTickInvokerMixin implements WorldBorderLi
         if ((worldBorderState & 3) == 3) {
             return (worldBorderState & 4) != 0;
         }
-        return this.field_27223.getLevel().getWorldBorder().isWithinBounds(this.getPos());
+        return this.this$0.getLevel().getWorldBorder().isWithinBounds(this.getPos());
     }
 
     private void startWorldBorderCaching() {
         this.worldBorderState = (byte) 1;
-        WorldBorder worldBorder = this.field_27223.getLevel().getWorldBorder();
+        WorldBorder worldBorder = this.this$0.getLevel().getWorldBorder();
         worldBorder.addListener(this);
         boolean isStationary = worldBorder.getStatus() == BorderStatus.STATIONARY;
         if (worldBorder.isWithinBounds(this.getPos())) {
