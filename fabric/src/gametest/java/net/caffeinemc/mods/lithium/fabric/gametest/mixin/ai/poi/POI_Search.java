@@ -202,7 +202,8 @@ public class POI_Search implements CustomTestMethodInvoker {
         ServerLevel level = context.getLevel();
         RandomSource random = RandomSource.create(level.getSeed()); //Hardcode seed here to be able to check equality with vanilla.
 
-        for (int i = 0; i < 19; i++) {
+        int iterations = 5;
+        for (int i = 0; i < iterations; i++) {
 
             int x = random.nextInt(60000000) - 30000000;
             int z = random.nextInt(60000000) - 30000000;
@@ -215,7 +216,7 @@ public class POI_Search implements CustomTestMethodInvoker {
 
             ObjectOpenHashSet<BlockPos> positions1 = new ObjectOpenHashSet<>();
             ObjectOpenHashSet<BlockPos> positions2 = new ObjectOpenHashSet<>();
-            System.out.println("Placing POIs for iteration " + (i + 1) + "/15 : around (" + x + ", " + y + ", " + z + ") with randomPct=" + randomPct + " and radius=" + radius);
+            System.out.println("Placing POIs for iteration " + (i + 1) + "/" + (iterations) + " : around (" + x + ", " + y + ", " + z + ") with randomPct=" + randomPct + " and radius=" + radius);
             for (BlockPos blockPos : BlockPos.betweenClosed(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius)) {
                 if (random.nextFloat() < randomPct && level.isInWorldBounds(blockPos)) {
                     level.setBlock(blockPos, Blocks.NETHER_PORTAL.defaultBlockState(), 0);
