@@ -6,6 +6,7 @@ import net.caffeinemc.mods.lithium.common.world.chunk.LithiumHashPalette;
 import net.minecraft.world.level.chunk.Configuration;
 import net.minecraft.world.level.chunk.Palette;
 import net.minecraft.world.level.chunk.Strategy;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -42,7 +43,7 @@ public abstract class StrategyMixin {
 
         @ModifyExpressionValue(
                 method = "getConfigurationForBitCount(I)Lnet/minecraft/world/level/chunk/Configuration;",
-                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;FOUR_BITS_LINEAR:Lnet/minecraft/world/level/chunk/Configuration;")
+                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;FOUR_BITS_LINEAR:Lnet/minecraft/world/level/chunk/Configuration;", opcode = Opcodes.GETSTATIC)
         )
         private Configuration getHash4Bit(Configuration original, @Local(argsOnly = true) int bits) {
             if (bits == 3 || bits == 4) {
@@ -53,7 +54,7 @@ public abstract class StrategyMixin {
 
         @ModifyExpressionValue(
                 method = "getConfigurationForBitCount(I)Lnet/minecraft/world/level/chunk/Configuration;",
-                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;FIVE_BITS_HASHMAP:Lnet/minecraft/world/level/chunk/Configuration;")
+                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;FIVE_BITS_HASHMAP:Lnet/minecraft/world/level/chunk/Configuration;", opcode = Opcodes.GETSTATIC)
         )
         private Configuration getHash5Bit(Configuration original) {
             return HASH_5BIT;
@@ -61,7 +62,7 @@ public abstract class StrategyMixin {
 
         @ModifyExpressionValue(
                 method = "getConfigurationForBitCount(I)Lnet/minecraft/world/level/chunk/Configuration;",
-                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;SIX_BITS_HASHMAP:Lnet/minecraft/world/level/chunk/Configuration;")
+                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;SIX_BITS_HASHMAP:Lnet/minecraft/world/level/chunk/Configuration;", opcode = Opcodes.GETSTATIC)
         )
         private Configuration getHash6Bit(Configuration original) {
             return HASH_6BIT;
@@ -69,7 +70,7 @@ public abstract class StrategyMixin {
 
         @ModifyExpressionValue(
                 method = "getConfigurationForBitCount(I)Lnet/minecraft/world/level/chunk/Configuration;",
-                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;SEVEN_BITS_HASHMAP:Lnet/minecraft/world/level/chunk/Configuration;")
+                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;SEVEN_BITS_HASHMAP:Lnet/minecraft/world/level/chunk/Configuration;", opcode = Opcodes.GETSTATIC)
         )
         private Configuration getHash7Bit(Configuration original) {
             return HASH_7BIT;
@@ -77,7 +78,7 @@ public abstract class StrategyMixin {
 
         @ModifyExpressionValue(
                 method = "getConfigurationForBitCount(I)Lnet/minecraft/world/level/chunk/Configuration;",
-                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;EIGHT_BITS_HASHMAP:Lnet/minecraft/world/level/chunk/Configuration;")
+                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;EIGHT_BITS_HASHMAP:Lnet/minecraft/world/level/chunk/Configuration;", opcode = Opcodes.GETSTATIC)
         )
         private Configuration getHash8Bit(Configuration original) {
             return HASH_8BIT;
@@ -89,7 +90,7 @@ public abstract class StrategyMixin {
 
         @ModifyExpressionValue(
                 method = "getConfigurationForBitCount(I)Lnet/minecraft/world/level/chunk/Configuration;",
-                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;THREE_BITS_LINEAR:Lnet/minecraft/world/level/chunk/Configuration;")
+                at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/chunk/Strategy;THREE_BITS_LINEAR:Lnet/minecraft/world/level/chunk/Configuration;", opcode = Opcodes.GETSTATIC)
         )
         private Configuration getHash3Bit(Configuration original) {
             return HASH_3BIT;

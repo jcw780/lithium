@@ -25,7 +25,7 @@ public abstract class WorldBorderMixin {
     private final WorldBorderPositionListenerMulti worldBorderPositionListenerMulti = new WorldBorderPositionListenerMulti();
 
     @Inject(
-            method = "<init>",
+            method = "<init>(Lnet/minecraft/world/level/border/WorldBorder$Settings;)V",
             at = @At("RETURN")
     )
     private void registerSimpleWorldBorderListenerMulti(CallbackInfo ci) {

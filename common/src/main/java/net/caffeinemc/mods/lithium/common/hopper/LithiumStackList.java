@@ -75,7 +75,6 @@ public class LithiumStackList extends NonNullList<ItemStack> implements LithiumD
         this.occupiedSlots = 0;
         this.fullSlots = 0;
         int size = this.size();
-        //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < size; i++) {
             ItemStack stack = this.get(i);
             if (!stack.isEmpty()) {

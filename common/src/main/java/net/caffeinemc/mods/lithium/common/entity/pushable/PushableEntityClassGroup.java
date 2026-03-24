@@ -62,6 +62,7 @@ public class PushableEntityClassGroup {
                         }
                         return true;
                     }
+                    //noinspection RedundantIfStatement
                     if (Player.class.isAssignableFrom(entityClass)) {
                         return true;
                     }

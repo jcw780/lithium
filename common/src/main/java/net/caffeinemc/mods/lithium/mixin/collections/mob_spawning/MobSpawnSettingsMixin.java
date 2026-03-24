@@ -1,7 +1,5 @@
 package net.caffeinemc.mods.lithium.mixin.collections.mob_spawning;
 
-import java.util.Map;
-
 import com.google.common.collect.Maps;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.EntityType;
@@ -14,6 +12,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Map;
 
 @Mixin(MobSpawnSettings.class)
 public class MobSpawnSettingsMixin {
@@ -30,9 +30,7 @@ public class MobSpawnSettingsMixin {
     private void reinit(float creatureSpawnProbability, Map<MobCategory, WeightedList<MobSpawnSettings.SpawnerData>> spawners, Map<EntityType<?>, MobSpawnSettings.MobSpawnCost> spawnCosts, CallbackInfo ci) {
         Map<MobCategory, WeightedList<MobSpawnSettings.SpawnerData>> spawns = Maps.newEnumMap(MobCategory.class);
 
-        for (Map.Entry<MobCategory, WeightedList<MobSpawnSettings.SpawnerData>> entry : this.spawners.entrySet()) {
-            spawns.put(entry.getKey(), entry.getValue());
-        }
+        spawns.putAll(this.spawners);
 
         this.spawners = spawns;
     }

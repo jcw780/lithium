@@ -28,6 +28,7 @@ public abstract class EntityMixin implements VicinityCacheProvider, LithiumEntit
     @Shadow
     protected abstract double getGravity();
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     @Shadow
     public Optional<BlockPos> mainSupportingBlockPos;
 

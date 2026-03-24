@@ -6,7 +6,9 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.behavior.*;
+import net.minecraft.world.entity.ai.behavior.AcquirePoi;
+import net.minecraft.world.entity.ai.behavior.BehaviorControl;
+import net.minecraft.world.entity.ai.behavior.VillagerGoalPackages;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import org.spongepowered.asm.mixin.Mixin;
@@ -29,11 +31,12 @@ import java.util.function.Predicate;
 public abstract class VillagerGoalPackagesMixin {
     @Redirect(method = "getCorePackage", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/behavior/AcquirePoi;create(Ljava/util/function/Predicate;Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;Lnet/minecraft/world/entity/ai/memory/MemoryModuleType;ZLjava/util/Optional;Ljava/util/function/BiPredicate;)Lnet/minecraft/world/entity/ai/behavior/BehaviorControl;"))
     private static BehaviorControl<PathfinderMob> returnNullIfAcquirePoiIsUseless(Predicate<Holder<PoiType>> predicate,
-                                                                 MemoryModuleType<GlobalPos> memoryModuleType,
-                                                                 MemoryModuleType<GlobalPos> memoryModuleType2,
-                                                                 boolean bl, Optional<Byte> optional,
-                                                                 BiPredicate<ServerLevel, BlockPos> biPredicate) {
+                                                                                  MemoryModuleType<GlobalPos> memoryModuleType,
+                                                                                  MemoryModuleType<GlobalPos> memoryModuleType2,
+                                                                                  boolean bl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<Byte> optional,
+                                                                                  BiPredicate<ServerLevel, BlockPos> biPredicate) {
         if (predicate == PoiType.NONE) {
+            //noinspection unchecked
             return LithiumEmptyBehavior.EMPTY_BEHAVIOR_SENTINEL;
         }
         return AcquirePoi.create(predicate, memoryModuleType, memoryModuleType2, bl, optional, biPredicate);

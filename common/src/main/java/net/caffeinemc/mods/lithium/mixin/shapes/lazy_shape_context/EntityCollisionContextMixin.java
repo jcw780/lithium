@@ -30,7 +30,6 @@ public class EntityCollisionContextMixin {
      * Mixin the instanceof to always return false to avoid the expensive inventory access.
      * No need to use Opcodes.INSTANCEOF or similar.
      */
-    @SuppressWarnings("InvalidInjectorMethodSignature")
     @ModifyConstant(
             method = "<init>(Lnet/minecraft/world/entity/Entity;ZZ)V",
             constant = @Constant(classValue = LivingEntity.class, ordinal = 0)

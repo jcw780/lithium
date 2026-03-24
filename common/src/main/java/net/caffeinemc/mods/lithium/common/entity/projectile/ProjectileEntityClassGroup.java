@@ -66,6 +66,7 @@ public class ProjectileEntityClassGroup {
                         if (AbstractArrow.class.isAssignableFrom(entityClass)) {
                             parentClass_isPickable = AbstractArrow.class;
                         }
+                        //noinspection deprecation
                         if (entityType.get().builtInRegistryHolder().is(EntityTypeTags.REDIRECTABLE_PROJECTILE)) {
                             return true;
                         }

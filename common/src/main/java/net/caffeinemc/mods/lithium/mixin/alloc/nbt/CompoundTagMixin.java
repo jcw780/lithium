@@ -63,7 +63,6 @@ public class CompoundTagMixin {
     @Mixin(targets = "net/minecraft/nbt/CompoundTag$1")
     static class Type {
 
-        @SuppressWarnings("InvalidInjectorMethodSignature")
         @ModifyVariable(
                 method = "loadCompound",
                 at = @At(

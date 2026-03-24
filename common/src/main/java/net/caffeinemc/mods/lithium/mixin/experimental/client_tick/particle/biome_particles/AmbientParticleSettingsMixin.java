@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.caffeinemc.mods.lithium.common.client.SharedFields;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.attribute.AmbientParticle;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,7 +24,7 @@ public class AmbientParticleSettingsMixin {
     }
 
     @ModifyExpressionValue(
-            method = "canSpawn", at = @At(value = "FIELD", target = "Lnet/minecraft/world/attribute/AmbientParticle;probability:F")
+            method = "canSpawn", at = @At(value = "FIELD", target = "Lnet/minecraft/world/attribute/AmbientParticle;probability:F", opcode = Opcodes.GETFIELD)
     )
     private float getAdjustedProbability(float original) {
         return original / Float.intBitsToFloat(SharedFields.MAXIMUM_BIOME_PARTICLE_CHANCE.get());

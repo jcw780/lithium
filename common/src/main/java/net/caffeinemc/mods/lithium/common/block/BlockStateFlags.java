@@ -49,7 +49,7 @@ public class BlockStateFlags {
             WATER = new TrackedBlockStatePredicate(countingFlags.size()) {
                 @Override
                 public boolean test(BlockState operand) {
-                    return operand.getFluidState().getType().is(FluidTags.WATER);
+                    return operand.getFluidState().is(FluidTags.WATER);
                 }
             };
             countingFlags.add(WATER);
@@ -57,7 +57,7 @@ public class BlockStateFlags {
             LAVA = new TrackedBlockStatePredicate(countingFlags.size()) {
                 @Override
                 public boolean test(BlockState operand) {
-                    return operand.getFluidState().getType().is(FluidTags.LAVA);
+                    return operand.getFluidState().is(FluidTags.LAVA);
                 }
             };
             countingFlags.add(LAVA);

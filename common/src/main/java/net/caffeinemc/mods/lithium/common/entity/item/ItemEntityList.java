@@ -47,7 +47,7 @@ public class ItemEntityList extends AbstractList<ItemEntity> implements ChangeSu
         this.delegate = delegate;
         this.delegateWithNulls = new ArrayList<>(delegate);
         this.elementsByCategory = new Object2ReferenceOpenCustomHashMap<>(STRATEGY);
-        this.maxHalfFullElementsByCategory = new Object2ReferenceOpenCustomHashMap<>(STRATEGY);;
+        this.maxHalfFullElementsByCategory = new Object2ReferenceOpenCustomHashMap<>(STRATEGY);
         this.tempUncategorizedElements = new IntOpenHashSet();
 
         for (int i = 0; i < this.delegateWithNulls.size(); i++) {

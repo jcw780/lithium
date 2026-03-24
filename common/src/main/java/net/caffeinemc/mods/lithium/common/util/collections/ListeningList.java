@@ -57,7 +57,6 @@ public class ListeningList<T> implements List<T> {
     @NotNull
     @Override
     public <T1> T1[] toArray(@NotNull T1[] t1s) {
-        //noinspection SuspiciousToArrayCall
         return this.delegate.toArray(t1s);
     }
 

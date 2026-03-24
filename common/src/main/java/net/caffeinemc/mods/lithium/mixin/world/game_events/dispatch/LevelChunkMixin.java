@@ -12,6 +12,7 @@ import net.minecraft.world.level.chunk.*;
 import net.minecraft.world.level.gameevent.GameEventListenerRegistry;
 import net.minecraft.world.level.levelgen.blending.BlendingData;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -72,7 +73,7 @@ public abstract class LevelChunkMixin extends ChunkAccess {
 
     @Inject(
             method = "getListenerRegistry(I)Lnet/minecraft/world/level/gameevent/GameEventListenerRegistry;",
-            at = @At(value = "FIELD", shift = At.Shift.BEFORE, target = "Lnet/minecraft/world/level/chunk/LevelChunk;gameEventListenerRegistrySections:Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;")
+            at = @At(value = "FIELD", shift = At.Shift.BEFORE, target = "Lnet/minecraft/world/level/chunk/LevelChunk;gameEventListenerRegistrySections:Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;", opcode = Opcodes.GETFIELD)
     )
     private void initializeCollection(CallbackInfoReturnable<GameEventListenerRegistry> cir) {
         if (this.gameEventListenerRegistrySections == null) {

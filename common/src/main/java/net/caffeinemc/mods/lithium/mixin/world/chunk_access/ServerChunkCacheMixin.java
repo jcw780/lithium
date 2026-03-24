@@ -30,7 +30,6 @@ import java.util.function.BooleanSupplier;
  * There are also some organizational and differences which help the JVM to better optimize code here, most of which
  * are documented.
  */
-@SuppressWarnings("OverwriteModifiers")
 @Mixin(ServerChunkCache.class)
 public abstract class ServerChunkCacheMixin {
     @Shadow

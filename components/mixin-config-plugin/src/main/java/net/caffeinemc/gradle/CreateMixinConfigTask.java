@@ -67,7 +67,7 @@ public abstract class CreateMixinConfigTask extends DefaultTask {
                         throw new RuntimeException("Failed to convert path to URL: " + path, e);
                     }
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         ClassLoader loader = new URLClassLoader(urls.toArray(new URL[0]), MixinConfigOption.class.getClassLoader());
         HashSet<String> mixinPackages = new HashSet<>();

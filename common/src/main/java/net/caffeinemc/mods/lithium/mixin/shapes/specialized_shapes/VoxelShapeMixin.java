@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.Shadow;
  */
 @Mixin(VoxelShape.class)
 public abstract class VoxelShapeMixin {
-    private static final double POSITIVE_EPSILON = +1.0E-7D;
+    private static final double POSITIVE_EPSILON = 1.0E-7D;
     private static final double NEGATIVE_EPSILON = -1.0E-7D;
 
     @Shadow

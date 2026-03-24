@@ -7,7 +7,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
-import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class VoxelShapeAlignedCuboidOffset extends VoxelShapeAlignedCuboid {
     //keep track on how much the voxelSet was offset. minX,maxX,minY are stored offset already
@@ -30,11 +29,6 @@ public class VoxelShapeAlignedCuboidOffset extends VoxelShapeAlignedCuboid {
             this.yOffset = yOffset;
             this.zOffset = zOffset;
         }
-    }
-
-    @Override
-    public VoxelShape move(double x, double y, double z) {
-        return new VoxelShapeAlignedCuboidOffset(this, this.shape, x, y, z);
     }
 
     @Override

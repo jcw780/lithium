@@ -7,8 +7,8 @@ plugins {
 
 // Fabric: https://fabricmc.net/develop/
 // Neoforge: https://neoforged.net/
-val MINECRAFT_VERSION by extra { "26.1-rc-3" } //MUST manually update fabric.mod.json and neoforge.mods.toml
-val NEOFORGE_VERSION by extra { "26.1.0.0-alpha.14+snapshot-11" }
+val MINECRAFT_VERSION by extra { "26.1" } //MUST manually update fabric.mod.json and neoforge.mods.toml
+val NEOFORGE_VERSION by extra { "26.1.0.1-beta" }
 val FABRIC_LOADER_VERSION by extra { "0.18.4" }
 val FABRIC_API_VERSION by extra { "0.144.0+26.1" }
 

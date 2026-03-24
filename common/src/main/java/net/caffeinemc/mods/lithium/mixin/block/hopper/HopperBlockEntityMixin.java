@@ -31,6 +31,7 @@ import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -174,7 +175,6 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
         if (!(hopperBlockEntity.insertInventory == insertInventory && hopperBlockEntity.insertStackList.getFullSlots() == hopperBlockEntity.insertStackList.size())) {
             Direction fromDirection = hopperBlockEntity.facing.getOpposite();
             int size = hopperStackList.size();
-            //noinspection ForLoopReplaceableByForEach
             for (int i = 0; i < size; ++i) {
                 ItemStack transferStack = hopperStackList.get(i);
                 if (!transferStack.isEmpty()) {
@@ -223,7 +223,7 @@ public abstract class HopperBlockEntityMixin extends BlockEntity implements Hopp
      * @param to   Hopper or Hopper Minecart that is extracting
      * @param from Inventory the hopper is extracting from
      */
-    @Inject(method = "suckInItems(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/entity/Hopper;)Z", at = @At(value = "FIELD", target = "Lnet/minecraft/core/Direction;DOWN:Lnet/minecraft/core/Direction;", shift = At.Shift.AFTER), cancellable = true)
+    @Inject(method = "suckInItems(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/entity/Hopper;)Z", at = @At(value = "FIELD", target = "Lnet/minecraft/core/Direction;DOWN:Lnet/minecraft/core/Direction;", shift = At.Shift.AFTER, opcode = Opcodes.GETSTATIC), cancellable = true)
     private static void lithiumExtract(Level world, Hopper to, CallbackInfoReturnable<Boolean> cir, @Local Container from) {
         if (!(to instanceof HopperBlockEntityMixin hopperBlockEntity)) {
             return; //optimizations not implemented for hopper minecarts
