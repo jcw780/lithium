@@ -4,16 +4,10 @@ _LithiumVersion_ is automatically replaced with the lithium version, e.g. 0.14.5
 Everything above the line is ignored and not included in the changelog. Everything below will be in the
 changelog on GitHub, Modrinth and CurseForge.
 ----------
-Lithium _LithiumVersion_ for Minecraft _MCVersion_ adds several optimizations and fixes.
+Lithium _LithiumVersion_ is the first release for Minecraft _MCVersion_.
 
 Make sure to take a backup of your world before using the mod and please report any bugs and mod compatibility issues at the [issue tracker](https://github.com/CaffeineMC/lithium-fabric/issues). You can check the [description of each optimization](https://github.com/CaffeineMC/lithium/blob/_ReleaseTag_/lithium-mixin-config.md) and how to disable it when encountering a problem.
 
-## Additions
-- Optimize nitwit jobsite search (Thanks to jcw780)
-- Optimize explosions by caching block states (Based on PR by pwouik)
-- Reduce iteration and allocation of block to entity effects
-- Add missing palette crash recovery attempt
-- Use cached false values for fluid hole search
-
-## Fixes
-- Fix negative indices caused by byte to int cast (crash with modded fluids https://github.com/CaffeineMC/lithium/issues/719)
+## Changes
+- Update to Minecraft 26.1
+- (Temporarily) remove a few optimizations due to the update
