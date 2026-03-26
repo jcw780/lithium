@@ -73,11 +73,11 @@ public abstract class LevelChunkSectionMixin implements LithiumSectionData {
             method = "setBlockState(IIILnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/block/state/BlockState;getFluidState()Lnet/minecraft/world/level/material/FluidState;",
+                    target = "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z",
                     ordinal = 0
             )
     )
-    private void updateRandomTickableBlockCounts(int x, int y, int z, BlockState newState, boolean lock, CallbackInfoReturnable<BlockState> cir, @Local(ordinal = 1) BlockState oldState) {
+    private void updateRandomTickableBlockCounts(int x, int y, int z, BlockState newState, boolean lock, CallbackInfoReturnable<BlockState> cir, @Local(name = "previous") BlockState oldState) {
         int prevFlags = ((BlockStateFlagHolder) oldState).lithium$getAllFlags();
         int flags = ((BlockStateFlagHolder) newState).lithium$getAllFlags();
 

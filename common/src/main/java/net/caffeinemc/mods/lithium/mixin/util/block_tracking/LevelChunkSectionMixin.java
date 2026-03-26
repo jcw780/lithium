@@ -89,7 +89,7 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
             method = "setBlockState(IIILnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/block/state/BlockState;getFluidState()Lnet/minecraft/world/level/material/FluidState;",
+                    target = "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z",
                     ordinal = 0
             )
     )
