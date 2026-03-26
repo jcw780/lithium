@@ -87,13 +87,9 @@ public abstract class LevelChunkSectionMixin implements BlockCountingSection, Bl
 
     @Inject(
             method = "setBlockState(IIILnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z",
-                    ordinal = 0
-            )
+            at = @At(value = "RETURN")
     )
-    private void updateFlagCounters(int x, int y, int z, BlockState newState, boolean lock, CallbackInfoReturnable<BlockState> cir, @Local(ordinal = 1) BlockState oldState) {
+    private void updateFlagCounters(int x, int y, int z, BlockState newState, boolean lock, CallbackInfoReturnable<BlockState> cir, @Local(name = "previous") BlockState oldState) {
         this.lithium$trackBlockStateChange(newState, oldState);
         ChunkSectionChangeCallback changeListener = this.lithium$getSectionData().getChangeListener();
         if (changeListener != null) {
