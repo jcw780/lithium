@@ -77,6 +77,10 @@ Various AI task optimizations
 (default: `true`)  
 Keep track of running and runnable tasks to speed up task launching checks
   
+### `mixin.ai.task.memory_changes`
+(default: `true`)  
+Keep track of AI memory changes to skip checking AI task memory prerequisites
+  
 ### `mixin.ai.task.replace_streams`
 (default: `true`)  
 Replace Stream code of AI tasks with more traditional iteration.
