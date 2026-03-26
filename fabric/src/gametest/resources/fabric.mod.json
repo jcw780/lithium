@@ -8,6 +8,9 @@
     "fabric-gametest" : [
       "net.caffeinemc.mods.lithium.fabric.gametest.mixin.ai.poi.POI_Search",
       "net.caffeinemc.mods.lithium.fabric.gametest.LithiumFabricGameTest"
+    ],
+    "main" : [
+      "net.caffeinemc.mods.lithium.fabric.gametest.LithiumFabricGameTest"
     ]
   }
 }

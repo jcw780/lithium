@@ -154,7 +154,7 @@ loom {
             vmArg("-Dfabric-api.gametest")
             runDir = "run/gametestServer"
             source(sourceSets["gametest"])
-            environmentVariable("LITHIUM_GAMETEST_RESOURCES", project(":common").file("src/gametest/resources/data").path)
+            environmentVariable("LITHIUM_GAMETEST_RESOURCES", project(":common").file("src/gametest/resources").path)
         }
         val clientGameTest by getting {
             client()
@@ -162,7 +162,7 @@ loom {
             vmArg("-Dfabric-api.gametest")
             runDir = "run/gametestClient"
             source(sourceSets["gametest"])
-            environmentVariable("LITHIUM_GAMETEST_RESOURCES", project(":common").file("src/gametest/resources/data").path)
+            environmentVariable("LITHIUM_GAMETEST_RESOURCES", project(":common").file("src/gametest/resources").path)
         }
     }
 }
