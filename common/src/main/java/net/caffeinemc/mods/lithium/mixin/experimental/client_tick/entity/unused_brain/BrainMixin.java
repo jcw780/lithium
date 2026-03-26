@@ -2,7 +2,7 @@ package net.caffeinemc.mods.lithium.mixin.experimental.client_tick.entity.unused
 
 import it.unimi.dsi.fastutil.objects.AbstractReference2ObjectFunction;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import net.caffeinemc.mods.lithium.common.ai.brain.BrainExtended;
+import net.caffeinemc.mods.lithium.common.ai.brain.memories.BrainExtended;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.ExpirableValue;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;

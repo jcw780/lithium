@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.lithium.common.client;
 
-import net.caffeinemc.mods.lithium.common.ai.brain.BrainExtended;
+import net.caffeinemc.mods.lithium.common.ai.brain.memories.BrainExtended;
 import net.minecraft.world.entity.ai.Brain;
 import org.spongepowered.asm.mixin.Unique;
 
