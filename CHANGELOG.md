@@ -10,5 +10,8 @@ Make sure to take a backup of your world before using the mod and please report 
 
 It is highly recommended to update from the previous release.
 
+## Additions
+- Reintroduce brain memory change counting optimization
+
 ## Fixes
 - Fix block counting utility, used for random ticking, oversized block collisions, and pathfinding around special blocks.
