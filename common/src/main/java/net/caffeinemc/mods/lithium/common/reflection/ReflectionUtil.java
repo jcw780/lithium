@@ -4,15 +4,21 @@ import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.material.LavaFluid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.WeakHashMap;
+
+import static net.minecraft.world.level.block.Blocks.LAVA;
 
 public class ReflectionUtil {
 
@@ -51,6 +57,24 @@ public class ReflectionUtil {
             return result;
         }
         boolean res = ReflectionUtil.hasMethodOverride(blockClazz, BlockBehaviour.class, true, REMAPPED_ON_ENTITY_COLLISION, BlockState.class, Level.class, BlockPos.class, Entity.class);
+        CACHED_IS_ENTITY_TOUCHABLE.put(blockClazz, res);
+        return res;
+    }
+
+    private static final String REMAPPED_RANDOM_TICK = "randomTick";
+    private static final WeakHashMap<Class<?>, Boolean> CACHED_IS_FIRE_SPREAD_RANGE_RANDOM_TICK = new WeakHashMap<>();
+    public static boolean isBlockStateFireSpreadRangeRandomTick(BlockState operand) {
+        if (!operand.is(LAVA)) {
+            return false;
+        }
+        Class<? extends Block> blockClazz = operand.getBlock().getClass();
+        //Caching results in hashmap as this calculation takes over a second for all blocks together
+        Boolean result = CACHED_IS_FIRE_SPREAD_RANGE_RANDOM_TICK.get(blockClazz);
+        if (result != null) {
+            return result;
+        }
+        boolean res = !ReflectionUtil.hasMethodOverride(operand.getFluidState().getClass(), LavaFluid.class, true, REMAPPED_RANDOM_TICK, Level.class, BlockPos.class, FluidState.class, RandomSource.class)
+         && !ReflectionUtil.hasMethodOverride(blockClazz, BlockBehaviour.class, true, REMAPPED_RANDOM_TICK, Level.class, BlockPos.class, FluidState.class, RandomSource.class);
         CACHED_IS_ENTITY_TOUCHABLE.put(blockClazz, res);
         return res;
     }

@@ -2,25 +2,37 @@ package net.caffeinemc.mods.lithium.mixin.world.chunk_ticking.random_block_ticki
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.caffeinemc.mods.lithium.common.block.BlockCountingSection;
 import net.caffeinemc.mods.lithium.common.block.BlockStateFlags;
 import net.caffeinemc.mods.lithium.common.world.section.LithiumSectionData;
+import net.caffeinemc.mods.lithium.common.world.section.PlayerClosestToSection;
 import net.caffeinemc.mods.lithium.common.world.section.RandomTickingSectionDataHelper;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerEntityGetter;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.storage.WritableLevelData;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Slice;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Optimize random ticks without changing their random distribution:
@@ -46,6 +58,9 @@ public abstract class ServerLevelMixin extends Level implements ServerEntityGett
     // when the number of randomtickable blocks in a section is relatively low. Value was determined by trying around.
     // Some results: For grass covered flatworld, values higher than 256 (all chunks have 0 or 256) are better. Nether needs something below 500 for good performance, probably because there is a split between sections with random lava and sections with lava lakes.
 
+    @Shadow
+    @Final
+    private ServerChunkCache chunkSource;
     @Unique
     private static final int MAX_COUNT_FOR_BLOCK_SEARCH_AFTER_RANDOM_CHANCE = (int) (4096 * 0.09375);
 
@@ -61,8 +76,20 @@ public abstract class ServerLevelMixin extends Level implements ServerEntityGett
                     to = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;getBlockRandomPos(IIII)Lnet/minecraft/core/BlockPos;", ordinal = 1)
             )
     )
-    private int lithiumRandomTick(int original, @Local LevelChunkSection levelChunkSection, @Local(ordinal = 0, argsOnly = true) int randomTickSpeed, @Local(ordinal = 1) int chunkX, @Local(ordinal = 5) int sectionY, @Local(ordinal = 2) int chunkZ) {
+    private int lithiumRandomTick(int original, @Local ChunkPos chunkPos, @Local LevelChunkSection levelChunkSection, @Local(ordinal = 0, argsOnly = true) int randomTickSpeed, @Local(ordinal = 1) int chunkX, @Local(ordinal = 5) int sectionY, @Local(ordinal = 2) int chunkZ) {
         short randomTickableStatesCount = ((BlockCountingSection) levelChunkSection).lithium$getCount(BlockStateFlags.RANDOM_TICKING);
+
+        if (randomTickableStatesCount == ((BlockCountingSection) levelChunkSection).lithium$getCount(BlockStateFlags.FIRE_SPREAD_RANGE_RANDOM_TICK)) {
+            if (!this.canSpreadFireAroundSection(SectionPos.asLong(chunkPos.x(), sectionY, chunkPos.z()))) {
+                // Sections are still random ticked in vanilla but will not do anything
+                // Need to run the RNG calls because they have side effects
+                for (int i = 0; i < randomTickSpeed; i++) {
+                    this.getRandomBlockIndexForRandomTick();
+                }
+                return randomTickSpeed;
+            }
+        }
+
         if (randomTickableStatesCount <= MAX_COUNT_FOR_BLOCK_SEARCH_AFTER_RANDOM_CHANCE) {
             for (int p = 0; p < randomTickSpeed; p++) {
                 int randomBlockIndex = this.getRandomBlockIndexForRandomTick();
@@ -90,5 +117,16 @@ public abstract class ServerLevelMixin extends Level implements ServerEntityGett
         int r = this.randValue >> 2;
         //Use the same bits as vanilla, but pack them into an integer instead of a BlockPos, which can be interpreted as number in [0..4095]
         return (r & 15) | (r >> 8 & 0xf00) | (r >> 4 & 0xf0);
+    }
+
+    @Shadow
+    public GameRules getGameRules() {
+        return null;
+    }
+
+    @Unique
+    private boolean canSpreadFireAroundSection (long sectionPos) {
+        int spreadRadius = this.getGameRules().get(GameRules.FIRE_SPREAD_RADIUS_AROUND_PLAYER);
+        return spreadRadius == -1 || ((PlayerClosestToSection) this.chunkSource.chunkMap).lithium$anyPlayerCloseEnoughToSection(sectionPos, spreadRadius);
     }
 }

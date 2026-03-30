@@ -25,6 +25,7 @@ public class BlockStateFlags {
     public static final TrackedBlockStatePredicate PATH_NOT_OPEN;
     public static final TrackedBlockStatePredicate WATER;
     public static final TrackedBlockStatePredicate LAVA;
+    public static final TrackedBlockStatePredicate FIRE_SPREAD_RANGE_RANDOM_TICK;
 
     public static final TrackedBlockStatePredicate[] FLAGS;
 
@@ -85,6 +86,14 @@ public class BlockStateFlags {
             }
         };
         countingFlags.add(RANDOM_TICKING);
+
+        FIRE_SPREAD_RANGE_RANDOM_TICK = new TrackedBlockStatePredicate(countingFlags.size()) {
+            @Override
+            public boolean test(BlockState operand) {
+                return ReflectionUtil.isBlockStateFireSpreadRangeRandomTick(operand);
+            }
+        };
+        countingFlags.add(FIRE_SPREAD_RANGE_RANDOM_TICK);
 
         NUM_TRACKED_FLAGS = countingFlags.size();
         TRACKED_FLAGS = countingFlags.toArray(new TrackedBlockStatePredicate[NUM_TRACKED_FLAGS]);
