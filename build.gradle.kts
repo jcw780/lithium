@@ -58,7 +58,7 @@ subprojects {
             builder.append(MOD_VERSION)
         } else {
             builder.append(MOD_VERSION.substringBefore('-'))
-            builder.append("-snapshot")
+            builder.append("-snapshot-unpushable_logging")
         }
 
         builder.append("+mc").append(MINECRAFT_COMPILE_VERSION)
