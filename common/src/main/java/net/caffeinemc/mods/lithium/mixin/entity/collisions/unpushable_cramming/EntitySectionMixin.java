@@ -5,6 +5,7 @@ import net.caffeinemc.mods.lithium.common.entity.pushable.FeetBlockCachingEntity
 import net.caffeinemc.mods.lithium.common.entity.pushable.PushableEntityClassGroup;
 import net.caffeinemc.mods.lithium.common.util.collections.ReferenceMaskedList;
 import net.caffeinemc.mods.lithium.common.world.ClimbingMobCachingSection;
+import net.minecraft.core.SectionPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.util.ClassInstanceMultiMap;
@@ -16,6 +17,8 @@ import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraft.world.level.entity.EntitySection;
 import net.minecraft.world.level.entity.Visibility;
 import net.minecraft.world.phys.AABB;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,6 +38,8 @@ public abstract class EntitySectionMixin<T extends EntityAccess> implements Clim
     private ClassInstanceMultiMap<T> storage;
     @Shadow
     private Visibility chunkStatus;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("Lithium");
 
     /**
      * Contains entities that are pushable under some conditions. Entities that are cached to be inside a climbable block
@@ -65,17 +70,25 @@ public abstract class EntitySectionMixin<T extends EntityAccess> implements Clim
             }
         }
         if (this.pushableEntities == null && i >= 25 && i >= (j * 2)) {
-            this.startFilteringPushableEntities();
+            this.startFilteringPushableEntities(i, j);
         }
         return AbortableIterationConsumer.Continuation.CONTINUE;
     }
 
     @Unique
-    private void startFilteringPushableEntities() {
+    private void startFilteringPushableEntities(int i, int j) {
         this.pushableEntities = new ReferenceMaskedList<>();
+        boolean sectionFound = false;
+        long sectionPos = 0L;
         for (T entity : this.storage) {
             this.onStartClimbingCachingEntity((Entity) entity);
+            if (!sectionFound) {
+                sectionPos = SectionPos.asLong(((Entity) entity).blockPosition());
+                sectionFound = true;
+            }
         }
+
+        LOGGER.info(String.format("Section <%d %d %d> triggered pushable optimization - %d Entities %d Pushable", SectionPos.x(sectionPos), SectionPos.y(sectionPos), SectionPos.z(sectionPos), i, j));
     }
 
     @Unique
