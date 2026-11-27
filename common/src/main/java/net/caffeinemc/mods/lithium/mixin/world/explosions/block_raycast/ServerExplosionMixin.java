@@ -271,9 +271,9 @@ public abstract class ServerExplosionMixin implements LithiumExplosion {
     private void performRayCast(RandomSource random, double vecX, double vecY, double vecZ, LongOpenHashSet touched) {
         double dist = Math.sqrt((vecX * vecX) + (vecY * vecY) + (vecZ * vecZ));
 
-        double normX = (vecX / dist) * 0.3D;
-        double normY = (vecY / dist) * 0.3D;
-        double normZ = (vecZ / dist) * 0.3D;
+        double normX = (vecX / dist) * 0.3F;
+        double normY = (vecY / dist) * 0.3F;
+        double normZ = (vecZ / dist) * 0.3F;
 
         float strength = this.radius * (0.7F + (random.nextFloat() * 0.6F));
 
